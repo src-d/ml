@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 import logging
 import os
@@ -7,6 +8,9 @@ import subprocess
 import tempfile
 
 import Stemmer
+
+from ast2vec.id2vec import Id2Vec
+from ast2vec.df import DocumentFrequencies
 
 
 class Repo2nBOW:
@@ -41,10 +45,32 @@ class Repo2nBOW:
             target_dir = url_or_path
         try:
             classified = self._classify_files(target_dir)
-            // TODO: babelfish
+
+            def uast_generator():
+                for lang, files in classified.items():
+                    # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved
+                    if lang not in ("Python", "Java"):
+                        continue
+                    for f in files:
+                        # TODO: multithreading in chunks
+                        # TODO: make request to bblfsh
+                        yield f
+
+            return self.convert_uasts(uast_generator())
         finally:
             if temp:
                 shutil.rmtree(target_dir)
+
+    def convert_uasts(self, uast_generator):
+        freqs = defaultdict(int)
+        for uast in uast_generator:
+            bag = self._uast_to_bag(uast)
+            for key, freq in bag.items():
+                freqs[key] += freq
+        return freqs
+
+    def _uast_to_bag(self, uast):
+        return {}
 
     def _classify_files(self, target_dir):
         bjson = subprocess.check_output([self._linguist, target_dir])
@@ -96,3 +122,24 @@ class Repo2nBOW:
             last = part[pos:]
             if last:
                 yield from ret(last)
+
+
+def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None):
+    if id2vec is None:
+        id2vec = Id2Vec()
+    if df is None:
+        df = DocumentFrequencies()
+    obj = Repo2nBOW(id2vec, df, linguist=linguist)
+    nbow = obj.convert_repository(url_or_path)
+    return nbow
+
+
+def repo2nbow2stdout(args):
+    id2vec = Id2Vec(args.id2vec or None)
+    df = DocumentFrequencies(args.df or None)
+    linguist = args.linguist or None
+    nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist)
+    nbl = [(weight, token) for token, weight in nbow.items()]
+    nbl.sort(reverse=True)
+    for w, t in nbl:
+        print("%s\t%f\n" % (t, w))

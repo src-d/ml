@@ -42,9 +42,8 @@ def preprocess(args):
     word_indices = {w: i for i, w in enumerate(chosen_words)}
     if args.df is not None:
         print("Writing the document frequencies to %s..." % args.df)
-        with open(args.df, "w") as fout:
-            for p in zip(chosen_words, chosen_freqs):
-                fout.write("%s\t%d\n" % p)
+        numpy.savez_compressed(
+            args.df, tokens=chosen_words, freqs=chosen_freqs)
     del chosen_freqs
     del chosen_words
     print("Combining individual co-occurrence matrices...")

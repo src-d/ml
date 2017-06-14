@@ -2,13 +2,27 @@ import argparse
 import sys
 
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
+from ast2vec.repo2nbow import repo2nbow2stdout
 
 
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="Commands", dest="command")
+    repo2nbow_parser = subparsers.add_parser(
+        "repo2nbow", help="Produce the nBOW from a Git repository.")
+    repo2nbow_parser.set_defaults(handler=repo2nbow2stdout)
+    repo2nbow_parser.add_argument(
+        "-r", "--repository", required=True,
+        help="URL or path to a Git repository.")
+    repo2nbow_parser.add_argument(
+        "--id2vec", help="URL or path to the identifier embeddings.")
+    repo2nbow_parser.add_argument(
+        "--df", help="URL or path to the document frequencies.")
+    repo2nbow_parser.add_argument(
+        "--linguist", help="Path to github/linguist-like executable.")
     preproc_parser = subparsers.add_parser(
-        "preproc", help="Convert co-occurrence CSR matrices to Swivel dataset")
+        "preproc", help="Convert co-occurrence CSR matrices to Swivel "
+                        "dataset.")
     preproc_parser.set_defaults(handler=preprocess)
     preproc_parser.add_argument(
         "-o", "--output", required=True, help="The output directory.")
@@ -20,7 +34,7 @@ def main():
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(
         "--df", default=None,
-        help="Path to the calculated document frequencies in TSV format "
+        help="Path to the calculated document frequencies in npz format "
              "(DF in TF-IDF).")
     preproc_parser.add_argument("input", nargs="+",
                                 help="Pickled scipy.sparse matrices.")
