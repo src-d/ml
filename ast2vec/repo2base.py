@@ -101,6 +101,12 @@ class Repo2Base:
             if temp:
                 shutil.rmtree(target_dir)
 
+    def convert_uast(self, uast):
+        return self.convert_uasts([uast])
+
+    def convert_uasts(self, uast_generator):
+        raise NotImplementedError()
+
     def _classify_files(self, target_dir):
         # FIXME(vmarkovtsev): add --json when we implement https://github.com/src-d/enry/issues/39
         bjson = subprocess.check_output([self._linguist, target_dir])

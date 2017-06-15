@@ -41,7 +41,8 @@ class Repo2nBOW(Repo2Base):
         return bag
 
 
-def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None):
+def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
+              bblfsh_endpoint=None):
     if id2vec is None:
         id2vec = Id2Vec()
     if df is None:
@@ -51,11 +52,12 @@ def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None):
     return nbow
 
 
-def repo2nbow2stdout(args):
+def repo2nbow_entry(args):
     id2vec = Id2Vec(args.id2vec or None)
     df = DocumentFrequencies(args.df or None)
     linguist = args.linguist or None
-    nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist)
+    nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
+                     bblfsh_endpoint=args.bblfsh)
     nbl = [(weight, token) for token, weight in nbow.items()]
     nbl.sort(reverse=True)
     for w, t in nbl:

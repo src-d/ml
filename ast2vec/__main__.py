@@ -3,7 +3,8 @@ import logging
 import sys
 
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
-from ast2vec.repo2nbow import repo2nbow2stdout
+from ast2vec.repo2coocc import repo2coocc_entry
+from ast2vec.repo2nbow import repo2nbow_entry
 
 
 def main():
@@ -14,7 +15,7 @@ def main():
     subparsers = parser.add_subparsers(help="Commands", dest="command")
     repo2nbow_parser = subparsers.add_parser(
         "repo2nbow", help="Produce the nBOW from a Git repository.")
-    repo2nbow_parser.set_defaults(handler=repo2nbow2stdout)
+    repo2nbow_parser.set_defaults(handler=repo2nbow_entry)
     repo2nbow_parser.add_argument(
         "-r", "--repository", required=True,
         help="URL or path to a Git repository.")
@@ -24,6 +25,24 @@ def main():
         "--df", help="URL or path to the document frequencies.")
     repo2nbow_parser.add_argument(
         "--linguist", help="Path to github/linguist-like executable.")
+    repo2nbow_parser.add_argument(
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+
+    repo2coocc_parser = subparsers.add_parser(
+        "repo2coocc", help="Produce the co-occurrence matrix from a Git "
+                           "repository.")
+    repo2coocc_parser.set_defaults(handler=repo2coocc_entry)
+    repo2coocc_parser.add_argument(
+        "-r", "--repository", required=True,
+        help="URL or path to a Git repository.")
+    repo2coocc_parser.add_argument(
+        "--linguist", help="Path to github/linguist-like executable.")
+    repo2coocc_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output path where .npz result will be stored.")
+    repo2coocc_parser.add_argument(
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+
     preproc_parser = subparsers.add_parser(
         "preproc", help="Convert co-occurrence CSR matrices to Swivel "
                         "dataset.")
@@ -42,6 +61,7 @@ def main():
              "(DF in TF-IDF).")
     preproc_parser.add_argument("input", nargs="+",
                                 help="Pickled scipy.sparse matrices.")
+
     train_parser = subparsers.add_parser(
         "train", help="Train identifier embeddings.")
     train_parser.set_defaults(handler=run_swivel)
@@ -50,12 +70,14 @@ def main():
     train_parser._optionals = swivel.flags._global_parser._optionals
     train_parser._action_groups.append(train_parser._optionals)
     train_parser._actions = swivel.flags._global_parser._actions
+
     postproc_parser = subparsers.add_parser(
         "postproc", help="Combine row and column embeddings together and "
                          "write them to an .npz.")
     postproc_parser.set_defaults(handler=postprocess)
     postproc_parser.add_argument("swivel_output_directory")
     postproc_parser.add_argument("npz")
+
     args = parser.parse_args()
     logging.basicConfig(level=logging._nameToLevel[args.log_level])
     args.handler(args)
