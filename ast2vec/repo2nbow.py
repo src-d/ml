@@ -1,12 +1,17 @@
 from collections import defaultdict
 import json
 import logging
+import multiprocessing
 import os
+from queue import Queue
 import re
 import shutil
 import subprocess
 import tempfile
+import threading
 
+from bblfsh import BblfshClient
+from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
 import Stemmer
 
 from ast2vec.id2vec import Id2Vec
@@ -16,9 +21,11 @@ from ast2vec.df import DocumentFrequencies
 class Repo2nBOW:
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")
     STEM_THRESHOLD = 6
+    SIMPLE_IDENTIFIER = DESCRIPTOR.enum_types_by_name["Role"] \
+        .values_by_name["SIMPLE_IDENTIFIER"].number
 
     def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
-                 log_level=logging.INFO):
+                 log_level=logging.INFO, bblfsh_endpoint=None):
         self._log = logging.getLogger("repo2nbow")
         self._log.setLevel(log_level)
         self._id2vec = id2vec
@@ -28,6 +35,8 @@ class Repo2nBOW:
         self._stem_threshold = 6
         self._tempdir = tempdir
         self._linguist = "enry" if linguist is None else linguist
+        self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
+                        for _ in range(multiprocessing.cpu_count())]
 
     def convert_repository(self, url_or_path):
         temp = not os.path.exists(url_or_path)
@@ -44,17 +53,48 @@ class Repo2nBOW:
         else:
             target_dir = url_or_path
         try:
+            self._log.info("Classifying the files...")
             classified = self._classify_files(target_dir)
+            self._log.info("Fetching and processing UASTs...")
 
             def uast_generator():
+                queue_in = Queue()
+                queue_out = Queue()
+
+                def thread_loop(thread_index):
+                    while True:
+                        task = queue_in.get()
+                        if task is None:
+                            break
+                        try:
+                            filename, language = task
+                            uast = self._bblfsh[thread_index].parse_uast(
+                                filename, language=language)
+                            queue_out.put_nowait(uast)
+                        except:
+                            self._log.exception(
+                                "Error while processing %s.", task)
+                            queue_out.put_nowait(None)
+
+                pool = [threading.Thread(target=thread_loop, args=(i,))
+                        for i in range(multiprocessing.cpu_count())]
+                for thread in pool:
+                    thread.start()
+                tasks = 0
                 for lang, files in classified.items():
                     # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved
                     if lang not in ("Python", "Java"):
                         continue
                     for f in files:
-                        # TODO: multithreading in chunks
-                        # TODO: make request to bblfsh
-                        yield f
+                        tasks += 1
+                        queue_in.put_nowait((f, lang))
+                for _ in pool:
+                    queue_in.put_nowait(None)
+                while tasks > 0:
+                    yield queue_out.get()
+                    tasks -= 1
+                for thread in pool:
+                    thread.join()
 
             return self.convert_uasts(uast_generator())
         finally:
@@ -70,7 +110,14 @@ class Repo2nBOW:
         return freqs
 
     def _uast_to_bag(self, uast):
-        return {}
+        stack = [uast]
+        bag = defaultdict(int)
+        while stack:
+            node = stack.pop(0)
+            if self.SIMPLE_IDENTIFIER in node.roles:
+                for sub in self._process_token(node.token):
+                    bag[sub] += 1
+            stack.extend(node.children)
 
     def _classify_files(self, target_dir):
         bjson = subprocess.check_output([self._linguist, target_dir])
