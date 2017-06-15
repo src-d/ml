@@ -1,6 +1,7 @@
 from collections import defaultdict
 import json
 import logging
+import math
 import multiprocessing
 import os
 from queue import Queue
@@ -21,8 +22,10 @@ from ast2vec.df import DocumentFrequencies
 class Repo2nBOW:
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")
     STEM_THRESHOLD = 6
+    MAX_TOKEN_LENGTH = 256
     SIMPLE_IDENTIFIER = DESCRIPTOR.enum_types_by_name["Role"] \
-        .values_by_name["SIMPLE_IDENTIFIER"].number
+        .values_by_name["SIMPLE_IDENTIFIER"].number + 1
+    # FIXME(vmarkovtsev): remove "+1"
 
     def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
                  log_level=logging.INFO, bblfsh_endpoint=None):
@@ -88,11 +91,14 @@ class Repo2nBOW:
                     for f in files:
                         tasks += 1
                         queue_in.put_nowait((f, lang))
+                report_interval = max(1, tasks // 100)
                 for _ in pool:
                     queue_in.put_nowait(None)
                 while tasks > 0:
                     yield queue_out.get()
                     tasks -= 1
+                    if tasks % report_interval == 0:
+                        self._log.info("Pending tasks: %d", tasks)
                 for thread in pool:
                     thread.join()
 
@@ -107,6 +113,9 @@ class Repo2nBOW:
             bag = self._uast_to_bag(uast)
             for key, freq in bag.items():
                 freqs[key] += freq
+        for key, val in freqs:
+            freqs[key] = math.log(1 + val) * math.log(
+                self._docfreq.sum / self._docfreq[key])
         return freqs
 
     def _uast_to_bag(self, uast):
@@ -118,8 +127,10 @@ class Repo2nBOW:
                 for sub in self._process_token(node.token):
                     bag[sub] += 1
             stack.extend(node.children)
+        return bag
 
     def _classify_files(self, target_dir):
+        # FIXME(vmarkovtsev): add --json when we implement https://github.com/src-d/enry/issues/39
         bjson = subprocess.check_output([self._linguist, target_dir])
         classified = json.loads(bjson.decode("utf-8"))
         return classified
@@ -135,7 +146,7 @@ class Repo2nBOW:
 
     @classmethod
     def _split(cls, token):
-        token = token.strip()
+        token = token.strip()[:cls.MAX_TOKEN_LENGTH]
         prev_p = [""]
 
         def ret(name):

@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
@@ -7,6 +8,9 @@ from ast2vec.repo2nbow import repo2nbow2stdout
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--log-level", default="INFO",
+                        choices=logging._nameToLevel,
+                        help="Logging verbosity.")
     subparsers = parser.add_subparsers(help="Commands", dest="command")
     repo2nbow_parser = subparsers.add_parser(
         "repo2nbow", help="Produce the nBOW from a Git repository.")
@@ -50,9 +54,10 @@ def main():
         "postproc", help="Combine row and column embeddings together and "
                          "write them to an .npz.")
     postproc_parser.set_defaults(handler=postprocess)
-    postproc_parser.add_argument("swivel-output-directory")
+    postproc_parser.add_argument("swivel_output_directory")
     postproc_parser.add_argument("npz")
     args = parser.parse_args()
+    logging.basicConfig(level=logging._nameToLevel[args.log_level])
     args.handler(args)
 
 if __name__ == "__main__":

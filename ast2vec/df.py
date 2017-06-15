@@ -9,6 +9,11 @@ class DocumentFrequencies(Dataset):
         tokens = npz["tokens"]
         freqs = npz["freqs"]
         self._df = dict(zip(tokens, freqs))
+        self._sum = freqs.sum()
+
+    @property
+    def sum(self):
+        return self._sum
 
     def __getitem__(self, item):
         return self._df[item]

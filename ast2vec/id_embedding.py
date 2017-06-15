@@ -8,6 +8,7 @@ from scipy.sparse import dok_matrix
 import tensorflow as tf
 
 import ast2vec.swivel as swivel
+from ast2vec.repo2nbow import Repo2nBOW
 
 
 def preprocess(args):
@@ -112,14 +113,18 @@ def postprocess(args):
     swd = args.swivel_output_directory
     with open(os.path.join(swd, "row_embedding.tsv")) as frow:
         with open(os.path.join(swd, "col_embedding.tsv")) as fcol:
-            for lrow, lcol in zip(frow, fcol):
+            for i, (lrow, lcol) in enumerate(zip(frow, fcol)):
+                if i % 10000 == (10000 - 1):
+                    sys.stdout.write("%d\r" % (i + 1))
                 prow, pcol = (l.split("\t", 1) for l in (lrow, lcol))
                 assert prow[0] == pcol[0]
-                tokens.append(prow[0])
+                tokens.append(prow[0][:Repo2nBOW.MAX_TOKEN_LENGTH])
                 erow, ecol = \
                     (numpy.fromstring(p[1], dtype=numpy.float32, sep="\t")
                      for p in (prow, pcol))
                 embeddings.append((erow + ecol) / 2)
-    embeddings = numpy.array(embeddings)
+    print("Generating numpy arrays...")
+    embeddings = numpy.array(embeddings, dtype=numpy.float32)
+    tokens = numpy.array(tokens, dtype=str)
     print("Writing %s..." % args.npz)
     numpy.savez_compressed(args.npz, embeddings=embeddings, tokens=tokens)
