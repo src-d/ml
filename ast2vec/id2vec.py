@@ -9,6 +9,8 @@ class Id2Vec(Dataset):
         self._embeddings = npz["embeddings"]
         self._tokens = npz["tokens"]
         self._log.info("Building the token index...")
+        # numpy arrays of string are of fixed item size (max length) - fix this
+        self._tokens = list(self._tokens)
         self._token2index = {w: i for i, w in enumerate(self._tokens)}
 
     @property

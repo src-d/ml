@@ -1,3 +1,4 @@
+import gzip
 import io
 import json
 import logging
@@ -34,7 +35,11 @@ class Dataset:
             self._fetch(source, default_file_name)
             source = default_file_name
         self._log.info("Reading %s...", source)
-        npz = numpy.load(source)
+        if source.endswith(".gz"):
+            with gzip.open(source) as f:
+                npz = numpy.load(f)
+        else:
+            npz = numpy.load(source)
         self._load(npz)
 
     def _load(self, npz):

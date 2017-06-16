@@ -108,8 +108,12 @@ class Repo2Base:
         raise NotImplementedError()
 
     def _classify_files(self, target_dir):
+        target_dir = os.path.abspath(target_dir)
         # FIXME(vmarkovtsev): add --json when we implement https://github.com/src-d/enry/issues/39
-        bjson = subprocess.check_output([self._linguist, target_dir])
+        # FIXME(vmarkovtsev): change to check_output() when we fix https://github.com/src-d/enry/issues/40
+        bjson = subprocess.run(
+            [self._linguist, target_dir],
+            stdout=subprocess.PIPE, check=False).stdout
         classified = json.loads(bjson.decode("utf-8"))
         return classified
 

@@ -12,10 +12,17 @@ from ast2vec.repo2nbow import Repo2nBOW
 
 
 def preprocess(args):
-    print("Reading word indices from %d files..." % len(args.input))
+    print("Scanning the inputs...")
+    inputs = []
+    for i in args.input:
+        if os.path.isdir(i):
+            inputs.extend(os.listdir(i))
+        else:
+            inputs.append(i)
+    print("Reading word indices from %d files..." % len(inputs))
     all_words = defaultdict(int)
-    for i, path in enumerate(args.input):
-        sys.stdout.write("%d / %d\r" % (i + 1, len(args.input)))
+    for i, path in enumerate(inputs):
+        sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
         with open(path, "rb") as fin:
             words = pickle.load(fin)
             for w in words:
@@ -49,8 +56,8 @@ def preprocess(args):
     del chosen_words
     print("Combining individual co-occurrence matrices...")
     ccmatrix = dok_matrix((vs, vs), dtype=numpy.int64)
-    for i, path in enumerate(args.input):
-        sys.stdout.write("%d / %d\r" % (i + 1, len(args.input)))
+    for i, path in enumerate(inputs):
+        sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
         with open(path, "rb") as fin:
             words = pickle.load(fin)
             indices = []
