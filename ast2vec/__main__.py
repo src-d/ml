@@ -1,7 +1,9 @@
 import argparse
 import logging
+import os
 import sys
 
+from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.repo2coocc import repo2coocc_entry
 from ast2vec.repo2nbow import repo2nbow_entry
@@ -80,9 +82,18 @@ def main():
     postproc_parser.add_argument("swivel_output_directory")
     postproc_parser.add_argument("npz")
 
+    enry_parser = subparsers.add_parser(
+        "enry", help="Install src-d/enry to the current working directory.")
+    enry_parser.set_defaults(handler=install_enry)
+    enry_parser.add_argument(
+        "--tempdir",
+        help="Store intermediate files in this directory instead of /tmp.")
+    enry_parser.add_argument("--output", default=os.getcwd(),
+                             help="Output directory.")
+
     args = parser.parse_args()
     logging.basicConfig(level=logging._nameToLevel[args.log_level])
-    args.handler(args)
+    return args.handler(args)
 
 if __name__ == "__main__":
     sys.exit(main())
