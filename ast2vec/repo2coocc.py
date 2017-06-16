@@ -11,6 +11,7 @@ from bblfsh.launcher import ensure_bblfsh_is_running
 import numpy
 from scipy.sparse import dok_matrix
 
+from ast2vec.meta import generate_meta
 from ast2vec.repo2base import Repo2Base
 
 
@@ -20,7 +21,6 @@ class Repo2Coocc(Repo2Base):
     word2_ind, cnt))
     """
     LOG_NAME = "repo2coocc"
-    uasts = []
 
     def convert_uasts(self, uast_generator):
         word2ind = dict()
@@ -63,13 +63,11 @@ class Repo2Coocc(Repo2Base):
                 stack.extend(node.children)
         return ids
 
-    def tokenizer(self, token):
-        return list(self._process_token(token))
-
     @staticmethod
-    def update_dict(words, word2ind):
-        for w in words:
-            _ = word2ind.setdefault(w, len(word2ind))
+    def update_dict(generator, word2ind, tokens):
+        for token in generator:
+            word2ind.setdefault(token, len(word2ind))
+            tokens.append(token)
 
     @staticmethod
     def all2all(words, word2ind):
@@ -85,15 +83,12 @@ class Repo2Coocc(Repo2Base):
 
         tokens = []
         for ch in children:
-            t = self.tokenizer(ch.token)
-            self.update_dict(t, word2ind)
-            tokens.extend(t)
+            self.update_dict(self._process_token(ch.token), word2ind, tokens)
 
         if (root.token.strip() is not None and root.token.strip() != '' and
                     self.SIMPLE_IDENTIFIER in root.roles):
-            t = self.tokenizer(root.token)
-            self.update_dict(t, word2ind)
-            tokens.extend(t)
+            self.update_dict(self._process_token(root.token), word2ind,
+                             tokens)
 
         for triplet in self.all2all(tokens, word2ind):
             mat[(triplet[0], triplet[1])] += triplet[2]
@@ -107,7 +102,9 @@ class Repo2Coocc(Repo2Base):
                 yield r
 
     def traverse_uast(self, root, word2ind, dok_mat):
-        # Travers UAST and extract co occurrence matrix
+        """
+        Traverse UAST and extract the co-occurence matrix
+        """
         stack = [root]
         new_stack = []
 
@@ -129,7 +126,9 @@ def repo2coocc_entry(args):
     ensure_bblfsh_is_running()
     vocabulary, matrix = repo2coocc(args.repository, linguist=args.linguist,
                                     bblfsh_endpoint=args.bblfsh)
-    numpy.savez_compressed(args.output, tokens=vocabulary, matrix=matrix)
+    numpy.savez_compressed(
+        args.output, tokens=vocabulary, matrix=matrix,
+        meta=generate_meta("co-occurrences"))
 
 
 def __pool_f__(v):

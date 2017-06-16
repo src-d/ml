@@ -10,6 +10,7 @@ import tempfile
 import threading
 
 from bblfsh import BblfshClient
+import bblfsh.launcher
 from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
 import Stemmer
 
