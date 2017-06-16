@@ -2,6 +2,8 @@ from collections import defaultdict
 import logging
 import math
 
+from bblfsh.launcher import ensure_bblfsh_is_running
+
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.repo2base import Repo2Base
@@ -60,6 +62,7 @@ def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
 
 
 def repo2nbow_entry(args):
+    ensure_bblfsh_is_running()
     id2vec = Id2Vec(args.id2vec or None)
     df = DocumentFrequencies(args.df or None)
     linguist = args.linguist or None
