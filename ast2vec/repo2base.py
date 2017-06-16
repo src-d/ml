@@ -67,7 +67,7 @@ class Repo2Base:
                             filename, language = task
                             uast = self._bblfsh[thread_index].parse_uast(
                                 filename, language=language)
-                            queue_out.put_nowait(uast)
+                            queue_out.put_nowait(uast.uast)
                         except:
                             self._log.exception(
                                 "Error while processing %s.", task)

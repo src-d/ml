@@ -36,7 +36,7 @@ class Repo2nBOW(Repo2Base):
         return freqs
 
     def _uast_to_bag(self, uast):
-        stack = [uast.uast]
+        stack = [uast]
         bag = defaultdict(int)
         while stack:
             node = stack.pop(0)
