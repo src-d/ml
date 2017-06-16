@@ -41,13 +41,11 @@ class Repo2Coocc(Repo2Base):
                 stack.extend(node.children)
         return ids
 
-    def tokenizer(self, token):
-        return list(self._process_token(token))
-
     @staticmethod
-    def update_dict(words, word2ind):
-        for w in words:
-            _ = word2ind.setdefault(w, len(word2ind))
+    def update_dict(generator, word2ind, tokens):
+        for token in generator:
+            word2ind.setdefault(token, len(word2ind))
+            tokens.append(token)
 
     @staticmethod
     def all2all(words, word2ind):
@@ -63,14 +61,10 @@ class Repo2Coocc(Repo2Base):
 
         tokens = []
         for ch in children:
-            t = self.tokenizer(ch.token)
-            self.update_dict(t, word2ind)
-            tokens.extend(t)
+            self.update_dict(self._process_token(ch.token), word2ind, tokens)
         if (root.token.strip() is not None and root.token.strip() != '' and
-                    self.SIMPLE_IDENTIFIER in root.roles):
-            t = self.tokenizer(root.token)
-            self.update_dict(t, word2ind)
-            tokens.extend(t)
+                self.SIMPLE_IDENTIFIER in root.roles):
+            self.update_dict(self._process_token(root.token), word2ind, tokens)
         for triplet in self.all2all(tokens, word2ind):
             mat[(triplet[0], triplet[1])] += triplet[2]
         return children
@@ -83,7 +77,9 @@ class Repo2Coocc(Repo2Base):
                 yield r
 
     def traverse_uast(self, root, word2ind, dok_mat):
-        # Travers UAST and extract co occurence matrix
+        """
+        Traverse UAST and extract the co-occurence matrix
+        """
         stack = [root]
         new_stack = []
 
