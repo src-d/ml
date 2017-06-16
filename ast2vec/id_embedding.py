@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 import os
 import pickle
 import sys
@@ -7,6 +8,7 @@ import numpy
 from scipy.sparse import dok_matrix
 import tensorflow as tf
 
+from ast2vec.meta import generate_meta
 import ast2vec.swivel as swivel
 from ast2vec.repo2nbow import Repo2nBOW
 
@@ -51,7 +53,8 @@ def preprocess(args):
     if args.df is not None:
         print("Writing the document frequencies to %s..." % args.df)
         numpy.savez_compressed(
-            args.df, tokens=chosen_words, freqs=chosen_freqs)
+            args.df, tokens=chosen_words, freqs=chosen_freqs,
+            meta=generate_meta("document frequencies"))
     del chosen_freqs
     del chosen_words
     print("Combining individual co-occurrence matrices...")
@@ -134,4 +137,5 @@ def postprocess(args):
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
     tokens = numpy.array(tokens, dtype=str)
     print("Writing %s..." % args.npz)
-    numpy.savez_compressed(args.npz, embeddings=embeddings, tokens=tokens)
+    numpy.savez_compressed(args.npz, embeddings=embeddings, tokens=tokens,
+                           meta=generate_meta("id2vec"))

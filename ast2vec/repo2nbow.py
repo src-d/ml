@@ -1,7 +1,9 @@
 from collections import defaultdict
 import logging
 import math
+import numpy
 
+from ast2vec.meta import generate_meta
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.repo2base import Repo2Base
@@ -42,7 +44,10 @@ class Repo2nBOW(Repo2Base):
             node = stack.pop(0)
             if self.SIMPLE_IDENTIFIER in node.roles:
                 for sub in self._process_token(node.token):
-                    bag[sub] += 1
+                    try:
+                        bag[self._id2vec.token2index[sub]] += 1
+                    except KeyError:
+                        pass
             stack.extend(node.children)
         return bag
 
@@ -65,7 +70,14 @@ def repo2nbow_entry(args):
     linguist = args.linguist or None
     nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
                      bblfsh_endpoint=args.bblfsh)
-    nbl = [(weight, token) for token, weight in nbow.items()]
+    numpy.savez_compressed(args.output, nbow=nbow,
+                           meta=generate_meta("nbow", id2vec, df))
+
+
+def print_nbow(npz, dependencies):
+    nbow = npz["nbow"]
+    id2vec = Id2Vec(dependencies[0])
+    nbl = [(f, id2vec.tokens[t]) for t, f in nbow.items()]
     nbl.sort(reverse=True)
     for w, t in nbl:
         print("%s\t%f" % (t, w))

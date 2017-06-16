@@ -7,6 +7,7 @@ from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.repo2coocc import repo2coocc_entry
 from ast2vec.repo2nbow import repo2nbow_entry
+from ast2vec.dump import dump_model
 
 
 def main():
@@ -29,6 +30,9 @@ def main():
         "--linguist", help="Path to github/linguist-like executable.")
     repo2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+    repo2nbow_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output path where the .npz will be stored.")
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
@@ -90,6 +94,16 @@ def main():
         help="Store intermediate files in this directory instead of /tmp.")
     enry_parser.add_argument("--output", default=os.getcwd(),
                              help="Output directory.")
+
+    dump_parser = subparsers.add_parser(
+        "dump", help="Dump a model to stdout.")
+    dump_parser.set_defaults(handler=dump_model)
+    dump_parser.add_argument(
+        "input", help="Path to the model file.")
+    dump_parser.add_argument("-d", "--dependency", nargs="+",
+                             help="Paths to the models which were used to "
+                                  "generate the dumped model in the order "
+                                  "they appear in the metadata.")
 
     args = parser.parse_args()
     logging.basicConfig(level=logging._nameToLevel[args.log_level])

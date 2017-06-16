@@ -4,6 +4,7 @@ from operator import itemgetter
 import numpy
 from scipy.sparse import dok_matrix
 
+from ast2vec.meta import generate_meta
 from ast2vec.repo2base import Repo2Base
 
 
@@ -100,6 +101,8 @@ def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None):
 def repo2coocc_entry(args):
     vocabulary, matrix = repo2coocc(args.repository, linguist=args.linguist,
                                     bblfsh_endpoint=args.bblfsh)
-    numpy.savez_compressed(args.output, tokens=vocabulary, matrix=matrix)
+    numpy.savez_compressed(
+        args.output, tokens=vocabulary, matrix=matrix,
+        meta=generate_meta("co-occurrences"))
 
 

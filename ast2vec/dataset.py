@@ -40,7 +40,15 @@ class Dataset:
                 npz = numpy.load(f)
         else:
             npz = numpy.load(source)
+        self._meta = npz["meta"]
         self._load(npz)
+
+    @property
+    def meta(self):
+        return self._meta
+
+    def __str__(self):
+        return str(self._meta)
 
     def _load(self, npz):
         raise NotImplementedError()
