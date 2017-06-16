@@ -5,7 +5,7 @@ import sys
 
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
-from ast2vec.repo2coocc import repo2coocc_entry
+from ast2vec.repo2coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2nbow import repo2nbow_entry
 
 
@@ -43,6 +43,21 @@ def main():
         "-o", "--output", required=True,
         help="Output path where .npz result will be stored.")
     repo2coocc_parser.add_argument(
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+
+    repos2coocc_parser = subparsers.add_parser(
+        "repos2coocc", help="Produce the co-occurrence matrix from a list of "
+                            "Git repositories.")
+    repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
+    repos2coocc_parser.add_argument(
+        "-i", "--input", required=True,
+        help="list of repositories or path to file with list of repositories.")
+    repos2coocc_parser.add_argument(
+        "--linguist", help="Path to github/linguist-like executable.")
+    repos2coocc_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output folder where .npz result will be stored.")
+    repos2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
 
     preproc_parser = subparsers.add_parser(
