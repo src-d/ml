@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from ast2vec import __version__
+import ast2vec
 
 
 def generate_meta(name, *deps):
     return {
         "model": name,
         "dependencies": [d.meta for d in deps],
-        "version": __version__,
+        "version": ast2vec.__version__,
         "created_at": datetime.now()
     }

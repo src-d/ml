@@ -107,7 +107,14 @@ def main():
 
     args = parser.parse_args()
     logging.basicConfig(level=logging._nameToLevel[args.log_level])
-    return args.handler(args)
+    try:
+        handler = args.handler
+    except AttributeError:
+        def print_usage(_):
+            parser.print_usage()
+
+        handler = print_usage
+    return handler(args)
 
 if __name__ == "__main__":
     sys.exit(main())
