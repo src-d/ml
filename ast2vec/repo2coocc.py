@@ -8,7 +8,7 @@ class Repo2Coocc(Repo2Base):
     Convert UAST to tuple (list of unique words, list of triplets (word1_ind,
     word2_ind, cnt))
     """
-    LOG_NAME = "repo2coo_matrix"
+    LOG_NAME = "repo2coocc"
 
     def convert_uasts(self, uast_generator):
         word2ind = dict()

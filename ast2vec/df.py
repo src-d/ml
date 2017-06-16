@@ -8,7 +8,9 @@ class DocumentFrequencies(Dataset):
     def _load(self, npz):
         tokens = npz["tokens"]
         freqs = npz["freqs"]
+        self._log.info("Building the docfreq dictionary...")
         self._df = dict(zip(tokens, freqs))
+        del tokens
         self._sum = freqs.sum()
 
     @property

@@ -24,13 +24,19 @@ class Repo2nBOW(Repo2Base):
             bag = self._uast_to_bag(uast)
             for key, freq in bag.items():
                 freqs[key] += freq
-        for key, val in freqs:
-            freqs[key] = math.log(1 + val) * math.log(
-                self._docfreq.sum / self._docfreq[key])
+        missing = []
+        for key, val in freqs.items():
+            try:
+                freqs[key] = math.log(1 + val) * math.log(
+                    self._docfreq.sum / self._docfreq[key])
+            except KeyError:
+                missing.append(key)
+        for key in missing:
+            del freqs[key]
         return freqs
 
     def _uast_to_bag(self, uast):
-        stack = [uast]
+        stack = [uast.uast]
         bag = defaultdict(int)
         while stack:
             node = stack.pop(0)
@@ -47,7 +53,8 @@ def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
         id2vec = Id2Vec()
     if df is None:
         df = DocumentFrequencies()
-    obj = Repo2nBOW(id2vec, df, linguist=linguist)
+    obj = Repo2nBOW(id2vec, df, linguist=linguist,
+                    bblfsh_endpoint=bblfsh_endpoint)
     nbow = obj.convert_repository(url_or_path)
     return nbow
 
@@ -61,4 +68,4 @@ def repo2nbow_entry(args):
     nbl = [(weight, token) for token, weight in nbow.items()]
     nbl.sort(reverse=True)
     for w, t in nbl:
-        print("%s\t%f\n" % (t, w))
+        print("%s\t%f" % (t, w))
