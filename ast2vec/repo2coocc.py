@@ -1,3 +1,4 @@
+from collections import defaultdict
 from operator import itemgetter
 
 import numpy
@@ -15,7 +16,7 @@ class Repo2Coocc(Repo2Base):
 
     def convert_uasts(self, uast_generator):
         word2ind = dict()
-        dok_mat = dict()
+        dok_mat = defaultdict(int)
         for uast in uast_generator:
             self.traverse_uast(uast, word2ind, dok_mat)
 
