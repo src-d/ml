@@ -1,4 +1,7 @@
+from operator import itemgetter
+
 import numpy
+from scipy.sparse import dok_matrix
 
 from ast2vec.repo2base import Repo2Base
 
@@ -12,10 +15,20 @@ class Repo2Coocc(Repo2Base):
 
     def convert_uasts(self, uast_generator):
         word2ind = dict()
-        dok_matrix = dict()
+        dok_mat = dict()
         for uast in uast_generator:
-            wi = dict.setdefault(w, len(dict))
-            pass
+            self.traverse_uast(uast, word2ind, dok_mat)
+
+        n_tokens = len(word2ind)
+        mat = dok_matrix((n_tokens, n_tokens))
+
+        for coord in dok_mat:
+            mat[coord[0], coord[1]] = dok_mat[coord]
+
+        words = [p[1] for p in sorted([(word2ind[w], w) for w in word2ind],
+                                      key=itemgetter(0))]
+
+        return words, mat.tocoo()
 
     def flatten_children(self, root):
         ids = []
@@ -34,8 +47,6 @@ class Repo2Coocc(Repo2Base):
     def update_dict(words, word2ind):
         for w in words:
             _ = word2ind.setdefault(w, len(word2ind))
-            # if w not in word2ind:
-            #     word2ind[w] = len(word2ind)
 
     @staticmethod
     def all2all(words, word2ind):
@@ -70,20 +81,17 @@ class Repo2Coocc(Repo2Base):
             for r in self.extract_ids(child):
                 yield r
 
-    def traverse_uast(self, root, word2ind, dok_matrix):
-        # Travers UAST and extract dependencies
+    def traverse_uast(self, root, word2ind, dok_mat):
+        # Travers UAST and extract co occurence matrix
         stack = [root]
         new_stack = []
 
         while stack:
             for node in stack:
-                children = self.process_node(node, word2ind, dok_matrix)
+                children = self.process_node(node, word2ind, dok_mat)
                 new_stack.extend(children)
             stack = new_stack
             new_stack = []
-        # words = [p[1] for p in sorted([(word2ind[w], w) for w in word2ind],
-        #                               key=itemgetter(0))]
-        # return words, dok_matrix.tocoo()
 
 
 def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None):
