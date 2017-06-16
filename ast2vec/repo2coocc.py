@@ -23,38 +23,11 @@ class Repo2Coocc(Repo2Base):
     uasts = []
 
     def convert_uasts(self, uast_generator):
-        # self.uasts.extend(uast_generator)
-        # # return self.uasts
-        # self.word2ind = word2ind = dict()
         word2ind = dict()
-        # self.reference_dict = set()
         dok_mat = defaultdict(int)
         for uast in uast_generator:
-            # bag = self._uast_to_bag(uast)
-            # self.reference_dict.update(bag)
-            # if {'contain', 'result', 'sock', 'socket'}.intersection(bag):
-            #     print("?", file)
-            # if  {'find', 'packag'}.intersection(bag):
-            #     print("!", file)
-            # if 'src/bblfsh/setup.py' == file:
-            #     print("dump src/bblfsh/setup.py")
-            #     print(sorted(bag))
-            #     from datetime import datetime
-            #     with open("setup_debug" + str(datetime.now()) + '.txt',
-            #               'w') as f:
-            #         f.write(str(uast))
-            # if 'src/bblfsh/bblfsh/launcher.py' == file:
-            #     print("dump src/bblfsh/bblfsh/launcher.py")
-            #     print(sorted(bag))
-            #     from datetime import datetime
-            #     with open("launcher_debug" + str(datetime.now()) + '.txt', 'w') as f:
-            #         f.write(str(uast))
             if uast is not None:
                 self.traverse_uast(uast, word2ind, dok_mat)
-            # else:
-            #     print('skipped!')
-            #     print('-' * 20)
-            # print('number of unique words:', len(word2ind))
 
         n_tokens = len(word2ind)
         mat = dok_matrix((n_tokens, n_tokens))
@@ -67,7 +40,6 @@ class Repo2Coocc(Repo2Base):
 
         words = [p[1] for p in sorted([(word2ind[w], w) for w in word2ind],
                                       key=itemgetter(0))]
-        # print(words, len(words), mat)
         return words, mat.tocoo()
 
     def _uast_to_bag(self, uast):
@@ -103,7 +75,6 @@ class Repo2Coocc(Repo2Base):
     def all2all(words, word2ind):
         for i in range(len(words)):
             for j in range(i + 1, len(words)):
-                # wi = word2ind.setdefault(words[i], len(word2ind))
                 wi = word2ind[words[i]]
                 wj = word2ind[words[j]]
                 yield (wi, wj, 1)
@@ -151,10 +122,6 @@ class Repo2Coocc(Repo2Base):
 def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None):
     obj = Repo2Coocc(linguist=linguist, bblfsh_endpoint=bblfsh_endpoint)
     vocabulary, matrix = obj.convert_repository(url_or_path)
-    # print(sorted(obj.word2ind))
-    # print()
-    # print(len(obj.reference_dict))
-    # print(sorted(obj.reference_dict))
     return vocabulary, matrix
 
 
@@ -190,9 +157,6 @@ def repos2coocc_entry(args):
     outdir = args.output
     if not exists(outdir):
         makedirs(outdir)
-
-    # for input in inputs:
-    #     __pool_f__((input, args, outdir))
 
     with Pool(processes=mp.cpu_count()) as pool:
         pool.map(__pool_f__, zip(inputs, [args] * len(inputs),
