@@ -1,4 +1,5 @@
 from ast2vec.dataset import Dataset
+from ast2vec.id2vec import Id2Vec
 
 
 class NBOW(Dataset):
@@ -23,3 +24,12 @@ class NBOW(Dataset):
 
     def repository_index_by_name(self, name):
         return self._repos_map[name]
+
+
+def print_nbow(npz, dependencies):
+    nbow = npz["nbow"]
+    id2vec = Id2Vec(dependencies[0])
+    nbl = [(f, id2vec.tokens[t]) for t, f in nbow.items()]
+    nbl.sort(reverse=True)
+    for w, t in nbl:
+        print("%s\t%f" % (t, w))

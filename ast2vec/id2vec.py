@@ -24,3 +24,10 @@ class Id2Vec(Dataset):
     @property
     def token2index(self):
         return self._token2index
+
+
+def print_id2vec(npz, dependencies):
+    words = npz["tokens"]
+    embeddings = npz["embeddings"]
+    print("Shape:", embeddings.shape)
+    print("First 10 words:", words[:10])

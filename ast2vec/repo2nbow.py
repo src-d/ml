@@ -80,15 +80,6 @@ def repo2nbow_entry(args):
                            meta=generate_meta("nbow", id2vec, df))
 
 
-def print_nbow(npz, dependencies):
-    nbow = npz["nbow"]
-    id2vec = Id2Vec(dependencies[0])
-    nbl = [(f, id2vec.tokens[t]) for t, f in nbow.items()]
-    nbl.sort(reverse=True)
-    for w, t in nbl:
-        print("%s\t%f" % (t, w))
-
-
 def repos2nbow_process(repo, args):
     log = logging.getLogger("repos2coocc")
     args_ = deepcopy(args)
