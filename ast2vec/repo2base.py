@@ -1,3 +1,4 @@
+import itertools
 import json
 import logging
 import multiprocessing
@@ -10,7 +11,7 @@ import tempfile
 import threading
 
 from bblfsh import BblfshClient
-import bblfsh.launcher
+from bblfsh.launcher import ensure_bblfsh_is_running
 from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
 import Stemmer
 
@@ -68,7 +69,7 @@ class Repo2Base:
                             filename, language = task
                             uast = self._bblfsh[thread_index].parse_uast(
                                 filename, language=language)
-                            queue_out.put_nowait(uast.uast)
+                            queue_out.put_nowait(uast)
                         except:
                             self._log.exception(
                                 "Error while processing %s.", task)
@@ -90,10 +91,13 @@ class Repo2Base:
                 for _ in pool:
                     queue_in.put_nowait(None)
                 while tasks > 0:
-                    yield queue_out.get()
+                    result = queue_out.get()
+                    if result is not None:
+                        yield result
                     tasks -= 1
                     if tasks % report_interval == 0:
-                        self._log.info("Pending tasks: %d", tasks)
+                        self._log.info("%s pending tasks: %d", url_or_path,
+                                       tasks)
                 for thread in pool:
                     thread.join()
 
@@ -163,3 +167,29 @@ class Repo2Base:
             last = part[pos:]
             if last:
                 yield from ret(last)
+
+
+def ensure_bblfsh_is_running_noexc():
+    try:
+        ensure_bblfsh_is_running()
+    except:
+        log = logging.getLogger("bblfsh")
+        log.exception("Failed to ensure that the Babelfish server is running.")
+
+
+def repos2_entry(args, payload_func):
+    ensure_bblfsh_is_running_noexc()
+    inputs = []
+
+    for i in args.input:
+        # check if it's a text file
+        if os.path.isfile(i):
+            with open(i) as f:
+                inputs.extend(l.strip() for l in f)
+        else:
+            inputs.append(i)
+
+    os.makedirs(args.output, exist_ok=True)
+
+    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+        pool.starmap(payload_func, itertools.product(inputs, [args]))

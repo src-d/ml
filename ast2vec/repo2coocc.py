@@ -1,18 +1,16 @@
 from collections import defaultdict
 from copy import deepcopy
-import multiprocessing as mp
-from multiprocessing import Pool
-
-from operator import itemgetter
-from os.path import isfile, exists, join
-from os import makedirs
+import itertools
+import logging
+import os
 
 from bblfsh.launcher import ensure_bblfsh_is_running
 import numpy
 from scipy.sparse import dok_matrix
 
 from ast2vec.meta import generate_meta
-from ast2vec.repo2base import Repo2Base
+from ast2vec.repo2base import Repo2Base, repos2_entry, \
+    ensure_bblfsh_is_running_noexc
 
 
 class Repo2Coocc(Repo2Base):
@@ -26,8 +24,7 @@ class Repo2Coocc(Repo2Base):
         word2ind = dict()
         dok_mat = defaultdict(int)
         for uast in uast_generator:
-            if uast is not None:
-                self.traverse_uast(uast, word2ind, dok_mat)
+            self.traverse_uast(uast.uast, word2ind, dok_mat)
 
         n_tokens = len(word2ind)
         mat = dok_matrix((n_tokens, n_tokens))
@@ -38,20 +35,8 @@ class Repo2Coocc(Repo2Base):
         for coord in dok_mat:
             mat[coord[0], coord[1]] = dok_mat[coord]
 
-        words = [p[1] for p in sorted([(word2ind[w], w) for w in word2ind],
-                                      key=itemgetter(0))]
+        words = [p[1] for p in sorted((word2ind[w], w) for w in word2ind)]
         return words, mat.tocoo()
-
-    def _uast_to_bag(self, uast):
-        stack = [uast]
-        bag = defaultdict(int)
-        while stack:
-            node = stack.pop(0)
-            if self.SIMPLE_IDENTIFIER in node.roles:
-                for sub in self._process_token(node.token):
-                    bag[sub] += 1
-            stack.extend(node.children)
-        return bag
 
     def flatten_children(self, root):
         ids = []
@@ -75,8 +60,8 @@ class Repo2Coocc(Repo2Base):
             for j in range(i + 1, len(words)):
                 wi = word2ind[words[i]]
                 wj = word2ind[words[j]]
-                yield (wi, wj, 1)
-                yield (wj, wi, 1)
+                yield wi, wj, 1
+                yield wj, wi, 1
 
     def process_node(self, root, word2ind, mat):
         children = self.flatten_children(root)
@@ -85,7 +70,7 @@ class Repo2Coocc(Repo2Base):
         for ch in children:
             self.update_dict(self._process_token(ch.token), word2ind, tokens)
 
-        if (root.token.strip() is not None and root.token.strip() != '' and
+        if (root.token.strip() is not None and root.token.strip() != "" and
                     self.SIMPLE_IDENTIFIER in root.roles):
             self.update_dict(self._process_token(root.token), word2ind,
                              tokens)
@@ -123,7 +108,7 @@ def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None):
 
 
 def repo2coocc_entry(args):
-    ensure_bblfsh_is_running()
+    ensure_bblfsh_is_running_noexc()
     vocabulary, matrix = repo2coocc(args.repository, linguist=args.linguist,
                                     bblfsh_endpoint=args.bblfsh)
     numpy.savez_compressed(
@@ -131,33 +116,17 @@ def repo2coocc_entry(args):
         meta=generate_meta("co-occurrences"))
 
 
-def __pool_f__(v):
-    repo, args, outdir = v
+def repos2coocc_process(repo, args):
+    log = logging.getLogger("repos2coocc")
     args_ = deepcopy(args)
-    outfile = join(outdir, repo.replace('/', '#'))
+    outfile = os.path.join(args.output, repo.replace("/", "#"))
     args_.output = outfile
-
     args_.repository = repo
-    repo2coocc_entry(args_)
+    try:
+        repo2coocc_entry(args_)
+    except:
+        log.exception("Unhandled error in repo2coocc_entry().")
 
 
 def repos2coocc_entry(args):
-    ensure_bblfsh_is_running()
-    inputs = []
-
-    i = args.input
-    # check if it's text file
-    if isfile(i):
-        with open(i, 'r') as f:
-            inputs.extend([l.strip() for l in f.readlines()])
-    else:
-        inputs.append(i)
-
-    outdir = args.output
-    if not exists(outdir):
-        makedirs(outdir)
-
-    with Pool(processes=mp.cpu_count()) as pool:
-        pool.map(__pool_f__, zip(inputs, [args] * len(inputs),
-                             [outdir] * len(inputs)))
-
+    return repos2_entry(args, repos2coocc_process)

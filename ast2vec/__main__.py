@@ -80,6 +80,21 @@ def main():
         "-o", "--output", required=True,
         help="Output path where the .npz will be stored.")
 
+    repos2nbow_parser = subparsers.add_parser(
+        "repos2nbow", help="Produce the nBOWs from a list of Git "
+                           "repositories.")
+    repos2nbow_parser.set_defaults(handler=repos2coocc_entry)
+    repos2nbow_parser.add_argument(
+        "-i", "--input", required=True, nargs="+",
+        help="List of repositories or path to file with list of repositories.")
+    repos2nbow_parser.add_argument(
+        "--linguist", help="Path to github/linguist-like executable.")
+    repos2nbow_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output folder where .npz results will be stored.")
+    repos2nbow_parser.add_argument(
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
                            "repository.")
@@ -100,13 +115,13 @@ def main():
                             "Git repositories.")
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     repos2coocc_parser.add_argument(
-        "-i", "--input", required=True,
-        help="list of repositories or path to file with list of repositories.")
+        "-i", "--input", required=True, nargs="+",
+        help="List of repositories or path to file with list of repositories.")
     repos2coocc_parser.add_argument(
         "--linguist", help="Path to github/linguist-like executable.")
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .npz result will be stored.")
+        help="Output folder where .npz results will be stored.")
     repos2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
 
