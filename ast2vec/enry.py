@@ -1,34 +1,34 @@
+import logging
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 
 MIN_GO_VERSION = 1, 8, 0
 
 
 def install_enry(args):
+    log = logging.getLogger("enry")
     target = os.path.join(args.output, "enry")
     if os.path.exists(target):
-        print("%s exists, no-op." % target)
+        log.error("%s exists, no-op.", target)
         return 0
     os.makedirs(args.output, exist_ok=True)
     if not os.path.isdir(args.output):
-        print("%s is not a directory." % args.output, file=sys.stderr)
+        log.error("%s is not a directory.", args.output)
         return 1
     try:
         version = subprocess.check_output(["go", "version"]).decode("utf-8")
     except subprocess.SubprocessError:
-        print("Please install Go compiler, refer to https://golang.org",
-              file=sys.stderr)
+        log.error("Please install a Go compiler, refer to https://golang.org")
         return 2
     version = tuple(int(n) for n in version.split()[2][2:].split("."))
     if version < MIN_GO_VERSION:
-        print("Your Go compiler version is %d.%d.%d, at least %d.%d.%d is "
-              "required." % (version + MIN_GO_VERSION), file=sys.stderr)
+        log.error("Your Go compiler version is %d.%d.%d, at least %d.%d.%d is "
+                  "required." % (version + MIN_GO_VERSION))
         return 3
     with tempfile.TemporaryDirectory(prefix="enry-", dir=args.tempdir) as tmp:
-        print("Building src-d/enry in %s..." % tmp)
+        log.info("Building src-d/enry in %s...", tmp)
         env = os.environ.copy()
         env["GOPATH"] = tmp
         # FIXME(vmarkovtsev): change to gopkg.in when we fix https://github.com/src-d/enry/issues/37
@@ -41,4 +41,4 @@ def install_enry(args):
              "github.com/src-d/enry/cli/enry"], env=env)
         shutil.copyfile(os.path.join(tmp, "bin", "enry"), target)
         os.chmod(target, 0o777)
-    print("Installed %s" % target)
+    log.info("Installed %s", target)

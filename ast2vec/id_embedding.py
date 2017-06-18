@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+import logging
 import os
 import pickle
 import sys
@@ -14,14 +14,15 @@ from ast2vec.repo2nbow import Repo2nBOW
 
 
 def preprocess(args):
-    print("Scanning the inputs...")
+    log = logging.getLogger("preproc")
+    log.info("Scanning the inputs...")
     inputs = []
     for i in args.input:
         if os.path.isdir(i):
             inputs.extend(os.listdir(i))
         else:
             inputs.append(i)
-    print("Reading word indices from %d files..." % len(inputs))
+    log.info("Reading word indices from %d files...", len(inputs))
     all_words = defaultdict(int)
     for i, path in enumerate(inputs):
         sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
@@ -34,8 +35,8 @@ def preprocess(args):
         vs = len(all_words)
     sz = args.shard_size
     vs -= vs % sz
-    print("Effective vocabulary size:", vs)
-    print("Truncating the vocabulary...")
+    log.info("Effective vocabulary size: %d", vs)
+    log.info("Truncating the vocabulary...")
     words = numpy.array(list(all_words.keys()))
     freqs = numpy.array(list(all_words.values()), dtype=numpy.int64)
     del all_words
@@ -45,19 +46,19 @@ def preprocess(args):
     chosen_words = words[chosen_indices]
     del words
     del freqs
-    print("Sorting the vocabulary...")
+    log.info("Sorting the vocabulary...")
     sorted_indices = numpy.argsort(-chosen_freqs)
     chosen_freqs = chosen_freqs[sorted_indices]
     chosen_words = chosen_words[sorted_indices]
     word_indices = {w: i for i, w in enumerate(chosen_words)}
     if args.df is not None:
-        print("Writing the document frequencies to %s..." % args.df)
+        log.info("Writing the document frequencies to %s...", args.df)
         numpy.savez_compressed(
             args.df, tokens=chosen_words, freqs=chosen_freqs,
             meta=generate_meta("document frequencies"))
     del chosen_freqs
     del chosen_words
-    print("Combining individual co-occurrence matrices...")
+    log.info("Combining individual co-occurrence matrices...")
     ccmatrix = dok_matrix((vs, vs), dtype=numpy.int64)
     for i, path in enumerate(inputs):
         sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
@@ -75,10 +76,10 @@ def preprocess(args):
                                   matrix.indptr[1:]):
                 for ii, v in zip(matrix.indices[rs:rf], matrix.data[rs:rf]):
                     ccmatrix[ri, mapped_indices[ii]] += v
-    print("Planning the sharding...")
+    log.info("Planning the sharding...")
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
     reorder = numpy.argsort(-bool_sums)
-    print("Writing the shards...")
+    log.info("Writing the shards...")
     nshards = vs / args.shard_size
     for row in range(nshards):
         for col in range(nshards):
@@ -109,6 +110,7 @@ def preprocess(args):
                       "w") as out:
                 out.write(example.SerializeToString())
     print(" " * 80 + "\r")
+    log.info("Success")
 
 
 def run_swivel(args):
@@ -117,7 +119,8 @@ def run_swivel(args):
 
 
 def postprocess(args):
-    print("Parsing the embeddings at %s..." % args.swivel_output_directory)
+    log = logging.getLogger("postproc")
+    log.info("Parsing the embeddings at %s...", args.swivel_output_directory)
     tokens = []
     embeddings = []
     swd = args.swivel_output_directory
@@ -133,9 +136,10 @@ def postprocess(args):
                     (numpy.fromstring(p[1], dtype=numpy.float32, sep="\t")
                      for p in (prow, pcol))
                 embeddings.append((erow + ecol) / 2)
-    print("Generating numpy arrays...")
+    print(" " * 20 + "\r")
+    log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
     tokens = numpy.array(tokens, dtype=str)
-    print("Writing %s..." % args.npz)
+    log.info("Writing %s...", args.npz)
     numpy.savez_compressed(args.npz, embeddings=embeddings, tokens=tokens,
                            meta=generate_meta("id2vec"))

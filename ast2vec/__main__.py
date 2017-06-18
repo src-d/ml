@@ -1,6 +1,9 @@
 import argparse
+import codecs
 import logging
+import io
 import os
+import re
 import sys
 
 from ast2vec.enry import install_enry
@@ -8,6 +11,49 @@ from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.repo2coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2nbow import repo2nbow_entry
 from ast2vec.dump import dump_model
+
+
+class ColorFormatter(logging.Formatter):
+    GREEN_MARKERS = [' ok', "ok:", 'finished', 'completed', 'ready',
+                     'done', 'running', 'successful', 'saved']
+    GREEN_RE = re.compile("|".join(GREEN_MARKERS))
+
+    def formatMessage(self, record):
+        level_color = "0"
+        text_color = "0"
+        fmt = ""
+        if record.levelno <= logging.DEBUG:
+            fmt = "\033[0;37m" + logging.BASIC_FORMAT + "\033[0m"
+        elif record.levelno <= logging.INFO:
+            level_color = "1;36"
+            lmsg = record.message.lower()
+            if self.GREEN_RE.search(lmsg):
+                text_color = "1;32"
+        elif record.levelno <= logging.WARNING:
+            level_color = "1;33"
+        elif record.levelno <= logging.CRITICAL:
+            level_color = "1;31"
+        if not fmt:
+            fmt = "\033[" + level_color + \
+                  "m%(levelname)s\033[0m:%(name)s:\033[" + text_color + \
+                  "m%(message)s\033[0m"
+        return fmt % record.__dict__
+
+
+def setup_logging(level):
+    def ensure_utf8_stream(stream):
+        if not isinstance(stream, io.StringIO):
+            stream = codecs.getwriter("utf-8")(stream.buffer)
+            stream.encoding = "utf-8"
+        return stream
+
+    sys.stdout, sys.stderr = (ensure_utf8_stream(s)
+                              for s in (sys.stdout, sys.stderr))
+    logging.basicConfig(level=level)
+    if not sys.stdin.closed and sys.stdin.isatty():
+        root = logging.getLogger()
+        handler = root.handlers[0]
+        handler.setFormatter(ColorFormatter())
 
 
 def main():
@@ -121,7 +167,7 @@ def main():
                                   "they appear in the metadata.")
 
     args = parser.parse_args()
-    logging.basicConfig(level=logging._nameToLevel[args.log_level])
+    setup_logging(logging._nameToLevel[args.log_level])
     try:
         handler = args.handler
     except AttributeError:
