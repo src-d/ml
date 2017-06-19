@@ -29,7 +29,7 @@ def preprocess(args):
         sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
         for w in split_strings(asdf.open(path).tree["tokens"]):
             all_words[w] += 1
-    vs = args.vocabulary_size
+    vs = int(args.vocabulary_size)
     if len(all_words) < vs:
         vs = len(all_words)
     sz = args.shard_size
