@@ -20,7 +20,7 @@ def preprocess(args):
     inputs = []
     for i in args.input:
         if os.path.isdir(i):
-            inputs.extend(os.listdir(i))
+            inputs.extend([os.path.join(i, f) for f in os.listdir(i)])
         else:
             inputs.append(i)
     log.info("Reading word indices from %d files...", len(inputs))
