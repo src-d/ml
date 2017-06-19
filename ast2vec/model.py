@@ -114,5 +114,5 @@ def disassemble_sparse_matrix(matrix):
 
 def assemble_sparse_matrix(subtree):
     matrix_class = getattr(scipy.sparse, "%s_matrix" % subtree["format"])
-    matrix = matrix_class(subtree["data"], shape=subtree["shape"])
+    matrix = matrix_class(tuple(subtree["data"]), shape=subtree["shape"])
     return matrix
