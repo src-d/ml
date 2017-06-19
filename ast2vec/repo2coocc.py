@@ -28,7 +28,7 @@ class Repo2Coocc(Repo2Base):
         mat = dok_matrix((n_tokens, n_tokens))
 
         if n_tokens == 0:
-            return [], mat
+            return [], mat.tocoo()
 
         for coord in dok_mat:
             mat[coord[0], coord[1]] = dok_mat[coord]
