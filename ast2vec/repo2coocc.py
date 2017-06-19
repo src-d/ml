@@ -7,7 +7,7 @@ import asdf
 from scipy.sparse import dok_matrix
 
 from ast2vec.meta import generate_meta
-from ast2vec.model import assemble_sparse_matrix, merge_strings
+from ast2vec.model import disassemble_sparse_matrix, merge_strings
 from ast2vec.repo2base import Repo2Base, repos2_entry, \
     ensure_bblfsh_is_running_noexc
 
@@ -112,7 +112,7 @@ def repo2coocc_entry(args):
                                     bblfsh_endpoint=args.bblfsh)
     asdf.AsdfFile({
         "tokens": merge_strings(vocabulary),
-        "matrix": assemble_sparse_matrix(matrix),
+        "matrix": disassemble_sparse_matrix(matrix),
         "meta": generate_meta("co-occurrences")
     }).write_to(args.output, all_array_compression="zlib")
 
