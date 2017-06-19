@@ -25,7 +25,7 @@ def install_enry(args=None, target="./enry", tempdir=None):
         return 1
     try:
         version = subprocess.check_output(["go", "version"]).decode("utf-8")
-    except subprocess.SubprocessError:
+    except (subprocess.SubprocessError, FileNotFoundError):
         log.error("Please install a Go compiler, refer to https://golang.org")
         return 2
     version = tuple(int(n) for n in version.split()[2][2:].split("."))
