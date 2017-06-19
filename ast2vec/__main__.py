@@ -41,6 +41,9 @@ class ColorFormatter(logging.Formatter):
 
 
 def setup_logging(level):
+    if not isinstance(level, int):
+        level = logging._nameToLevel[level]
+
     def ensure_utf8_stream(stream):
         if not isinstance(stream, io.StringIO):
             stream = codecs.getwriter("utf-8")(stream.buffer)
@@ -182,7 +185,7 @@ def main():
                                   "they appear in the metadata.")
 
     args = parser.parse_args()
-    setup_logging(logging._nameToLevel[args.log_level])
+    setup_logging(args.log_level)
     try:
         handler = args.handler
     except AttributeError:
