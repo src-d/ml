@@ -7,7 +7,8 @@ import asdf
 from scipy.sparse import dok_matrix
 
 from ast2vec.meta import generate_meta
-from ast2vec.model import disassemble_sparse_matrix, merge_strings
+from ast2vec.model import disassemble_sparse_matrix, merge_strings, \
+    split_strings
 from ast2vec.repo2base import Repo2Base, repos2_entry, \
     ensure_bblfsh_is_running_noexc
 
@@ -139,3 +140,14 @@ def repos2coocc_process(repo, args):
 
 def repos2coocc_entry(args):
     return repos2_entry(args, repos2coocc_process)
+
+
+def print_coocc(tree, dependencies):
+    words = split_strings(tree["tokens"])
+    m_shape = tree["matrix"]["shape"]
+    nnz = len(tree["matrix"]["data"])
+
+    print("Number of words:", len(words))
+    print("First 10 words:", words[:10])
+    print("Matrix info:", "number of non zero elements", nnz, ", shape:",
+          m_shape)
