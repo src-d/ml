@@ -145,7 +145,7 @@ def repos2coocc_entry(args):
 def print_coocc(tree, dependencies):
     words = split_strings(tree["tokens"])
     m_shape = tree["matrix"]["shape"]
-    nnz = len(tree["matrix"]["data"])
+    nnz = tree['matrix']['data'][0].shape[0]
 
     print("Number of words:", len(words))
     print("First 10 words:", words[:10])
