@@ -24,9 +24,10 @@ class Repo2Base:
     SIMPLE_IDENTIFIER = DESCRIPTOR.enum_types_by_name["Role"] \
         .values_by_name["SIMPLE_IDENTIFIER"].number + 1
     # FIXME(vmarkovtsev): remove "+1"
+    DEFAULT_BBLFSH_TIMEOUT = 10
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
-                 bblfsh_endpoint=None):
+                 bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT):
         self._log = logging.getLogger(self.LOG_NAME)
         self._log.setLevel(log_level)
         self._stemmer = Stemmer.Stemmer("english")
@@ -36,6 +37,7 @@ class Repo2Base:
         self._linguist = "enry" if linguist is None else linguist
         self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
                         for _ in range(multiprocessing.cpu_count())]
+        self._timeout = timeout
 
     def convert_repository(self, url_or_path):
         temp = not os.path.exists(url_or_path)
@@ -54,6 +56,8 @@ class Repo2Base:
         try:
             self._log.info("Classifying the files...")
             classified = self._classify_files(target_dir)
+            self._log.info("Result: %s",
+                           {k: len(v) for k, v in classified.items()})
             self._log.info("Fetching and processing UASTs...")
 
             def uast_generator():
@@ -73,7 +77,11 @@ class Repo2Base:
                                 filename = os.readlink(filename)
 
                             uast = self._bblfsh[thread_index].parse_uast(
-                                filename, language=language)
+                                filename, language=language,
+                                timeout=self._timeout)
+                            if uast is None:
+                                self._log.warning("bblfsh timed out on %s",
+                                                  filename)
                             queue_out.put_nowait(uast)
                         except:
                             self._log.exception(
@@ -85,15 +93,15 @@ class Repo2Base:
                 for thread in pool:
                     thread.start()
                 tasks = 0
+                lang_list = ("Python", "Java")
                 for lang, files in classified.items():
                     # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved
-                    lang_list = ("Python", "Java",)
                     if lang not in lang_list:
                         continue
                     for f in files:
                         tasks += 1
-                        queue_in.put_nowait((os.path.join(target_dir, f),
-                                             lang))
+                        queue_in.put_nowait(
+                            (os.path.join(target_dir, f), lang))
                 report_interval = max(1, tasks // 100)
                 for _ in pool:
                     queue_in.put_nowait(None)
