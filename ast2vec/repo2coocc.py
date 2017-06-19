@@ -1,10 +1,8 @@
 from collections import defaultdict
 from copy import deepcopy
-import itertools
 import logging
 import os
 
-from bblfsh.launcher import ensure_bblfsh_is_running
 import numpy
 from scipy.sparse import dok_matrix
 
