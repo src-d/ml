@@ -67,6 +67,11 @@ class Repo2Base:
                             break
                         try:
                             filename, language = task
+
+                            # Check if filename is symlink
+                            if os.path.islink(filename):
+                                filename = os.readlink(filename)
+
                             uast = self._bblfsh[thread_index].parse_uast(
                                 filename, language=language)
                             queue_out.put_nowait(uast)
@@ -82,11 +87,13 @@ class Repo2Base:
                 tasks = 0
                 for lang, files in classified.items():
                     # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved
-                    if lang not in ("Python", "Java"):
+                    lang_list = ("Python", "Java",)
+                    if lang not in lang_list:
                         continue
                     for f in files:
                         tasks += 1
-                        queue_in.put_nowait((f, lang))
+                        queue_in.put_nowait((os.path.join(target_dir, f),
+                                             lang))
                 report_interval = max(1, tasks // 100)
                 for _ in pool:
                     queue_in.put_nowait(None)
