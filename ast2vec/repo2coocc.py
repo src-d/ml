@@ -125,7 +125,9 @@ def repos2coocc_process(repo, args):
         repo_name = repo[8:]
     elif repo.startswith('http://'):
         repo_name = repo[7:]
-    outfile = os.path.join(args.output, repo_name.replace("/", "#"))
+    else:
+        repo_name = repo
+    outfile = os.path.join(args.output, repo_name.replace("/", "%") + '.asdf')
 
     args_.output = outfile
     args_.repository = repo
