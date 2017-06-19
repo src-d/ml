@@ -120,7 +120,13 @@ def repo2coocc_entry(args):
 def repos2coocc_process(repo, args):
     log = logging.getLogger("repos2coocc")
     args_ = deepcopy(args)
-    outfile = os.path.join(args.output, repo.replace("/", "#"))
+    # remove http:// or https:// from the repo name
+    if repo.startswith('https://'):
+        repo_name = repo[8:]
+    elif repo.startswith('http://'):
+        repo_name = repo[7:]
+    outfile = os.path.join(args.output, repo_name("/", "#"))
+
     args_.output = outfile
     args_.repository = repo
     try:
