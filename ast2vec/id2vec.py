@@ -1,4 +1,4 @@
-from ast2vec.model import Model
+from ast2vec.model import Model, split_strings
 
 
 class Id2Vec(Model):
@@ -7,7 +7,7 @@ class Id2Vec(Model):
 
     def _load(self, npz):
         self._embeddings = npz["embeddings"]
-        self._tokens = npz["tokens"]
+        self._tokens = split_strings(npz["tokens"])
         self._log.info("Building the token index...")
         # numpy arrays of string are of fixed item size (max length) - fix this
         self._tokens = list(self._tokens)
@@ -26,8 +26,8 @@ class Id2Vec(Model):
         return self._token2index
 
 
-def print_id2vec(npz, dependencies):
-    words = npz["tokens"]
-    embeddings = npz["embeddings"]
+def print_id2vec(tree, dependencies):
+    words = split_strings(tree["tokens"])
+    embeddings = tree["embeddings"]
     print("Shape:", embeddings.shape)
     print("First 10 words:", words[:10])

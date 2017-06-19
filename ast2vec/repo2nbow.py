@@ -4,8 +4,7 @@ import logging
 import math
 import os
 
-import numpy
-from bblfsh.launcher import ensure_bblfsh_is_running
+import asdf
 
 from ast2vec.meta import generate_meta
 from ast2vec.id2vec import Id2Vec
@@ -40,7 +39,7 @@ class Repo2nBOW(Repo2Base):
                 missing.append(key)
         for key in missing:
             del freqs[key]
-        return freqs
+        return dict(freqs)
 
     def _uast_to_bag(self, uast):
         stack = [uast]
@@ -76,8 +75,10 @@ def repo2nbow_entry(args):
     linguist = args.linguist or None
     nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
                      bblfsh_endpoint=args.bblfsh)
-    numpy.savez_compressed(args.output, nbow=nbow,
-                           meta=generate_meta("nbow", id2vec, df))
+    asdf.AsdfFile({
+        "nbow": nbow,
+        "meta": generate_meta("nbow", id2vec, df)
+    }).write_to(args.output, all_array_compression="zlib")
 
 
 def repos2nbow_process(repo, args):

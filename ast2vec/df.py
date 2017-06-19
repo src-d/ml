@@ -1,13 +1,13 @@
-from ast2vec.model import Model
+from ast2vec.model import Model, split_strings
 
 
 class DocumentFrequencies(Model):
     NAME = "docfreq"
     DEFAULT_CACHE_DIR = "~/.cache/source{d}/df"
 
-    def _load(self, npz):
-        tokens = npz["tokens"]
-        freqs = npz["freqs"]
+    def _load(self, tree):
+        tokens = split_strings(tree["tokens"])
+        freqs = tree["freqs"]
         self._log.info("Building the docfreq dictionary...")
         self._df = dict(zip(tokens, freqs))
         del tokens
@@ -25,3 +25,9 @@ class DocumentFrequencies(Model):
 
     def __len__(self):
         return len(self._df)
+
+
+def print_df(tree, dependencies):
+    words = split_strings(tree["tokens"])
+    print("Number of words:", len(words))
+    print("First 10 words:", words[:10])

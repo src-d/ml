@@ -78,7 +78,7 @@ def main():
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
     repo2nbow_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output path where the .npz will be stored.")
+        help="Output path where the .asdf will be stored.")
 
     repos2nbow_parser = subparsers.add_parser(
         "repos2nbow", help="Produce the nBOWs from a list of Git "
@@ -91,7 +91,7 @@ def main():
         "--linguist", help="Path to github/linguist-like executable.")
     repos2nbow_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .npz results will be stored.")
+        help="Output folder where .asdf results will be stored.")
     repos2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
 
@@ -106,7 +106,7 @@ def main():
         "--linguist", help="Path to github/linguist-like executable.")
     repo2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output path where .npz result will be stored.")
+        help="Output path where .asdf result will be stored.")
     repo2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
 
@@ -121,7 +121,7 @@ def main():
         "--linguist", help="Path to github/linguist-like executable.")
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .npz results will be stored.")
+        help="Output folder where .asdf results will be stored.")
     repos2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
 
@@ -139,7 +139,7 @@ def main():
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(
         "--df", default=None,
-        help="Path to the calculated document frequencies in npz format "
+        help="Path to the calculated document frequencies in asdf format "
              "(DF in TF-IDF).")
     preproc_parser.add_argument(
         "input", nargs="+",
@@ -157,10 +157,10 @@ def main():
 
     postproc_parser = subparsers.add_parser(
         "postproc", help="Combine row and column embeddings together and "
-                         "write them to an .npz.")
+                         "write them to an .asdf.")
     postproc_parser.set_defaults(handler=postprocess)
     postproc_parser.add_argument("swivel_output_directory")
-    postproc_parser.add_argument("npz")
+    postproc_parser.add_argument("result")
 
     enry_parser = subparsers.add_parser(
         "enry", help="Install src-d/enry to the current working directory.")

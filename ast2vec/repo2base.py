@@ -181,7 +181,11 @@ def ensure_bblfsh_is_running_noexc():
         ensure_bblfsh_is_running()
     except:
         log = logging.getLogger("bblfsh")
-        log.exception("Failed to ensure that the Babelfish server is running.")
+        message = "Failed to ensure that the Babelfish server is running."
+        if log.isEnabledFor(logging.DEBUG):
+            log.exception(message)
+        else:
+            log.warning(message)
 
 
 def repos2_entry(args, payload_func):

@@ -1,14 +1,15 @@
 from collections import defaultdict
 import logging
 import os
-import pickle
 import sys
 
+import asdf
 import numpy
 from scipy.sparse import dok_matrix
 import tensorflow as tf
 
 from ast2vec.meta import generate_meta
+from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
 import ast2vec.swivel as swivel
 from ast2vec.repo2nbow import Repo2nBOW
 
@@ -26,10 +27,8 @@ def preprocess(args):
     all_words = defaultdict(int)
     for i, path in enumerate(inputs):
         sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
-        with open(path, "rb") as fin:
-            words = pickle.load(fin)
-            for w in words:
-                all_words[w] += 1
+        for w in split_strings(asdf.open(path).tree["tokens"]):
+            all_words[w] += 1
     vs = args.vocabulary_size
     if len(all_words) < vs:
         vs = len(all_words)
@@ -53,9 +52,11 @@ def preprocess(args):
     word_indices = {w: i for i, w in enumerate(chosen_words)}
     if args.df is not None:
         log.info("Writing the document frequencies to %s...", args.df)
-        numpy.savez_compressed(
-            args.df, tokens=chosen_words, freqs=chosen_freqs,
-            meta=generate_meta("docfreq"))
+        asdf.AsdfFile({
+            "tokens": merge_strings(chosen_words),
+            "freqs": chosen_freqs,
+            "meta": generate_meta("docfreq")
+        }).write_to(args.df, all_array_compression="zlib")
     del chosen_freqs
     del chosen_words
     log.info("Combining individual co-occurrence matrices...")
@@ -63,7 +64,8 @@ def preprocess(args):
     for i, path in enumerate(inputs):
         sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
         with open(path, "rb") as fin:
-            words = pickle.load(fin)
+            tree = asdf.open(path).tree
+            words = split_strings(tree["tokens"])
             indices = []
             mapped_indices = []
             for i, w in enumerate(words):
@@ -71,7 +73,8 @@ def preprocess(args):
                 if gi is not None:
                     indices.append(i)
                     mapped_indices.append(gi)
-            matrix = pickle.load(fin)[indices, indices].tocsr()
+            matrix = assemble_sparse_matrix(tree["matrix"])[indices, indices] \
+                .tocsr()
             for ri, rs, rf in zip(mapped_indices, matrix.indptr,
                                   matrix.indptr[1:]):
                 for ii, v in zip(matrix.indices[rs:rf], matrix.data[rs:rf]):
@@ -140,6 +143,9 @@ def postprocess(args):
     log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
     tokens = numpy.array(tokens, dtype=str)
-    log.info("Writing %s...", args.npz)
-    numpy.savez_compressed(args.npz, embeddings=embeddings, tokens=tokens,
-                           meta=generate_meta("id2vec"))
+    log.info("Writing %s...", args.result)
+    asdf.AsdfFile({
+        "tokens": merge_strings(tokens),
+        "embeddings": embeddings,
+        "meta": generate_meta("id2vec")
+    }).write_to(args.result, all_array_compression="zlib")
