@@ -31,10 +31,11 @@ class Repo2nBOW(Repo2Base):
             for key, freq in bag.items():
                 freqs[key] += freq
         missing = []
+        vocabulary = self._id2vec.tokens
         for key, val in freqs.items():
             try:
                 freqs[key] = math.log(1 + val) * math.log(
-                    self._docfreq.sum / self._docfreq[key])
+                    self._docfreq.sum / self._docfreq[vocabulary[key]])
             except KeyError:
                 missing.append(key)
         for key in missing:
