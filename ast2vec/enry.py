@@ -7,15 +7,21 @@ import tempfile
 MIN_GO_VERSION = 1, 8, 0
 
 
-def install_enry(args):
+def install_enry(args=None, target="./enry", tempdir=None):
     log = logging.getLogger("enry")
-    target = os.path.join(args.output, "enry")
-    if os.path.exists(target):
-        log.error("%s exists, no-op.", target)
+    if args is not None:
+        tempdir = args.tempdir
+        target = os.path.join(args.output, "enry")
+    if shutil.which(os.path.basename(target)) is not None:
+        log.warning("enry is in the PATH, no-op.")
         return 0
-    os.makedirs(args.output, exist_ok=True)
-    if not os.path.isdir(args.output):
-        log.error("%s is not a directory.", args.output)
+    if shutil.which(target, path=os.getcwd()):
+        log.warning("%s exists, no-op.", target)
+        return 0
+    parent_dir = os.path.dirname(target)
+    os.makedirs(parent_dir, exist_ok=True)
+    if not os.path.isdir(parent_dir):
+        log.error("%s is not a directory.", parent_dir)
         return 1
     try:
         version = subprocess.check_output(["go", "version"]).decode("utf-8")
@@ -27,7 +33,7 @@ def install_enry(args):
         log.error("Your Go compiler version is %d.%d.%d, at least %d.%d.%d is "
                   "required." % (version + MIN_GO_VERSION))
         return 3
-    with tempfile.TemporaryDirectory(prefix="enry-", dir=args.tempdir) as tmp:
+    with tempfile.TemporaryDirectory(prefix="enry-", dir=tempdir) as tmp:
         log.info("Building src-d/enry in %s...", tmp)
         env = os.environ.copy()
         env["GOPATH"] = tmp

@@ -5,5 +5,6 @@ from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.nbow import NBOW
 from ast2vec.__main__ import setup_logging
+from ast2vec.enry import install_enry
 
 __version__ = 1, 0, 0

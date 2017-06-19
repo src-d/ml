@@ -34,7 +34,11 @@ class Repo2Base:
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = 6
         self._tempdir = tempdir
-        self._linguist = "enry" if linguist is None else linguist
+        self._linguist = linguist
+        if self._linguist is None:
+            self._linguist = shutil.which("enry", path=os.getcwd())
+        if self._linguist is None:
+            self._linguist = "enry"
         self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
                         for _ in range(multiprocessing.cpu_count())]
         self._timeout = timeout
