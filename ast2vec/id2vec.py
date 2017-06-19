@@ -1,8 +1,8 @@
-from ast2vec.dataset import Dataset
+from ast2vec.model import Model
 
 
-class Id2Vec(Dataset):
-    LOG_NAME = "id2vec"
+class Id2Vec(Model):
+    NAME = "id2vec"
     DEFAULT_CACHE_DIR = "~/.cache/source{d}/id2vec"
 
     def _load(self, npz):

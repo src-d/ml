@@ -10,14 +10,14 @@ import numpy
 import requests
 
 
-class Dataset:
-    LOG_NAME = None
+class Model:
+    NAME = None
     DEFAULT_FILE_NAME = "default.npz"
     DEFAULT_SOURCE = "https://google.cloud.link"
     DEFAULT_CACHE_DIR = None
 
     def __init__(self, source=None, cache_dir=None, log_level=logging.INFO):
-        self._log = logging.getLogger(self.LOG_NAME)
+        self._log = logging.getLogger(self.NAME)
         self._log.setLevel(log_level)
         if cache_dir is None:
             cache_dir = self.DEFAULT_CACHE_DIR
@@ -41,6 +41,11 @@ class Dataset:
         else:
             npz = numpy.load(source)
         self._meta = npz["meta"]
+        if isinstance(self._meta, numpy.ndarray):
+            self._meta = self._meta.tolist()
+        if self.NAME != self._meta["model"]:
+            raise ValueError("The supplied model is of the wrong type: needed "
+                             "%s, got %s." % (self.NAME, self._meta["model"]))
         self._load(npz)
 
     @property

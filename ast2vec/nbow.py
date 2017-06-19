@@ -1,9 +1,9 @@
-from ast2vec.dataset import Dataset
+from ast2vec.model import Model
 from ast2vec.id2vec import Id2Vec
 
 
-class NBOW(Dataset):
-    LOG_NAME = "nbow"
+class NBOW(Model):
+    NAME = "nbow"
     DEFAULT_CACHE_DIR = "~/.cache/source{d}/nbow"
 
     def _load(self, npz):

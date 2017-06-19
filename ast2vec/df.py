@@ -1,8 +1,8 @@
-from ast2vec.dataset import Dataset
+from ast2vec.model import Model
 
 
-class DocumentFrequencies(Dataset):
-    LOG_NAME = "df"
+class DocumentFrequencies(Model):
+    NAME = "docfreq"
     DEFAULT_CACHE_DIR = "~/.cache/source{d}/df"
 
     def _load(self, npz):

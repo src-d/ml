@@ -55,7 +55,7 @@ def preprocess(args):
         log.info("Writing the document frequencies to %s...", args.df)
         numpy.savez_compressed(
             args.df, tokens=chosen_words, freqs=chosen_freqs,
-            meta=generate_meta("document frequencies"))
+            meta=generate_meta("docfreq"))
     del chosen_freqs
     del chosen_words
     log.info("Combining individual co-occurrence matrices...")
