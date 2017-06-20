@@ -14,9 +14,9 @@ import scipy.sparse
 
 class Model:
     NAME = None
-    DEFAULT_FILE_NAME = "default"
+    DEFAULT_NAME = "default"
     DEFAULT_FILE_EXT = ".asdf"
-    DEFAULT_SOURCE = "https://google.cloud.link"
+    DEFAULT_SOURCE = "https://datasets.sourced.tech/index.json"
     DEFAULT_CACHE_DIR = None
 
     def __init__(self, source=None, cache_dir=None, log_level=logging.INFO):
@@ -29,7 +29,7 @@ class Model:
             is_uuid = True
         except (TypeError, ValueError):
             is_uuid = False
-        model_id = self.DEFAULT_FILE_NAME if not is_uuid else source
+        model_id = self.DEFAULT_NAME if not is_uuid else source
         file_name = model_id + self.DEFAULT_FILE_EXT
         file_name = os.path.join(os.path.expanduser(cache_dir), file_name)
         if os.path.exists(file_name):
@@ -38,7 +38,10 @@ class Model:
             buffer = io.BytesIO()
             self._fetch(self.DEFAULT_SOURCE, buffer)
             config = json.loads(buffer.getvalue().decode("utf-8"))
-            source = config["id2vec"][model_id]["url"]
+            source = config[self.NAME][model_id]
+            if not is_uuid:
+                source = config[self.NAME][source]
+            source = source["url"]
         if source.startswith("http://") or source.startswith("https://"):
             self._fetch(source, file_name)
             source = file_name

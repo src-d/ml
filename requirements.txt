@@ -4,4 +4,5 @@ scipy>=0.17,<1.0
 tensorflow>=1.0,<2.0
 clint>=0.5.0
 asdf>=1.2,<2.0
+google-cloud-storage>=1.0,<2.0
 -e git://github.com/bblfsh/client-python.git@v0.0.1#egg=bblfsh
