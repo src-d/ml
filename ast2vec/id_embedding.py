@@ -73,8 +73,8 @@ def preprocess(args):
                 if gi is not None:
                     indices.append(i)
                     mapped_indices.append(gi)
-            matrix = assemble_sparse_matrix(tree["matrix"].tocsr()) \
-                [indices, indices].tocsr()
+            matrix = assemble_sparse_matrix(tree["matrix"]).tocsr() \
+                [indices, indices]
             for ri, rs, rf in zip(mapped_indices, matrix.indptr,
                                   matrix.indptr[1:]):
                 for ii, v in zip(matrix.indices[rs:rf], matrix.data[rs:rf]):
