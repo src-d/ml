@@ -266,6 +266,9 @@ class SwivelModel:
         devices = ['/gpu:%d' % i for i in range(FLAGS.num_gpus)] \
             if FLAGS.num_gpus > 0 else get_available_gpus()
         self.devices_number = len(devices)
+        if not self.devices_number:
+            devices = ['/cpu:0']
+            self.devices_number = 1
         for dev in devices:
             with tf.device(dev):
                 with tf.name_scope(dev[1:].replace(':', '_')):
@@ -440,10 +443,10 @@ def main(_):
                         update_summary = True
                 if show_status:
                     elapsed = float(time.time() - t0[0])
-                log(msg, global_step, n_submatrices_to_train,
-                    100.0 * global_step / n_submatrices_to_train,
-                    n_steps_between_status_updates / elapsed, loss)
-                t0[0] = time.time()
+                    log(msg, global_step, n_submatrices_to_train,
+                        100.0 * global_step / n_submatrices_to_train,
+                        n_steps_between_status_updates / elapsed, loss)
+                    t0[0] = time.time()
             if update_summary and FLAGS.logs:
                 model.write_summary(sess)
 
