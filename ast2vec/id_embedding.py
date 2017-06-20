@@ -4,8 +4,9 @@ import os
 import sys
 
 import asdf
+from clint.textui import progress
 import numpy
-from scipy.sparse import dok_matrix
+from scipy.sparse import dok_matrix, csr_matrix, coo_matrix
 import tensorflow as tf
 
 from ast2vec.meta import generate_meta
@@ -25,14 +26,13 @@ def preprocess(args):
             inputs.append(i)
     log.info("Reading word indices from %d files...", len(inputs))
     all_words = defaultdict(int)
-    for i, path in enumerate(inputs):
-        sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
+    for i, path in progress.bar(enumerate(inputs), expected_size=len(inputs)):
         for w in split_strings(asdf.open(path).tree["tokens"]):
             all_words[w] += 1
-    vs = int(args.vocabulary_size)
+    vs = args.vocabulary_size
     if len(all_words) < vs:
         vs = len(all_words)
-    sz = int(args.shard_size)
+    sz = args.shard_size
     vs -= vs % sz
     log.info("Effective vocabulary size: %d", vs)
     log.info("Truncating the vocabulary...")
@@ -61,8 +61,7 @@ def preprocess(args):
     del chosen_words
     log.info("Combining individual co-occurrence matrices...")
     ccmatrix = dok_matrix((vs, vs), dtype=numpy.int64)
-    for i, path in enumerate(inputs):
-        sys.stdout.write("%d / %d\r" % (i + 1, len(inputs)))
+    for i, path in progress.bar(enumerate(inputs), expected_size=len(inputs)):
         with open(path, "rb") as fin:
             tree = asdf.open(path).tree
             words = split_strings(tree["tokens"])
@@ -73,22 +72,22 @@ def preprocess(args):
                 if gi is not None:
                     indices.append(i)
                     mapped_indices.append(gi)
-            matrix = assemble_sparse_matrix(tree["matrix"]).tocsr() \
-                [indices, indices]
+
+            matrix = csr_matrix(assemble_sparse_matrix(tree["matrix"])
+                                .tocsr()[indices, indices])
             for ri, rs, rf in zip(mapped_indices, matrix.indptr,
                                   matrix.indptr[1:]):
                 for ii, v in zip(matrix.indices[rs:rf], matrix.data[rs:rf]):
                     ccmatrix[ri, mapped_indices[ii]] += v
     log.info("Planning the sharding...")
+    ccmatrix = ccmatrix.tocsr()
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
     reorder = numpy.argsort(-bool_sums)
     log.info("Writing the shards...")
-    nshards = vs / args.shard_size
-    for row in range(nshards):
+    os.makedirs(args.output, exist_ok=True)
+    nshards = vs // args.shard_size
+    for row in progress.bar(range(nshards), expected_size=nshards):
         for col in range(nshards):
-            sys.stdout.write(
-                "%d / %d\r" % (row * nshards + col, nshards * nshards))
-
             def _int64s(xs):
                 return tf.train.Feature(
                     int64_list=tf.train.Int64List(value=list(xs)))
@@ -99,7 +98,7 @@ def preprocess(args):
 
             indices_row = reorder[row::nshards]
             indices_col = reorder[col::nshards]
-            shard = ccmatrix[indices_row, indices_col].tocoo()
+            shard = coo_matrix(ccmatrix[indices_row, indices_col])
 
             example = tf.train.Example(features=tf.train.Features(feature={
                 "global_row": _int64s(row + nshards * i for i in range(sz)),
@@ -110,9 +109,8 @@ def preprocess(args):
 
             with open(os.path.join(args.output,
                                    "shard-%03d-%03d.pb" % (row, col)),
-                      "w") as out:
+                      "wb") as out:
                 out.write(example.SerializeToString())
-    print(" " * 80 + "\r")
     log.info("Success")
 
 

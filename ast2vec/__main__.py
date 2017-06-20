@@ -136,10 +136,10 @@ def main():
     preproc_parser.add_argument(
         "-o", "--output", required=True, help="The output directory.")
     preproc_parser.add_argument(
-        "-v", "--vocabulary-size", default=1 << 17,
+        "-v", "--vocabulary-size", default=1 << 17, type=int,
         help="The final vocabulary size. Only the most frequent words will be"
              "left.")
-    preproc_parser.add_argument("-s", "--shard-size", default=4096,
+    preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(
         "--df", default=None,
