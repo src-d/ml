@@ -158,6 +158,8 @@ def main():
     train_parser._optionals = swivel.flags._global_parser._optionals
     train_parser._action_groups.append(train_parser._optionals)
     train_parser._actions = swivel.flags._global_parser._actions
+    train_parser._option_string_actions = \
+        swivel.flags._global_parser._option_string_actions
 
     postproc_parser = subparsers.add_parser(
         "postproc", help="Combine row and column embeddings together and "
