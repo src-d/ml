@@ -1,3 +1,4 @@
+import shutil
 from collections import defaultdict
 import logging
 import os
@@ -58,6 +59,14 @@ def preprocess(args):
             "meta": generate_meta("docfreq")
         }).write_to(args.df, all_array_compression="zlib")
     del chosen_freqs
+
+    with open(os.path.join(args.output, "row_vocab.txt"), "w") as out:
+        out.write('\n'.join(chosen_words))
+    log.info("Saved row_vocab.txt...")
+    shutil.copyfile(os.path.join(args.output, "row_vocab.txt"),
+                    os.path.join(args.output, "col_vocab.txt"))
+    log.info("Saved col_vocab.txt...")
+
     del chosen_words
     log.info("Combining individual co-occurrence matrices...")
     ccmatrix = dok_matrix((vs, vs), dtype=numpy.int64)
@@ -82,6 +91,12 @@ def preprocess(args):
     log.info("Planning the sharding...")
     ccmatrix = ccmatrix.tocsr()
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
+    with open(os.path.join(args.output, "row_sums.txt"), "w") as out:
+        out.write('\n'.join(map(str, bool_sums.tolist())))
+    log.info("Saved row_sums.txt...")
+    shutil.copyfile(os.path.join(args.output, "row_sums.txt"),
+                    os.path.join(args.output, "col_sums.txt"))
+    log.info("Saved col_sums.txt...")
     reorder = numpy.argsort(-bool_sums)
     log.info("Writing the shards...")
     os.makedirs(args.output, exist_ok=True)
@@ -116,6 +131,7 @@ def preprocess(args):
 
 def run_swivel(args):
     swivel.FLAGS = args
+    logging.getLogger("tensorflow").handlers.clear()
     swivel.main(args)
 
 
@@ -130,6 +146,7 @@ def postprocess(args):
             for i, (lrow, lcol) in enumerate(zip(frow, fcol)):
                 if i % 10000 == (10000 - 1):
                     sys.stdout.write("%d\r" % (i + 1))
+                    sys.stdout.flush()
                 prow, pcol = (l.split("\t", 1) for l in (lrow, lcol))
                 assert prow[0] == pcol[0]
                 tokens.append(prow[0][:Repo2nBOW.MAX_TOKEN_LENGTH])
@@ -137,7 +154,6 @@ def postprocess(args):
                     (numpy.fromstring(p[1], dtype=numpy.float32, sep="\t")
                      for p in (prow, pcol))
                 embeddings.append((erow + ecol) / 2)
-    print(" " * 20 + "\r")
     log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
     tokens = numpy.array(tokens, dtype=str)
