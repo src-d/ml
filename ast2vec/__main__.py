@@ -8,6 +8,7 @@ import sys
 
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
+from ast2vec.publish import publish_model
 from ast2vec.repo2coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2nbow import repo2nbow_entry
 from ast2vec.dump import dump_model
@@ -183,6 +184,19 @@ def main():
                              help="Paths to the models which were used to "
                                   "generate the dumped model in the order "
                                   "they appear in the metadata.")
+
+    publish_parser = subparsers.add_parser(
+        "publish", help="Upload the model to the cloud and update the "
+                        "registry.")
+    publish_parser.set_defaults(handler=publish_model)
+    publish_parser.add_argument(
+        "model", help="The path to the model to publish.")
+    publish_parser.add_argument("--gcs", default="datasets.sourced.tech",
+                                help="GCS bucket to use.")
+    publish_parser.add_argument("-u", "--update-default", action="store_true",
+                                help="Update the models index.")
+    publish_parser.add_argument("--force", action="store_true",
+                                help="Overwrite existing models.")
 
     args = parser.parse_args()
     setup_logging(args.log_level)
