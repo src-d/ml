@@ -32,7 +32,7 @@ def preprocess(args):
     vs = int(args.vocabulary_size)
     if len(all_words) < vs:
         vs = len(all_words)
-    sz = args.shard_size
+    sz = int(args.shard_size)
     vs -= vs % sz
     log.info("Effective vocabulary size: %d", vs)
     log.info("Truncating the vocabulary...")
