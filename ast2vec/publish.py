@@ -13,6 +13,10 @@ from ast2vec.model import Model
 
 
 class FileReadTracker:
+    """
+    Wrapper around Python fileobj which records the file position and updates
+    the console progressbar.
+    """
     def __init__(self, file):
         self._file = file
         self._position = 0
@@ -39,6 +43,11 @@ class FileReadTracker:
 
 
 def publish_model(args):
+    """
+    Pushes the model to Google Cloud Storage and updates the index file.
+    :param args: argparse.Namespace with "model", "gcs" and "force".
+    :return: None if successful, 1 otherwise.
+    """
     log = logging.getLogger("publish")
     log.info("Reading %s...", os.path.abspath(args.model))
     tree = asdf.open(args.model).tree

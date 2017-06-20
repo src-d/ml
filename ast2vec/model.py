@@ -13,13 +13,23 @@ import scipy.sparse
 
 
 class Model:
-    NAME = None
-    DEFAULT_NAME = "default"
-    DEFAULT_FILE_EXT = ".asdf"
-    DEFAULT_SOURCE = "https://datasets.sourced.tech/index.json"
-    DEFAULT_CACHE_DIR = None
+    """
+    Base class for all the models.
+    """
+
+    NAME = None  #: Name of the model. Used as the logging domain, too.
+    DEFAULT_NAME = "default"  #: When no uuid is specified, this is used.
+    DEFAULT_FILE_EXT = ".asdf"  #: File extension of the model.
+    DEFAULT_SOURCE = "https://datasets.sourced.tech/index.json"  #: Model repository index file.
+    DEFAULT_CACHE_DIR = None  #: Must be initialized in the children.
 
     def __init__(self, source=None, cache_dir=None, log_level=logging.INFO):
+        """
+        Initializes a new Model instance.
+        :param source: UUID, file system path or an URL; None means auto.
+        :param cache_dir: The directory where to store the downloaded model.
+        :param log_level: The logging level applied to this instance.
+        """
         self._log = logging.getLogger(self.NAME)
         self._log.setLevel(log_level)
         if cache_dir is None:
@@ -56,6 +66,9 @@ class Model:
 
     @property
     def meta(self):
+        """
+        Metadata dictionary: when was created, uuid, engine version, etc.
+        """
         return self._meta
 
     def __str__(self):
@@ -81,6 +94,12 @@ class Model:
                 
                 
 def merge_strings(list_of_strings):
+    """
+    Packs the list of strings into two arrays: the concatenated chars and the
+    individual string offsets.
+    :param list_of_strings: The list of strings to pack.
+    :return: dict with "strings" and "offsets" arrays.
+    """
     strings = numpy.array(["".join(list_of_strings).encode("utf-8")])
     offset = 0
     offsets = []
@@ -92,6 +111,12 @@ def merge_strings(list_of_strings):
 
 
 def split_strings(subtree):
+    """
+    Reverses :func:`merge_strings()` - produces the list of strings from
+    the dictionary with concatenated chars and offsets.
+    :param subtree: The dict with "strings" and "offsets".
+    :return: list of strings.
+    """
     result = []
     strings = subtree["strings"][0].decode("utf-8")
     offsets = subtree["offsets"]

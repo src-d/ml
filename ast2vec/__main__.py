@@ -15,6 +15,9 @@ from ast2vec.dump import dump_model
 
 
 class ColorFormatter(logging.Formatter):
+    """
+    logging Formatter which prints messages with colors.
+    """
     GREEN_MARKERS = [' ok', "ok:", 'finished', 'completed', 'ready',
                      'done', 'running', 'successful', 'saved']
     GREEN_RE = re.compile("|".join(GREEN_MARKERS))
@@ -42,6 +45,13 @@ class ColorFormatter(logging.Formatter):
 
 
 def setup_logging(level):
+    """
+    Makes stdout and stderr unicode friendly in case of misconfigured
+    environments, initializes the logging and enables colored logs if it is
+    appropriate.
+    :param level: The logging level, can be either an int or a string.
+    :return: None
+    """
     if not isinstance(level, int):
         level = logging._nameToLevel[level]
 
@@ -61,6 +71,10 @@ def setup_logging(level):
 
 
 def main():
+    """
+    Creates all the argparse-rs and invokes the function from set_defaults().
+    :return: The result of the function from set_defaults().
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--log-level", default="INFO",
                         choices=logging._nameToLevel,
