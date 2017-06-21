@@ -123,6 +123,11 @@ def main():
         help="Babelfish timeout - longer requests are dropped.")
     repos2nbow_parser.add_argument("--gcs", default=None,
                                    help="GCS bucket to use.")
+    repos2nbow_parser.add_argument(
+        "--processes", type=int, default=2,
+        help="Number of parallel processes to run. Since every process "
+             "spawns the number of threads equal to the number of CPU cores "
+             "it is better to set this to 1 or 2.")
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
@@ -159,6 +164,11 @@ def main():
     repos2coocc_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
+    repos2coocc_parser.add_argument(
+        "--processes", type=int, default=2,
+        help="Number of parallel processes to run. Since every process "
+             "spawns the number of threads equal to the number of CPU cores "
+             "it is better to set this to 1 or 2.")
 
     preproc_parser = subparsers.add_parser(
         "preproc", help="Convert co-occurrence CSR matrices to Swivel "

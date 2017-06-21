@@ -233,5 +233,5 @@ def repos2_entry(args, payload_func):
 
     os.makedirs(args.output, exist_ok=True)
 
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+    with multiprocessing.Pool(processes=args.processes) as pool:
         pool.starmap(payload_func, itertools.product(inputs, [args]))
