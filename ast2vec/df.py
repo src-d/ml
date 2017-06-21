@@ -3,7 +3,6 @@ from ast2vec.model import Model, split_strings
 
 class DocumentFrequencies(Model):
     NAME = "docfreq"
-    DEFAULT_CACHE_DIR = "~/.cache/source{d}/df"
 
     def _load(self, tree):
         tokens = split_strings(tree["tokens"])

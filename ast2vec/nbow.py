@@ -4,7 +4,6 @@ from ast2vec.id2vec import Id2Vec
 
 class NBOW(Model):
     NAME = "nbow"
-    DEFAULT_CACHE_DIR = "~/.cache/source{d}/nbow"
 
     def _load(self, tree):
         self._repos = split_strings(tree["repos"])

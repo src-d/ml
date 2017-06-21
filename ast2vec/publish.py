@@ -1,12 +1,16 @@
+import io
 import json
 import logging
+import math
 import os
 import time
 import uuid
 
 import asdf
 from clint.textui import progress
+from dateutil.parser import parse as parse_datetime
 from google.cloud.storage import Client
+import requests
 
 from ast2vec.meta import extract_index_meta
 from ast2vec.model import Model
@@ -75,7 +79,8 @@ def publish_model(args):
         if blob.exists() and not args.force:
             log.error("Model %s already exists, aborted.", meta["uuid"])
             return 1
-        log.info("Uploading %s...", os.path.abspath(args.model))
+        log.info("Uploading %s from %s...", meta["model"],
+                 os.path.abspath(args.model))
         with open(args.model, "rb") as fin:
             tracker = FileReadTracker(fin)
             try:
@@ -85,9 +90,10 @@ def publish_model(args):
             finally:
                 tracker.done()
         blob.make_public()
-        model_url = blob.media_link
+        model_url = blob.public_url
+        log.info("Uploaded as %s", blob.path)
         log.info("Updating the models index...")
-        blob = bucket.get_blob("index.json")
+        blob = bucket.get_blob(Model.INDEX_FILE)
         index = json.loads(blob.download_as_string().decode("utf-8"))
         index["models"].setdefault(meta["model"], {})[meta["uuid"]] = \
             extract_index_meta(meta, model_url)
@@ -96,3 +102,19 @@ def publish_model(args):
         blob.upload_from_string(json.dumps(index, indent=4, sort_keys=True))
     finally:
         sentinel.delete()
+
+
+def list_models(args):
+    r = requests.get(Model.compose_index_url(args.gcs), stream=True)
+    index = json.loads(r.content.decode("utf-8"))
+    for key, val in index["models"].items():
+        print(key)
+        default = None
+        for mid, meta in val.items():
+            if mid == "default":
+                default = meta["uuid"]
+                break
+        for mid, meta in sorted(
+                val.items(), key=lambda m: parse_datetime(m[1]["created_at"])):
+            print("  %s %s" % ("*" if default == mid else " ", mid),
+                  meta["created_at"])

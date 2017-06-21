@@ -8,9 +8,9 @@ import sys
 
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
-from ast2vec.publish import publish_model
+from ast2vec.publish import publish_model, list_models
 from ast2vec.repo2coocc import repo2coocc_entry, repos2coocc_entry
-from ast2vec.repo2nbow import repo2nbow_entry
+from ast2vec.repo2nbow import repo2nbow_entry, repos2nbow_entry
 from ast2vec.dump import dump_model
 
 
@@ -97,11 +97,13 @@ def main():
     repo2nbow_parser.add_argument(
         "-o", "--output", required=True,
         help="Output path where the .asdf will be stored.")
+    repo2nbow_parser.add_argument("--gcs", default=None,
+                                  help="GCS bucket to use.")
 
     repos2nbow_parser = subparsers.add_parser(
         "repos2nbow", help="Produce the nBOWs from a list of Git "
                            "repositories.")
-    repos2nbow_parser.set_defaults(handler=repos2coocc_entry)
+    repos2nbow_parser.set_defaults(handler=repos2nbow_entry)
     repos2nbow_parser.add_argument(
         "-i", "--input", required=True, nargs="+",
         help="List of repositories or path to file with list of repositories.")
@@ -112,6 +114,8 @@ def main():
         help="Output folder where .asdf results will be stored.")
     repos2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+    repos2nbow_parser.add_argument("--gcs", default=None,
+                                   help="GCS bucket to use.")
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
@@ -195,11 +199,12 @@ def main():
         "dump", help="Dump a model to stdout.")
     dump_parser.set_defaults(handler=dump_model)
     dump_parser.add_argument(
-        "input", help="Path to the model file.")
-    dump_parser.add_argument("-d", "--dependency", nargs="+",
-                             help="Paths to the models which were used to "
-                                  "generate the dumped model in the order "
-                                  "they appear in the metadata.")
+        "input", help="Path to the model file, URL or UUID.")
+    dump_parser.add_argument(
+        "-d", "--dependency", nargs="+", help=
+        "Paths to the models which were used to generate the dumped model in "
+        "the order they appear in the metadata.")
+    dump_parser.add_argument("--gcs", default=None, help="GCS bucket to use.")
 
     publish_parser = subparsers.add_parser(
         "publish", help="Upload the model to the cloud and update the "
@@ -207,12 +212,17 @@ def main():
     publish_parser.set_defaults(handler=publish_model)
     publish_parser.add_argument(
         "model", help="The path to the model to publish.")
-    publish_parser.add_argument("--gcs", default="datasets.sourced.tech",
+    publish_parser.add_argument("--gcs", default=None,
                                 help="GCS bucket to use.")
     publish_parser.add_argument("-u", "--update-default", action="store_true",
                                 help="Update the models index.")
     publish_parser.add_argument("--force", action="store_true",
                                 help="Overwrite existing models.")
+
+    list_parser = subparsers.add_parser(
+        "list-models", help="Lists all the models in the registry.")
+    list_parser.set_defaults(handler=list_models)
+    list_parser.add_argument("--gcs", default=None, help="GCS bucket to use.")
 
     args = parser.parse_args()
     setup_logging(args.log_level)

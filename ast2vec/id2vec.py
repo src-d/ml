@@ -3,7 +3,6 @@ from ast2vec.model import Model, split_strings
 
 class Id2Vec(Model):
     NAME = "id2vec"
-    DEFAULT_CACHE_DIR = "~/.cache/source{d}/id2vec"
 
     def _load(self, npz):
         self._embeddings = npz["embeddings"]

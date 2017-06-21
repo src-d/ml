@@ -58,11 +58,11 @@ class Repo2nBOW(Repo2Base):
 
 
 def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
-              bblfsh_endpoint=None):
+              bblfsh_endpoint=None, gcs_bucket=None):
     if id2vec is None:
-        id2vec = Id2Vec()
+        id2vec = Id2Vec(gcs_bucket=gcs_bucket)
     if df is None:
-        df = DocumentFrequencies()
+        df = DocumentFrequencies(gcs_bucket=gcs_bucket)
     obj = Repo2nBOW(id2vec, df, linguist=linguist,
                     bblfsh_endpoint=bblfsh_endpoint)
     nbow = obj.convert_repository(url_or_path)
@@ -71,8 +71,8 @@ def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
 
 def repo2nbow_entry(args):
     ensure_bblfsh_is_running_noexc()
-    id2vec = Id2Vec(args.id2vec or None)
-    df = DocumentFrequencies(args.df or None)
+    id2vec = Id2Vec(args.id2vec or None, gcs_bucket=args.gcs)
+    df = DocumentFrequencies(args.df or None, gcs_bucket=args.gcs)
     linguist = args.linguist or None
     nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
                      bblfsh_endpoint=args.bblfsh)
