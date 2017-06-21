@@ -9,6 +9,7 @@ import sys
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.publish import publish_model, list_models
+from ast2vec.repo2base import Repo2Base
 from ast2vec.repo2coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2nbow import repo2nbow_entry, repos2nbow_entry
 from ast2vec.dump import dump_model
@@ -95,6 +96,9 @@ def main():
     repo2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
     repo2nbow_parser.add_argument(
+        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        help="Babelfish timeout - longer requests are dropped.")
+    repo2nbow_parser.add_argument(
         "-o", "--output", required=True,
         help="Output path where the .asdf will be stored.")
     repo2nbow_parser.add_argument("--gcs", default=None,
@@ -114,6 +118,9 @@ def main():
         help="Output folder where .asdf results will be stored.")
     repos2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+    repos2nbow_parser.add_argument(
+        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        help="Babelfish timeout - longer requests are dropped.")
     repos2nbow_parser.add_argument("--gcs", default=None,
                                    help="GCS bucket to use.")
 
@@ -131,6 +138,9 @@ def main():
         help="Output path where .asdf result will be stored.")
     repo2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+    repo2coocc_parser.add_argument(
+        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        help="Babelfish timeout - longer requests are dropped.")
 
     repos2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a list of "
@@ -146,6 +156,9 @@ def main():
         help="Output folder where .asdf results will be stored.")
     repos2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+    repos2coocc_parser.add_argument(
+        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        help="Babelfish timeout - longer requests are dropped.")
 
     preproc_parser = subparsers.add_parser(
         "preproc", help="Convert co-occurrence CSR matrices to Swivel "

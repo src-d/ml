@@ -2,6 +2,10 @@ from ast2vec.model import Model, split_strings
 
 
 class DocumentFrequencies(Model):
+    """
+    Document frequencies - number of times a source code identifier appeared
+    in different repositories. Each repository counts only once.
+    """
     NAME = "docfreq"
 
     def _load(self, tree):
@@ -27,6 +31,12 @@ class DocumentFrequencies(Model):
 
 
 def print_df(tree, dependencies):
+    """
+    Prints the brief information about :class:`DocumentFrequencies` model.
+    :param tree: Internal loaded tree of the model.
+    :param dependencies: Not used.
+    :return: None
+    """
     words = split_strings(tree["tokens"])
     print("Number of words:", len(words))
     print("First 10 words:", words[:10])

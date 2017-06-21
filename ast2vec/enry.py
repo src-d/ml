@@ -10,9 +10,10 @@ MIN_GO_VERSION = 1, 8, 0
 def install_enry(args=None, target="./enry", tempdir=None):
     """
     Deploys src-d/enry at the specified path.
-    :param args: argparse.Namespace with "output" and "tmpdir". "output" sets \
-                 the target directory, "tmpdir" sets the temporary directory
-                 which is used to clone src-d/enry and build it.
+    :param args: :class:`argparse.Namespace` with "output" and "tmpdir". \
+                 "output" sets the target directory, "tmpdir" sets \
+                 the temporary directory which is used to clone src-d/enry \
+                 and build it.
     :param target: The path to the built executable. If args is not None, it \
                    becomes overridden.
     :param tempdir: The temporary directory where to clone and build \

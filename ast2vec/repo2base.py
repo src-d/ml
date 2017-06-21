@@ -17,14 +17,18 @@ import Stemmer
 
 
 class Repo2Base:
-    LOG_NAME = None
-    NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")
-    STEM_THRESHOLD = 6
-    MAX_TOKEN_LENGTH = 256
+    """
+    Base class for repsitory features extraction. Abstracts from Babelfish and
+    source code identifier processing.
+    """
+    LOG_NAME = None  #: Must be defined in the children.
+    NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")  #: Regexp to split source code identifiers.
+    STEM_THRESHOLD = 6  #: We do not stem splitted parts shorter than or equal to this size.
+    MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than thi value.
     SIMPLE_IDENTIFIER = DESCRIPTOR.enum_types_by_name["Role"] \
-        .values_by_name["SIMPLE_IDENTIFIER"].number + 1
+        .values_by_name["SIMPLE_IDENTIFIER"].number + 1  #: Id of SIMPLE_IDENTIFIER in Babelfish.
     # FIXME(vmarkovtsev): remove "+1"
-    DEFAULT_BBLFSH_TIMEOUT = 10
+    DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT):
@@ -32,7 +36,7 @@ class Repo2Base:
         self._log.setLevel(log_level)
         self._stemmer = Stemmer.Stemmer("english")
         self._stemmer.maxCacheSize = 0
-        self._stem_threshold = 6
+        self._stem_threshold = self.STEM_THRESHOLD
         self._tempdir = tempdir
         self._linguist = linguist
         if self._linguist is None:
@@ -189,6 +193,10 @@ class Repo2Base:
 
 
 def ensure_bblfsh_is_running_noexc():
+    """
+    Launches the Babelfish server, if it is possible and needed.
+    :return: None
+    """
     try:
         ensure_bblfsh_is_running()
     except:
@@ -201,6 +209,17 @@ def ensure_bblfsh_is_running_noexc():
 
 
 def repos2_entry(args, payload_func):
+    """
+    Invokes payload_func for every repository in parallel processes.
+    :param args: :class:`argparse.Namespace` with "input" and "output".
+                 "input" is the list of repository URLs or paths or files
+                 with repository URLS or paths. "output" is the output
+                 directory where to store the results.
+    :param payload_func: :func:`callable` which accepts (repo, args).
+                         repo is a repository URL or path, args bypassed
+                         through.
+    :return: None
+    """
     ensure_bblfsh_is_running_noexc()
     inputs = []
 

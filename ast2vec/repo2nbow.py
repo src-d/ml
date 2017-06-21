@@ -14,13 +14,17 @@ from ast2vec.repo2base import Repo2Base, repos2_entry, \
 
 
 class Repo2nBOW(Repo2Base):
+    """
+    Implements the step repository -> :class:`ast2vec.NBOW`.
+    """
     LOG_NAME = "repo2nbow"
 
     def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
-                 log_level=logging.INFO, bblfsh_endpoint=None):
+                 log_level=logging.INFO, bblfsh_endpoint=None,
+                 timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
         super(Repo2nBOW, self).__init__(
             tempdir=tempdir, linguist=linguist, log_level=log_level,
-            bblfsh_endpoint=bblfsh_endpoint)
+            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
         self._id2vec = id2vec
         self._docfreq = docfreq
 
@@ -50,7 +54,7 @@ class Repo2nBOW(Repo2Base):
             if self.SIMPLE_IDENTIFIER in node.roles:
                 for sub in self._process_token(node.token):
                     try:
-                        bag[self._id2vec.token2index[sub]] += 1
+                        bag[self._id2vec.token2index(sub)] += 1
                     except KeyError:
                         pass
             stack.extend(node.children)
@@ -58,13 +62,26 @@ class Repo2nBOW(Repo2Base):
 
 
 def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
-              bblfsh_endpoint=None, gcs_bucket=None):
+              bblfsh_endpoint=None, timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+              gcs_bucket=None):
+    """
+    Performs the step repository -> :class:`ast2vec.NBOW`.
+    :param url_or_path: Repository URL or file system path.
+    :param id2vec: :class:`ast2vec.Id2Vec` model.
+    :param df: :class:`ast2vec.DocumentFrequencies` model.
+    :param linguist: path to githib/linguist or src-d/enry.
+    :param bblfsh_endpoint: Babelfish server's address.
+    :param timeout: Babelfish server request timeout.
+    :param gcs_bucket: GCS bucket name where the models are stored.
+    :return: {token: weight}
+    :rtype: dict
+    """
     if id2vec is None:
         id2vec = Id2Vec(gcs_bucket=gcs_bucket)
     if df is None:
         df = DocumentFrequencies(gcs_bucket=gcs_bucket)
     obj = Repo2nBOW(id2vec, df, linguist=linguist,
-                    bblfsh_endpoint=bblfsh_endpoint)
+                    bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
     nbow = obj.convert_repository(url_or_path)
     return nbow
 
@@ -75,7 +92,8 @@ def repo2nbow_entry(args):
     df = DocumentFrequencies(args.df or None, gcs_bucket=args.gcs)
     linguist = args.linguist or None
     nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
-                     bblfsh_endpoint=args.bblfsh)
+                     bblfsh_endpoint=args.bblfsh, timeout=args.timeout,
+                     gcs_bucket=args.gcs)
     asdf.AsdfFile({
         "nbow": nbow,
         "meta": generate_meta("nbow", id2vec, df)

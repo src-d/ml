@@ -22,7 +22,7 @@ class Model:
     NAME = None  #: Name of the model. Used as the logging domain, too.
     DEFAULT_NAME = "default"  #: When no uuid is specified, this is used.
     DEFAULT_FILE_EXT = ".asdf"  #: File extension of the model.
-    DEFAULT_GCS_BUCKET = "datasets.sourced.tech"  #: GCS bucket name where models are stored.
+    DEFAULT_GCS_BUCKET = "datasets.sourced.tech"  #: GCS bucket where the models are stored.
     INDEX_FILE = "index.json"  #: Models repository index file name.
     CACHE_DIR_ROOT = os.path.join("~", ".source{d}")  #: Cache root path.
 
@@ -129,7 +129,7 @@ class Model:
 def merge_strings(list_of_strings):
     """
     Packs the list of strings into two arrays: the concatenated chars and the
-    individual string offsets.
+    individual string offsets. :func:`split_strings()` does the inverse.
     :param list_of_strings: The list of strings to pack.
     :return: dict with "strings" and "offsets" arrays.
     """
@@ -145,8 +145,8 @@ def merge_strings(list_of_strings):
 
 def split_strings(subtree):
     """
-    Reverses :func:`merge_strings()` - produces the list of strings from
-    the dictionary with concatenated chars and offsets.
+    Produces the list of strings from the dictionary with concatenated chars
+    and offsets. Opposite to :func:`merge_strings()`.
     :param subtree: The dict with "strings" and "offsets".
     :return: list of strings.
     """
@@ -162,9 +162,18 @@ def split_strings(subtree):
 
 
 def disassemble_sparse_matrix(matrix):
+    """
+    Transforms a scipy.sparse matrix into the serializable collection of numpy
+    arrays. :func:`assemble_sparse_matrix()` does the inverse.
+    :param matrix: scipy.sparse matrix; csr, csc and coo formats are supported.
+    :return: dict with "shape", "format" and "data" - tuple of numpy arrays.
+    """
+    fmt = matrix.getformat()
+    if fmt not in ("csr", "csc", "coo"):
+        raise ValueError("Unsupported scipy.sparse matrix format: %s." % fmt)
     result = {
         "shape": matrix.shape,
-        "format": matrix.getformat()
+        "format": fmt
     }
     if isinstance(matrix, (scipy.sparse.csr_matrix, scipy.sparse.csc_matrix)):
         result["data"] = matrix.data, matrix.indices, matrix.indptr
@@ -174,6 +183,12 @@ def disassemble_sparse_matrix(matrix):
 
 
 def assemble_sparse_matrix(subtree):
+    """
+    Transforms a dictionary with "shape", "format" and "data" into the
+    scipy.sparse matrix. Opposite to :func:`disassemble_sparse_matrix()`.
+    :param subtree: dict which describes the scipy.sparse matrix.
+    :return: scipy.sparse matrix of the specified format.
+    """
     matrix_class = getattr(scipy.sparse, "%s_matrix" % subtree["format"])
     matrix = matrix_class(tuple(subtree["data"]), shape=subtree["shape"])
     return matrix

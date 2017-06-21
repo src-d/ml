@@ -2,6 +2,9 @@ from ast2vec.model import Model, split_strings
 
 
 class Id2Vec(Model):
+    """
+    id2vec model - source code identifier embeddings.
+    """
     NAME = "id2vec"
 
     def _load(self, npz):
@@ -14,18 +17,32 @@ class Id2Vec(Model):
 
     @property
     def embeddings(self):
+        """
+        numpy array with the embeddings of shape (N tokens x embedding dims).
+        """
         return self._embeddings
 
     @property
     def tokens(self):
+        """
+        List with the processed source code identifiers of length N tokens.
+        """
         return self._tokens
 
-    @property
-    def token2index(self):
-        return self._token2index
+    def token2index(self, item):
+        """
+        Returns the index of the specified processed source code identifier.
+        """
+        return self._token2index[item]
 
 
 def print_id2vec(tree, dependencies):
+    """
+    Prints the brief information about :class:`Id2Vec` model.
+    :param tree: Internal loaded tree of the model.
+    :param dependencies: Not used.
+    :return: None
+    """
     words = split_strings(tree["tokens"])
     embeddings = tree["embeddings"]
     print("Shape:", embeddings.shape)
