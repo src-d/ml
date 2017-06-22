@@ -237,8 +237,8 @@ def main():
         "model", help="The path to the model to publish.")
     publish_parser.add_argument("--gcs", default=None,
                                 help="GCS bucket to use.")
-    publish_parser.add_argument("-u", "--update-default", action="store_true",
-                                help="Update the models index.")
+    publish_parser.add_argument("-d", "--update-default", action="store_true",
+                                help="Set this model as the default one.")
     publish_parser.add_argument("--force", action="store_true",
                                 help="Overwrite existing models.")
 

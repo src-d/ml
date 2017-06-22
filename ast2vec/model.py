@@ -110,7 +110,11 @@ class Model:
     def _fetch(self, url, where, chunk_size=65536):
         self._log.info("Fetching %s...", url)
         r = requests.get(url, stream=True)
-        f = open(where, "wb") if isinstance(where, str) else where
+        if isinstance(where, str):
+            os.makedirs(os.path.dirname(where), exist_ok=True)
+            f = open(where, "wb")
+        else:
+            f = where
         try:
             total_length = int(r.headers.get("content-length"))
             num_chunks = math.ceil(total_length / chunk_size)

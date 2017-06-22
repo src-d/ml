@@ -129,6 +129,7 @@ def list_models(args):
                 break
         for mid, meta in sorted(
                 [m for m in val.items() if m[1] != default],
-                key=lambda m: parse_datetime(m[1]["created_at"])):
+                key=lambda m: parse_datetime(m[1]["created_at"]),
+                reverse=True):
             print("  %s %s" % ("*" if default == mid else " ", mid),
                   meta["created_at"])
