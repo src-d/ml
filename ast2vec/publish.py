@@ -101,6 +101,7 @@ def publish_model(args):
         if args.update_default:
             index["models"][meta["model"]][Model.DEFAULT_NAME] = meta["uuid"]
         blob.upload_from_string(json.dumps(index, indent=4, sort_keys=True))
+        blob.make_public()
     finally:
         sentinel.delete()
 
@@ -113,15 +114,21 @@ def list_models(args):
     :return: None
     """
     r = requests.get(Model.compose_index_url(args.gcs), stream=True)
-    index = json.loads(r.content.decode("utf-8"))
+    content = r.content.decode("utf-8")
+    try:
+        index = json.loads(content)
+    except json.decoder.JSONDecodeError:
+        print(content)
+        return 1
     for key, val in index["models"].items():
         print(key)
         default = None
         for mid, meta in val.items():
             if mid == "default":
-                default = meta["uuid"]
+                default = meta
                 break
         for mid, meta in sorted(
-                val.items(), key=lambda m: parse_datetime(m[1]["created_at"])):
+                [m for m in val.items() if m[1] != default],
+                key=lambda m: parse_datetime(m[1]["created_at"])):
             print("  %s %s" % ("*" if default == mid else " ", mid),
                   meta["created_at"])
