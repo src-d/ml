@@ -20,7 +20,8 @@ def preprocess(args):
     """
     Loads co-occurrence matrices for several repositories and generates the
     document frequencies and the Swivel protobuf dataset.
-    :param args: :class:`argparse.Namespace` with "input", "vocabulary_size",
+
+    :param args: :class:`argparse.Namespace` with "input", "vocabulary_size", \
                  "shard_size", "df" and "output".
     :return: None
     """
@@ -63,6 +64,7 @@ def preprocess(args):
         asdf.AsdfFile({
             "tokens": merge_strings(chosen_words),
             "freqs": chosen_freqs,
+            "docs": len(inputs),
             "meta": generate_meta("docfreq")
         }).write_to(args.df, all_array_compression="zlib")
     del chosen_freqs
@@ -140,6 +142,7 @@ def run_swivel(args):
     """
     Trains the Swivel model. Wraps swivel.py, adapted from
     https://github.com/vmarkovtsev/models/blob/master/swivel/swivel.py
+
     :param args: :class:`argparse.Namespace` identical to \
                  :class:`tf.app.flags`.
     :return: None
@@ -153,6 +156,7 @@ def postprocess(args):
     """
     Merges row and column embeddings produced by Swivel and writes the Id2Vec
     model.
+
     :param args: :class:`argparse.Namespace` with "swivel_output_directory" \
                  and "result". The text files are read from \
                  `swivel_output_directory` and the model is written to \

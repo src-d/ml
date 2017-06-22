@@ -16,7 +16,7 @@ from ast2vec.repo2base import Repo2Base, repos2_entry, \
 class Repo2Coocc(Repo2Base):
     """
     Convert UAST to tuple (list of unique words, list of triplets (word1_ind,
-    word2_ind, cnt))
+    word2_ind, cnt)).
     """
     LOG_NAME = "repo2coocc"
 
@@ -90,7 +90,7 @@ class Repo2Coocc(Repo2Base):
 
     def _traverse_uast(self, root, word2ind, dok_mat):
         """
-        Traverse UAST and extract the co-occurence matrix
+        Traverses UAST and extract the co-occurrence matrix.
         """
         stack = [root]
         new_stack = []
@@ -106,7 +106,8 @@ class Repo2Coocc(Repo2Base):
 def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None,
                timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
     """
-    Performs the step repository -> :class:`ast2vec.NBOW`.
+    Performs the step repository -> :class:`ast2vec.nbow.NBOW`.
+
     :param url_or_path: Repository URL or file system path.
     :param linguist: path to githib/linguist or src-d/enry.
     :param bblfsh_endpoint: Babelfish server's address.

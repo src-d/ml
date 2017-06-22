@@ -1,3 +1,7 @@
+.idea/
+doc/_build/
+doc/ast2vec.rst
+doc/modules.rst
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -30,6 +30,7 @@ class Model:
                  log_level=logging.INFO):
         """
         Initializes a new Model instance.
+
         :param source: UUID, file system path or an URL; None means auto.
         :param cache_dir: The directory where to store the downloaded model.
         :param gcs_bucket: The name of the Google Cloud Storage bucket to use.
@@ -130,8 +131,10 @@ def merge_strings(list_of_strings):
     """
     Packs the list of strings into two arrays: the concatenated chars and the
     individual string offsets. :func:`split_strings()` does the inverse.
-    :param list_of_strings: The list of strings to pack.
-    :return: dict with "strings" and "offsets" arrays.
+
+    :param list_of_strings: The :class:`list` of :class:`str`-s to pack.
+    :return: :class:`dict` with "strings" and "offsets" \
+             :class:`numpy.ndarray`-s.
     """
     strings = numpy.array(["".join(list_of_strings).encode("utf-8")])
     offset = 0
@@ -147,8 +150,9 @@ def split_strings(subtree):
     """
     Produces the list of strings from the dictionary with concatenated chars
     and offsets. Opposite to :func:`merge_strings()`.
+
     :param subtree: The dict with "strings" and "offsets".
-    :return: list of strings.
+    :return: :class:`list` of :class:`str`-s.
     """
     result = []
     strings = subtree["strings"][0].decode("utf-8")
@@ -163,10 +167,13 @@ def split_strings(subtree):
 
 def disassemble_sparse_matrix(matrix):
     """
-    Transforms a scipy.sparse matrix into the serializable collection of numpy
-    arrays. :func:`assemble_sparse_matrix()` does the inverse.
-    :param matrix: scipy.sparse matrix; csr, csc and coo formats are supported.
-    :return: dict with "shape", "format" and "data" - tuple of numpy arrays.
+    Transforms a scipy.sparse matrix into the serializable collection of
+    :class:`numpy.ndarray`-s. :func:`assemble_sparse_matrix()` does the inverse.
+
+    :param matrix: :mod:`scipy.sparse` matrix; csr, csc and coo formats are \
+                   supported.
+    :return: :class:`dict` with "shape", "format" and "data" - :class:`tuple` \
+             of :class:`numpy.ndarray`.
     """
     fmt = matrix.getformat()
     if fmt not in ("csr", "csc", "coo"):
@@ -185,9 +192,12 @@ def disassemble_sparse_matrix(matrix):
 def assemble_sparse_matrix(subtree):
     """
     Transforms a dictionary with "shape", "format" and "data" into the
-    scipy.sparse matrix. Opposite to :func:`disassemble_sparse_matrix()`.
-    :param subtree: dict which describes the scipy.sparse matrix.
-    :return: scipy.sparse matrix of the specified format.
+    :mod:`scipy.sparse` matrix.
+    Opposite to :func:`disassemble_sparse_matrix()`.
+
+    :param subtree: :class:`dict` which describes the :mod:`scipy.sparse` \
+                    matrix.
+    :return: :mod:`scipy.sparse` matrix of the specified format.
     """
     matrix_class = getattr(scipy.sparse, "%s_matrix" % subtree["format"])
     matrix = matrix_class(tuple(subtree["data"]), shape=subtree["shape"])

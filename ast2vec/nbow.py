@@ -5,7 +5,8 @@ from ast2vec.id2vec import Id2Vec
 class NBOW(Model):
     """
     Weighted bag of words model. Every word is represented with a vector.
-    Bag = repository. Word = source code identifier.
+    Bag = repository. Word = source code identifier. This model depends on
+    :class:`ast2vec.id2vec.Id2Vec` and :class:`ast2vec.df.DocumentFrequencies`.
     """
 
     NAME = "nbow"
@@ -20,8 +21,10 @@ class NBOW(Model):
         """
         Returns repository name, word indices and weights for the given
         repository index.
+
         :param item: Repository index.
-        :return: (name, numpy array with word indices, numpy array with weights)
+        :return: (name, :class:`numpy.ndarray` with word indices, \
+                  :class:`numpy.ndarray` with weights)
         """
         data = self._model[item]
         return self._repos[item], data.indices, data.data
@@ -47,7 +50,8 @@ class NBOW(Model):
 
 def print_nbow(tree, dependencies):
     """
-    Print the brief information about the NBOW model.
+    Print the brief information about the :class:`NBOW` model.
+
     :param tree: Internal loaded tree of the model.
     :param dependencies: Overriding parent model sources.
     :return: None

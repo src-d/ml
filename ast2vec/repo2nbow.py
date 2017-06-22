@@ -15,7 +15,7 @@ from ast2vec.repo2base import Repo2Base, repos2_entry, \
 
 class Repo2nBOW(Repo2Base):
     """
-    Implements the step repository -> :class:`ast2vec.NBOW`.
+    Implements the step repository -> :class:`ast2vec.nbow.NBOW`.
     """
     LOG_NAME = "repo2nbow"
 
@@ -39,7 +39,7 @@ class Repo2nBOW(Repo2Base):
         for key, val in freqs.items():
             try:
                 freqs[key] = math.log(1 + val) * math.log(
-                    self._docfreq.sum / self._docfreq[vocabulary[key]])
+                    self._docfreq.docs / self._docfreq[vocabulary[key]])
             except KeyError:
                 missing.append(key)
         for key in missing:
@@ -65,7 +65,8 @@ def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
               bblfsh_endpoint=None, timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
               gcs_bucket=None):
     """
-    Performs the step repository -> :class:`ast2vec.NBOW`.
+    Performs the step repository -> :class:`ast2vec.nbow.NBOW`.
+
     :param url_or_path: Repository URL or file system path.
     :param id2vec: :class:`ast2vec.Id2Vec` model.
     :param df: :class:`ast2vec.DocumentFrequencies` model.

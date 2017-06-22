@@ -49,6 +49,7 @@ class FileReadTracker:
 def publish_model(args):
     """
     Pushes the model to Google Cloud Storage and updates the index file.
+
     :param args: :class:`argparse.Namespace` with "model", "gcs" and "force".
     :return: None if successful, 1 otherwise.
     """
@@ -107,6 +108,7 @@ def publish_model(args):
 def list_models(args):
     """
     Outputs the list of known models in the registry.
+
     :param args: :class:`argparse.Namespace` with "gcs".
     :return: None
     """

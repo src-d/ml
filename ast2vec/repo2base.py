@@ -18,8 +18,8 @@ import Stemmer
 
 class Repo2Base:
     """
-    Base class for repsitory features extraction. Abstracts from Babelfish and
-    source code identifier processing.
+    Base class for repsitory features extraction. Abstracts from
+    `Babelfish <https://doc.bblf.sh/>`_ and source code identifier processing.
     """
     LOG_NAME = None  #: Must be defined in the children.
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")  #: Regexp to split source code identifiers.
@@ -195,6 +195,7 @@ class Repo2Base:
 def ensure_bblfsh_is_running_noexc():
     """
     Launches the Babelfish server, if it is possible and needed.
+
     :return: None
     """
     try:
@@ -211,12 +212,13 @@ def ensure_bblfsh_is_running_noexc():
 def repos2_entry(args, payload_func):
     """
     Invokes payload_func for every repository in parallel processes.
-    :param args: :class:`argparse.Namespace` with "input" and "output".
-                 "input" is the list of repository URLs or paths or files
-                 with repository URLS or paths. "output" is the output
+
+    :param args: :class:`argparse.Namespace` with "input" and "output". \
+                 "input" is the list of repository URLs or paths or files \
+                 with repository URLS or paths. "output" is the output \
                  directory where to store the results.
-    :param payload_func: :func:`callable` which accepts (repo, args).
-                         repo is a repository URL or path, args bypassed
+    :param payload_func: :func:`callable` which accepts (repo, args). \
+                         repo is a repository URL or path, args bypassed \
                          through.
     :return: None
     """

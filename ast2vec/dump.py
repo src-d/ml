@@ -26,6 +26,7 @@ class GenericModel(Model):
 def dump_model(args):
     """
     Prints the information about the model.
+
     :param args: :class:`argparse.Namespace` with "input", "gcs" and \
                  "dependency". "dependency" overrides the parent models.
     :return: None

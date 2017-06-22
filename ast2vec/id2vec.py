@@ -18,7 +18,8 @@ class Id2Vec(Model):
     @property
     def embeddings(self):
         """
-        numpy array with the embeddings of shape (N tokens x embedding dims).
+        :class:`numpy.ndarray` with the embeddings of shape
+        (N tokens x embedding dims).
         """
         return self._embeddings
 
@@ -39,6 +40,7 @@ class Id2Vec(Model):
 def print_id2vec(tree, dependencies):
     """
     Prints the brief information about :class:`Id2Vec` model.
+
     :param tree: Internal loaded tree of the model.
     :param dependencies: Not used.
     :return: None
