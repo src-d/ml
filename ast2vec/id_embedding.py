@@ -69,6 +69,9 @@ def preprocess(args):
         }).write_to(args.df, all_array_compression="zlib")
     del chosen_freqs
 
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
+
     with open(os.path.join(args.output, "row_vocab.txt"), "w") as out:
         out.write('\n'.join(chosen_words))
     log.info("Saved row_vocab.txt...")
