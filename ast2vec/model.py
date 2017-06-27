@@ -134,38 +134,49 @@ class Model:
 def merge_strings(list_of_strings):
     """
     Packs the list of strings into two arrays: the concatenated chars and the
-    individual string offsets. :func:`split_strings()` does the inverse.
+    individual string lengths. :func:`split_strings()` does the inverse.
 
     :param list_of_strings: The :class:`list` of :class:`str`-s to pack.
-    :return: :class:`dict` with "strings" and "offsets" \
+    :return: :class:`dict` with "strings" and "lengths" \
              :class:`numpy.ndarray`-s.
     """
     strings = numpy.array(["".join(list_of_strings).encode("utf-8")])
-    offset = 0
-    offsets = []
+    max_len = 0
+    lengths = []
     for s in list_of_strings:
-        offsets.append(offset)
-        offset += len(s)
-    offsets = numpy.array(offsets, dtype=numpy.uint32)
-    return {"strings": strings, "offsets": offsets}
+        l = len(s)
+        lengths.append(l)
+        if l > max_len:
+            max_len = l
+    bl = max_len.bit_length()
+    if bl <= 8:
+        dtype = numpy.uint8
+    elif bl <= 16:
+        dtype = numpy.uint16
+    elif bl <= 32:
+        dtype = numpy.uint32
+    else:
+        raise ValueError("There are very long strings (max length %d)."
+                         % max_len)
+    lengths = numpy.array(lengths, dtype=dtype)
+    return {"strings": strings, "lengths": lengths}
 
 
 def split_strings(subtree):
     """
     Produces the list of strings from the dictionary with concatenated chars
-    and offsets. Opposite to :func:`merge_strings()`.
+    and lengths. Opposite to :func:`merge_strings()`.
 
-    :param subtree: The dict with "strings" and "offsets".
+    :param subtree: The dict with "strings" and "lengths".
     :return: :class:`list` of :class:`str`-s.
     """
     result = []
     strings = subtree["strings"][0].decode("utf-8")
-    offsets = subtree["offsets"]
-    for i, offset in enumerate(offsets):
-        if i < offsets.shape[0] - 1:
-            result.append(strings[offset:offsets[i + 1]])
-        else:
-            result.append(strings[offset:])
+    lengths = subtree["lengths"]
+    offset = 0
+    for i, l in enumerate(lengths):
+        result.append(strings[offset:offset + l])
+        offset += l
     return result
 
 
