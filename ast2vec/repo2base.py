@@ -201,6 +201,12 @@ class Transformer:
         return NotImplementedError()
 
 
+class DictAttr:
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+
+
 def ensure_bblfsh_is_running_noexc():
     """
     Launches the Babelfish server, if it is possible and needed.

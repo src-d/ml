@@ -104,12 +104,6 @@ class Repo2Coocc(Repo2Base):
             new_stack = []
 
 
-class DictAttr:
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-
 class Repo2CooccTransformer(Repo2Coocc, Transformer):
     n_processes = 2
     LOG_NAME = "repos2coocc"
