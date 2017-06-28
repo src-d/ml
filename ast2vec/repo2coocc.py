@@ -1,5 +1,6 @@
 from collections import defaultdict
 from copy import deepcopy
+import multiprocessing
 import logging
 import os
 
@@ -9,7 +10,7 @@ from scipy.sparse import dok_matrix
 from ast2vec.meta import generate_meta
 from ast2vec.model import disassemble_sparse_matrix, merge_strings, \
     split_strings
-from ast2vec.repo2base import Repo2Base, repos2_entry, \
+from ast2vec.repo2base import Repo2Base, Transformer, repos2_entry, \
     ensure_bblfsh_is_running_noexc
 
 
@@ -101,6 +102,92 @@ class Repo2Coocc(Repo2Base):
                 new_stack.extend(children)
             stack = new_stack
             new_stack = []
+
+
+class DictAttr:
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+
+
+class Repo2CooccTransformer(Repo2Coocc, Transformer):
+    n_processes = 2
+    LOG_NAME = "repos2coocc"
+
+    def __make_args__(self):
+        endpoint = self._bblfsh[0]._channel._channel.target()
+        return {'linguist': self._linguist, 'bblfsh_endpoint': endpoint,
+                'timeout': self._timeout}
+
+    @staticmethod
+    def process_repo(url_or_path, args):
+        obj = Repo2Coocc(**args)
+        vocabulary, matrix = obj.convert_repository(url_or_path)
+        return vocabulary, matrix
+
+    @staticmethod
+    def __repo_to_output_file__(repo, output):
+        if repo.startswith('https://'):
+            repo_name = repo[8:]
+        elif repo.startswith('http://'):
+            repo_name = repo[7:]
+        else:
+            repo_name = repo
+        outfile = os.path.join(output,
+                               repo_name.replace("/", "%") + '.asdf')
+
+        return outfile
+
+    @staticmethod
+    def process_entry(url_or_path, args, output):
+        outfile = Repo2CooccTransformer.__repo_to_output_file__(url_or_path,
+                                                                output)
+
+        vocabulary, matrix = Repo2CooccTransformer.process_repo(url_or_path,
+                                                                args)
+        asdf.AsdfFile({
+            "tokens": merge_strings(vocabulary),
+            "matrix": disassemble_sparse_matrix(matrix),
+            "meta": generate_meta("co-occurrences")
+        }).write_to(outfile, all_array_compression="zlib")
+
+    def transform(self, X, output, n_processes=None):
+        """
+        Invokes payload_func for every repository in parallel processes.
+        :param X: "X" is the list of repository URLs or paths or \
+                  files with repository URLS or paths.
+        :param output: "output" is the output directory where to store the \
+                        results.
+        :param n_processes: number of threads to use
+        :return: None
+        """
+        ensure_bblfsh_is_running_noexc()
+
+        if n_processes is None:
+            n_processes = self.n_processes
+        self.n_processes = n_processes
+
+        inputs = []
+
+        if isinstance(X, str):
+            X = [X]
+
+        for i in X:
+            # check if it's a text file
+            if os.path.isfile(i):
+                with open(i) as f:
+                    inputs.extend(l.strip() for l in f)
+            else:
+                inputs.append(i)
+
+        os.makedirs(output, exist_ok=True)
+
+        args = self.__make_args__()
+
+        with multiprocessing.Pool(processes=n_processes) as pool:
+            pool.starmap(Repo2CooccTransformer.process_entry,
+                         zip(inputs, [args] * len(inputs),
+                             [output] * len(inputs)))
 
 
 def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None,

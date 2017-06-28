@@ -192,6 +192,15 @@ class Repo2Base:
                 yield from ret(last)
 
 
+class Transformer:
+    """
+    Base class for transformers
+    """
+
+    def transform(self, *args, **kwargs):
+        return NotImplementedError()
+
+
 def ensure_bblfsh_is_running_noexc():
     """
     Launches the Babelfish server, if it is possible and needed.
