@@ -142,14 +142,19 @@ class Repo2CooccTransformer(Repo2Coocc, Transformer):
     def process_entry(url_or_path, args, output):
         outfile = Repo2CooccTransformer.__repo_to_output_file__(url_or_path,
                                                                 output)
-
-        vocabulary, matrix = Repo2CooccTransformer.process_repo(url_or_path,
-                                                                args)
-        asdf.AsdfFile({
-            "tokens": merge_strings(vocabulary),
-            "matrix": disassemble_sparse_matrix(matrix),
-            "meta": generate_meta("co-occurrences")
-        }).write_to(outfile, all_array_compression="zlib")
+        try:
+            vocabulary, matrix = Repo2CooccTransformer.process_repo(
+                url_or_path, args)
+            asdf.AsdfFile({
+                "tokens": merge_strings(vocabulary),
+                "matrix": disassemble_sparse_matrix(matrix),
+                "meta": generate_meta("co-occurrences")
+            }).write_to(outfile, all_array_compression="zlib")
+        except:
+            log = logging.getLogger(Repo2CooccTransformer.LOG_NAME)
+            err = "Unhandled error in Repo2CooccTransformer.process_entry() "
+            err += "at %s."
+            log.exception(err % url_or_path)
 
     def transform(self, X, output, n_processes=None):
         """
@@ -166,6 +171,8 @@ class Repo2CooccTransformer(Repo2Coocc, Transformer):
         if n_processes is None:
             n_processes = self.n_processes
         self.n_processes = n_processes
+        if n_processes == -1:
+            n_processes = multiprocessing.cpu_count()
 
         inputs = []
 
