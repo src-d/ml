@@ -13,7 +13,35 @@ import tensorflow as tf
 from ast2vec.meta import generate_meta
 from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
 import ast2vec.swivel as swivel
+from ast2vec.repo2base import Transformer, DictAttr
 from ast2vec.repo2nbow import Repo2nBOW
+
+
+class PreprocessTransformer(Transformer):
+    vocabulary_size = 1 << 17
+    shard_size = 4096
+
+    def __init__(self, vocabulary_size=None, shard_size=None):
+        if vocabulary_size is not None:
+            self.vocabulary_size = vocabulary_size
+        if shard_size is not None:
+            self.shard_size = shard_size
+
+    def transform(self, X, output, df=None, vocabulary_size=None,
+                  shard_size=None):
+        if vocabulary_size is not None:
+            self.vocabulary_size = vocabulary_size
+        if shard_size is not None:
+            self.shard_size = shard_size
+
+        if isinstance(X, str):
+            X = [X]
+
+        d = {'vocabulary_size': self.vocabulary_size, 'input': X, 'df': df,
+             'shard_size': self.shard_size, 'output': output}
+
+        args = DictAttr(d)
+        preprocess(args)
 
 
 def preprocess(args):
