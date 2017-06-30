@@ -9,7 +9,7 @@ import asdf
 from ast2vec.meta import generate_meta
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
-from ast2vec.repo2base import Repo2Base, repos2_entry, \
+from ast2vec.repo2base import Repo2Base, Transformer, repos2_entry, \
     ensure_bblfsh_is_running_noexc
 
 
@@ -27,6 +27,14 @@ class Repo2nBOW(Repo2Base):
             bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
         self._id2vec = id2vec
         self._docfreq = docfreq
+
+    @property
+    def id2vec(self):
+        return self._id2vec
+
+    @property
+    def docfreq(self):
+        return self._docfreq
 
     def convert_uasts(self, uast_generator):
         freqs = defaultdict(int)
@@ -59,6 +67,69 @@ class Repo2nBOW(Repo2Base):
                         pass
             stack.extend(node.children)
         return bag
+
+
+class Repo2nBOWTransformer(Transformer):
+    """
+    Wrap the step: repository -> :class:`ast2vec.nbow.NBOW`.
+    """
+    LOG_NAME = "repo2nbow_transformer"
+
+    def __init__(self, id2vec=None, docfreq=None, linguist=None,
+                 gcs_bucket=None, bblfsh_endpoint=None,
+                 timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
+        self.repo2nbow = self.init_repo2nbow(id2vec=id2vec, linguist=linguist,
+                                             docfreq=docfreq, timeout=timeout,
+                                             bblfsh_endpoint=bblfsh_endpoint,
+                                             gcs_bucket=gcs_bucket)
+
+
+    @staticmethod
+    def init_repo2nbow(id2vec=None, docfreq=None, linguist=None,
+              bblfsh_endpoint=None, timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+              gcs_bucket=None):
+        """
+        Performs the step repository -> :class:`ast2vec.nbow.NBOW`.
+
+        :param url_or_path: Repository URL or file system path.
+        :param id2vec: :class:`ast2vec.Id2Vec` model.
+        :param docfreq: :class:`ast2vec.DocumentFrequencies` model.
+        :param linguist: path to githib/linguist or src-d/enry.
+        :param bblfsh_endpoint: Babelfish server's address.
+        :param timeout: Babelfish server request timeout.
+        :param gcs_bucket: GCS bucket name where the models are stored.
+        :return: Repo2nBOW instance initialized with id2vec & df & etc.
+        :rtype: Repo2nBOW
+        """
+        id2vec = Id2Vec(id2vec or None, gcs_bucket=gcs_bucket)
+        docfreq = DocumentFrequencies(docfreq or None, gcs_bucket=gcs_bucket)
+
+        obj = Repo2nBOW(id2vec, docfreq, linguist=linguist,
+                        bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
+
+        return obj
+
+    def _process_repo(self, repo, outfile):
+        nbow = self.repo2nbow.convert_repository(repo)
+        asdf.AsdfFile({
+            "nbow": nbow,
+            "meta": generate_meta("nbow", self.repo2nbow.id2vec,
+                                  self.repo2nbow.docfreq)
+        }).write_to(outfile, all_array_compression="zlib")
+
+    def transform(self, X, output):
+        if isinstance(X, str):
+            # write result to file output
+            outfile = output
+            self._process_repo(X, outfile)
+        elif isinstance(X, list):
+            # write files to folder output
+            os.makedirs(output, exist_ok=True)
+            for repo in X:
+                outfile = os.path.join(output, repo.replace("/", "#"))
+                self._process_repo(repo, outfile)
+
+
 
 
 def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
