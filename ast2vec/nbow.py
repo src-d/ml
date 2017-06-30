@@ -56,6 +56,7 @@ def print_nbow(tree, dependencies):
     :param dependencies: Overriding parent model sources.
     :return: None
     """
+    MAX_WORDS = 10
     try:
         nbow = tree["nbow"]
         if dependencies is None:
@@ -64,7 +65,9 @@ def print_nbow(tree, dependencies):
         id2vec = Id2Vec(source=dependencies[0])
         nbl = [(f, id2vec.tokens[t]) for t, f in nbow.items()]
         nbl.sort(reverse=True)
-        for w, t in nbl:
+        for i, (w, t) in enumerate(nbl):
+            if i == MAX_WORDS:
+                break
             print("%s\t%f" % (t, w))
     except KeyError:
         print("Shape:", tree["matrix"]["shape"])
