@@ -37,4 +37,4 @@ def dump_model(args):
     try:
         PRINTERS[meta["model"]](model.tree, args.dependency)
     except KeyError:
-        pass
+        print("Printer for", meta["model"], "couldn\'t parse", args.input)
