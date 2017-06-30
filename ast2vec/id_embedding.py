@@ -169,6 +169,59 @@ def preprocess(args):
     log.info("Success")
 
 
+class SwivelTransformer(Transformer):
+    FLAGS = swivel.FLAGS
+
+    def transform(self, input_base_path=None, output_base_path=None,
+                  embedding_size=None, trainable_bias=None,
+                  submatrix_rows=None, submatrix_cols=None,
+                  loss_multiplier=None, confidence_exponent=None,
+                  confidence_scale=None, confidence_base=None,
+                  learning_rate=None, optimizer=None,
+                  num_concurrent_steps=None, num_readers=None, num_epochs=None,
+                  per_process_gpu_memory_fraction=None, num_gpus=None,
+                  logs=None):
+        if input_base_path is not None:
+            self.FLAGS.input_base_path = input_base_path
+        if output_base_path is not None:
+            self.FLAGS.output_base_path = output_base_path
+        if embedding_size is not None:
+            self.FLAGS.embedding_size = embedding_size
+        if trainable_bias is not None:
+            self.FLAGS.trainable_bias = trainable_bias
+        if submatrix_rows is not None:
+            self.FLAGS.submatrix_rows = submatrix_rows
+        if submatrix_cols is not None:
+            self.FLAGS.submatrix_cols = submatrix_cols
+        if loss_multiplier is not None:
+            self.FLAGS.loss_multiplier = loss_multiplier
+        if confidence_exponent is not None:
+            self.FLAGS.confidence_exponent = confidence_exponent
+        if confidence_scale is not None:
+            self.FLAGS.confidence_scale = confidence_scale
+        if confidence_base is not None:
+            self.FLAGS.confidence_base = confidence_base
+        if learning_rate is not None:
+            self.FLAGS.learning_rate = learning_rate
+        if optimizer is not None:
+            self.FLAGS.optimizer = optimizer
+        if num_concurrent_steps is not None:
+            self.FLAGS.num_concurrent_steps = num_concurrent_steps
+        if num_readers is not None:
+            self.FLAGS.num_readers = num_readers
+        if num_epochs is not None:
+            self.FLAGS.num_epochs = num_epochs
+        if per_process_gpu_memory_fraction is not None:
+            self.FLAGS.per_process_gpu_memory_fraction = \
+                per_process_gpu_memory_fraction
+        if num_gpus is not None:
+            self.FLAGS.num_gpus = num_gpus
+        if logs is not None:
+            self.FLAGS.logs = logs
+
+        run_swivel(self.FLAGS)
+
+
 def run_swivel(args):
     """
     Trains the Swivel model. Wraps swivel.py, adapted from
