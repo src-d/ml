@@ -1,3 +1,4 @@
+from itertools import islice
 from ast2vec.model import Model, split_strings, assemble_sparse_matrix
 from ast2vec.id2vec import Id2Vec
 
@@ -65,9 +66,7 @@ def print_nbow(tree, dependencies):
         id2vec = Id2Vec(source=dependencies[0])
         nbl = [(f, id2vec.tokens[t]) for t, f in nbow.items()]
         nbl.sort(reverse=True)
-        for i, (w, t) in enumerate(nbl):
-            if i == MAX_WORDS:
-                break
+        for w, t in islice(nbl, MAX_WORDS):
             print("%s\t%f" % (t, w))
     except KeyError:
         print("Shape:", tree["matrix"]["shape"])

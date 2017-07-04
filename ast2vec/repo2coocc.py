@@ -105,37 +105,59 @@ class Repo2Coocc(Repo2Base):
 
 
 class Repo2CooccTransformer(Repo2Coocc, Transformer):
-    n_processes = 2
+    num_processes = 2
     LOG_NAME = "repos2coocc"
 
-    def __make_args__(self):
-        endpoint = self._bblfsh[0]._channel._channel.target()
-        return {'linguist': self._linguist, 'bblfsh_endpoint': endpoint,
-                'timeout': self._timeout}
+    @staticmethod
+    def prepare_filename(repo, output):
+        """
+        Remove prefixes from the repo name, so later it can be used to create
+        file for each repository + replace slashes ("/") with sharps ("#").
+        :param repo: name of repository
+        :param output: output folder
+        :return: converted repository name (removed "http://", etc.)
+        """
+        prefixes = ["https://", "http://"]
+        for prefix in prefixes:
+            if repo.startswith(prefix):
+                repo_name = repo[len(prefix):]
+                break
+        else:
+            repo_name = repo
+        outfile = os.path.join(output,
+                               repo_name.replace("/", "&") + ".asdf")
+
+        return outfile
 
     @staticmethod
     def process_repo(url_or_path, args):
+        """
+        Extract vocabulary and co-occurrence matrix from repository.
+        :param url_or_path: Repository URL or file system path.
+        :param args: parameters to initialize Repo2Coocc: linguist,
+               bblfsh_endpoint, timeout.
+        :return: (list of source code identifiers, scipy.sparse co-occurrences
+                 matrix)
+        :rtype: tuple
+        """
         obj = Repo2Coocc(**args)
         vocabulary, matrix = obj.convert_repository(url_or_path)
         return vocabulary, matrix
 
     @staticmethod
-    def __repo_to_output_file__(repo, output):
-        if repo.startswith('https://'):
-            repo_name = repo[8:]
-        elif repo.startswith('http://'):
-            repo_name = repo[7:]
-        else:
-            repo_name = repo
-        outfile = os.path.join(output,
-                               repo_name.replace("/", "%") + '.asdf')
-
-        return outfile
-
-    @staticmethod
     def process_entry(url_or_path, args, output):
-        outfile = Repo2CooccTransformer.__repo_to_output_file__(url_or_path,
-                                                                output)
+        """
+        Pipeline for one repository:
+        1) prepare filename
+        2) extract vocabulary and co-occurrence matrix from repository
+        3) save result
+        :param url_or_path: Repository URL or file system path.
+        :param args: parameters to initialize Repo2Coocc: linguist,
+               bblfsh_endpoint, timeout.
+        :param output: folder to store results
+        """
+        outfile = Repo2CooccTransformer.prepare_filename(url_or_path,
+                                                         output)
         try:
             vocabulary, matrix = Repo2CooccTransformer.process_repo(
                 url_or_path, args)
@@ -146,67 +168,72 @@ class Repo2CooccTransformer(Repo2Coocc, Transformer):
             }).write_to(outfile, all_array_compression="zlib")
         except:
             log = logging.getLogger(Repo2CooccTransformer.LOG_NAME)
-            err = "Unhandled error in Repo2CooccTransformer.process_entry() "
-            err += "at %s."
-            log.exception(err % url_or_path)
+            log.exception(
+                "Unhandled error in Repo2CooccTransformer.process_entry() "
+                "at %s." % url_or_path)
 
-    def transform(self, X, output, n_processes=None):
+    def transform(self, repos, output, num_processes=None):
         """
-        Invokes payload_func for every repository in parallel processes.
-        :param X: "X" is the list of repository URLs or paths or \
+        Extract co-occurrence matrices & list of tokens for each repository ->
+        save to output folder.
+        :param repos: "repos" is the list of repository URLs or paths or \
                   files with repository URLS or paths.
         :param output: "output" is the output directory where to store the \
                         results.
-        :param n_processes: number of threads to use
+        :param num_processes: number of threads to use, if negative - use all \
+               CPUs.
         :return: None
         """
-        ensure_bblfsh_is_running_noexc()
-
-        if n_processes is None:
-            n_processes = self.n_processes
-        self.n_processes = n_processes
-        if n_processes == -1:
-            n_processes = multiprocessing.cpu_count()
+        if num_processes is None:
+            num_processes = self.num_processes
+        self.num_processes = num_processes
+        if num_processes < 0:
+            num_processes = multiprocessing.cpu_count()
 
         inputs = []
 
-        if isinstance(X, str):
-            X = [X]
+        if isinstance(repos, str):
+            repos = [repos]
 
-        for i in X:
+        for repo in repos:
             # check if it's a text file
-            if os.path.isfile(i):
-                with open(i) as f:
+            if os.path.isfile(repo):
+                with open(repo) as f:
                     inputs.extend(l.strip() for l in f)
             else:
-                inputs.append(i)
+                inputs.append(repo)
 
         os.makedirs(output, exist_ok=True)
 
-        args = self.__make_args__()
+        args = self._make_args()
 
-        with multiprocessing.Pool(processes=n_processes) as pool:
+        with multiprocessing.Pool(processes=num_processes) as pool:
             pool.starmap(Repo2CooccTransformer.process_entry,
                          zip(inputs, [args] * len(inputs),
                              [output] * len(inputs)))
+
+    def _make_args(self):
+        endpoint = self._bblfsh[0]._channel._channel.target()
+        return {"linguist": self._linguist, "bblfsh_endpoint": endpoint,
+                "timeout": self._timeout}
 
 
 def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None,
                timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
     """
-    Performs the step repository -> :class:`ast2vec.nbow.NBOW`.
-
+    Extract vocabulary and co-occurrence matrix from repository.
     :param url_or_path: Repository URL or file system path.
     :param linguist: path to githib/linguist or src-d/enry.
     :param bblfsh_endpoint: Babelfish server's address.
     :param timeout: Babelfish server request timeout.
-    :return: (list of source code identifiers, scipy.sparse co-occurrences matrix)
+    :return: (list of source code identifiers, scipy.sparse co-occurrences
+             matrix)
     :rtype: tuple
     """
-    obj = Repo2Coocc(linguist=linguist, bblfsh_endpoint=bblfsh_endpoint,
-                     timeout=timeout)
-    vocabulary, matrix = obj.convert_repository(url_or_path)
-    return vocabulary, matrix
+    return Repo2CooccTransformer.process_repo(
+        url_or_path, {"linguist": linguist,
+                      "bblfsh_endpoint": bblfsh_endpoint,
+                      "timeout": timeout})
 
 
 def repo2coocc_entry(args):
@@ -224,14 +251,8 @@ def repo2coocc_entry(args):
 def repos2coocc_process(repo, args):
     log = logging.getLogger("repos2coocc")
     args_ = deepcopy(args)
-    # remove http:// or https:// from the repo name
-    if repo.startswith('https://'):
-        repo_name = repo[8:]
-    elif repo.startswith('http://'):
-        repo_name = repo[7:]
-    else:
-        repo_name = repo
-    outfile = os.path.join(args.output, repo_name.replace("/", "%") + '.asdf')
+
+    outfile = Repo2CooccTransformer.prepare_filename(repo, args.output)
 
     args_.output = outfile
     args_.repository = repo
@@ -248,7 +269,7 @@ def repos2coocc_entry(args):
 def print_coocc(tree, dependencies):
     words = split_strings(tree["tokens"])
     m_shape = tree["matrix"]["shape"]
-    nnz = tree['matrix']['data'][0].shape[0]
+    nnz = tree["matrix"]["data"][0].shape[0]
 
     print("Number of words:", len(words))
     print("First 10 words:", words[:10])
