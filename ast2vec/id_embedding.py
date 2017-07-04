@@ -1,3 +1,4 @@
+from argparse import Namespace
 import shutil
 from collections import defaultdict
 import logging
@@ -13,7 +14,7 @@ import tensorflow as tf
 from ast2vec.meta import generate_meta
 from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
 import ast2vec.swivel as swivel
-from ast2vec.repo2base import Transformer, DictAttr
+from ast2vec.repo2base import Transformer
 from ast2vec.repo2nbow import Repo2nBOW
 
 
@@ -40,7 +41,7 @@ class PreprocessTransformer(Transformer):
         d = {'vocabulary_size': self.vocabulary_size, 'input': X, 'df': df,
              'shard_size': self.shard_size, 'output': output}
 
-        args = DictAttr(d)
+        args = Namespace(d)
         preprocess(args)
 
 
@@ -250,8 +251,8 @@ class PostprocessTransformer(Transformer):
         """
         swivel_output_directory = X
         result = output
-        args = DictAttr({"swivel_output_directory": swivel_output_directory,
-                         "result": result})
+        args = Namespace({"swivel_output_directory": swivel_output_directory,
+                          "result": result})
 
         postprocess(args)
 
