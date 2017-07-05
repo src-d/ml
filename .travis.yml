@@ -16,6 +16,8 @@ python:
   - "3.5"
   - "3.6"
 install:
+  - gimme 1.8
+  - source ~/.gimme/envs/latest.env
   - pip install --upgrade pip
   - pip install -r requirements.txt
   - CC=gcc-5 CXX=g++-5 pip install -e .

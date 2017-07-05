@@ -251,11 +251,9 @@ class PostprocessTransformer(Transformer):
         """
         swivel_output_directory = X
         result = output
-        args = Namespace({"swivel_output_directory": swivel_output_directory,
-                          "result": result})
-
+        args = Namespace(swivel_output_directory=swivel_output_directory,
+                         result=result)
         postprocess(args)
-
 
 
 def postprocess(args):

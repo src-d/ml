@@ -42,6 +42,8 @@ def install_enry(args=None, target="./enry", tempdir=None):
         log.error("Please install a Go compiler, refer to https://golang.org")
         return 2
     version = tuple(int(n) for n in version.split()[2][2:].split("."))
+    if len(version) == 2:
+        version += 0,
     if version < MIN_GO_VERSION:
         log.error("Your Go compiler version is %d.%d.%d, at least %d.%d.%d is "
                   "required." % (version + MIN_GO_VERSION))
