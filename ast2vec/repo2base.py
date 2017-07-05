@@ -137,11 +137,7 @@ class Repo2Base:
 
     def _classify_files(self, target_dir):
         target_dir = os.path.abspath(target_dir)
-        # FIXME(vmarkovtsev): add --json when we implement https://github.com/src-d/enry/issues/39
-        # FIXME(vmarkovtsev): change to check_output() when we fix https://github.com/src-d/enry/issues/40
-        bjson = subprocess.run(
-            [self._linguist, target_dir],
-            stdout=subprocess.PIPE, check=False).stdout
+        bjson = subprocess.check_output([self._linguist, target_dir, "--json"])
         classified = json.loads(bjson.decode("utf-8"))
         return classified
 
