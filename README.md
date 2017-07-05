@@ -1,5 +1,7 @@
 ## ast2vec
 
+[![Build Status](https://travis-ci.org/src-d/ast2vec.svg?branch=master)](https://travis-ci.org/src-d/ast2vec) [![PyPI](https://img.shields.io/pypi/v/ast2vec.svg)](https://pypi.python.org/pypi/ast2vec)
+
 Machine Learning models on top of Abstract Syntax Trees.
 
 Currently, there are implemented:
