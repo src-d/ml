@@ -64,40 +64,40 @@ from tensorflow.python.client import device_lib
 
 flags = tf.app.flags
 
-flags.DEFINE_string('input_base_path', None,
-                    'Directory containing input shards, vocabularies, '
-                    'and marginals.')
-flags.DEFINE_string('output_base_path', None,
-                    'Path where to write the trained embeddings.')
-flags.DEFINE_integer('embedding_size', 300, 'Size of the embeddings')
-flags.DEFINE_boolean('trainable_bias', False, 'Biases are trainable')
-flags.DEFINE_integer('submatrix_rows', 4096,
-                     'Rows in each training submatrix. This must match'
-                     'the training data.')
-flags.DEFINE_integer('submatrix_cols', 4096,
-                     'Rows in each training submatrix. This must match'
-                     'the training data.')
-flags.DEFINE_float('loss_multiplier', 1.0 / 4096,
-                   'constant multiplier on loss.')
-flags.DEFINE_float('confidence_exponent', 0.5,
-                   'Exponent for l2 confidence function')
-flags.DEFINE_float('confidence_scale', 0.25,
-                   'Scale for l2 confidence function')
-flags.DEFINE_float('confidence_base', 0.1, 'Base for l2 confidence function')
-flags.DEFINE_float('learning_rate', 1.0, 'Initial learning rate')
-flags.DEFINE_string('optimizer', 'Adagrad',
-                    'SGD optimizer (tf.train.*Optimizer)')
-flags.DEFINE_integer('num_concurrent_steps', 2,
-                     'Number of threads to train with')
-flags.DEFINE_integer('num_readers', 4,
-                     'Number of threads to read the input data and feed it')
-flags.DEFINE_float('num_epochs', 40, 'Number epochs to train for')
-flags.DEFINE_float('per_process_gpu_memory_fraction', 0,
-                   'Fraction of GPU memory to use, 0 means allow_growth')
-flags.DEFINE_integer('num_gpus', 0,
-                     'Number of GPUs to use, 0 means all available')
-flags.DEFINE_string('logs', '',
-                    'Path for TensorBoard logs (empty value disables them)')
+flags.DEFINE_string("input_base_path", None,
+                    "Directory containing input shards, vocabularies, "
+                    "and marginals.")
+flags.DEFINE_string("output_base_path", None,
+                    "Path where to write the trained embeddings.")
+flags.DEFINE_integer("embedding_size", 300, "Size of the embeddings")
+flags.DEFINE_boolean("trainable_bias", False, "Biases are trainable")
+flags.DEFINE_integer("submatrix_rows", 4096,
+                     "Rows in each training submatrix. This must match"
+                     "the training data.")
+flags.DEFINE_integer("submatrix_cols", 4096,
+                     "Rows in each training submatrix. This must match"
+                     "the training data.")
+flags.DEFINE_float("loss_multiplier", 1.0 / 4096,
+                   "constant multiplier on loss.")
+flags.DEFINE_float("confidence_exponent", 0.5,
+                   "Exponent for l2 confidence function")
+flags.DEFINE_float("confidence_scale", 0.25,
+                   "Scale for l2 confidence function")
+flags.DEFINE_float("confidence_base", 0.1, "Base for l2 confidence function")
+flags.DEFINE_float("learning_rate", 1.0, "Initial learning rate")
+flags.DEFINE_string("optimizer", "Adagrad",
+                    "SGD optimizer (tf.train.*Optimizer)")
+flags.DEFINE_integer("num_concurrent_steps", 2,
+                     "Number of threads to train with")
+flags.DEFINE_integer("num_readers", 4,
+                     "Number of threads to read the input data and feed it")
+flags.DEFINE_float("num_epochs", 40, "Number epochs to train for")
+flags.DEFINE_float("per_process_gpu_memory_fraction", 0,
+                   "Fraction of GPU memory to use, 0 means allow_growth")
+flags.DEFINE_integer("num_gpus", 0,
+                     "Number of GPUs to use, 0 means all available")
+flags.DEFINE_string("logs", "",
+                    "Path for TensorBoard logs (empty value disables them)")
 
 FLAGS = flags.FLAGS
 
@@ -108,7 +108,7 @@ def log(message, *args, **kwargs):
 
 def get_available_gpus():
     return [d.name for d in device_lib.list_local_devices()
-            if d.device_type == 'GPU']
+            if d.device_type == "GPU"]
 
 
 def embeddings_with_init(vocab_size, embedding_dim, name):
@@ -127,19 +127,19 @@ def count_matrix_input(filenames, submatrix_rows, submatrix_cols):
     features = tf.parse_single_example(
         serialized_example,
         features={
-            'global_row': tf.FixedLenFeature([submatrix_rows], dtype=tf.int64),
-            'global_col': tf.FixedLenFeature([submatrix_cols], dtype=tf.int64),
-            'sparse_local_row': tf.VarLenFeature(dtype=tf.int64),
-            'sparse_local_col': tf.VarLenFeature(dtype=tf.int64),
-            'sparse_value': tf.VarLenFeature(dtype=tf.float32)
+            "global_row": tf.FixedLenFeature([submatrix_rows], dtype=tf.int64),
+            "global_col": tf.FixedLenFeature([submatrix_cols], dtype=tf.int64),
+            "sparse_local_row": tf.VarLenFeature(dtype=tf.int64),
+            "sparse_local_col": tf.VarLenFeature(dtype=tf.int64),
+            "sparse_value": tf.VarLenFeature(dtype=tf.float32)
         })
 
-    global_row = features['global_row']
-    global_col = features['global_col']
+    global_row = features["global_row"]
+    global_col = features["global_col"]
 
-    sparse_local_row = features['sparse_local_row'].values
-    sparse_local_col = features['sparse_local_col'].values
-    sparse_count = features['sparse_value'].values
+    sparse_local_row = features["sparse_local_row"].values
+    sparse_local_col = features["sparse_local_col"].values
+    sparse_count = features["sparse_value"].values
 
     sparse_indices = tf.concat(axis=1, values=[tf.expand_dims(sparse_local_row, 1),
                                                tf.expand_dims(sparse_local_col, 1)])
@@ -170,28 +170,28 @@ def write_embedding_tensor_to_disk(vocab_path, output_path, sess, embedding):
     # Fetch the embedding values from the model
     embeddings = sess.run(embedding)
 
-    with open(output_path, 'w') as out_f:
+    with open(output_path, "w") as out_f:
         with open(vocab_path) as vocab_f:
             for index, word in enumerate(vocab_f):
                 word = word.strip()
                 embedding = embeddings[index]
-                out_f.write(word + '\t' + '\t'.join(
-                    [str(x) for x in embedding]) + '\n')
+                out_f.write(word + "\t" + "\t".join(
+                    [str(x) for x in embedding]) + "\n")
 
 
 def write_embeddings_to_disk(config, model, sess):
     """Writes row and column embeddings disk"""
     # Row Embedding
-    row_vocab_path = config.input_base_path + '/row_vocab.txt'
-    row_embedding_output_path = config.output_base_path + '/row_embedding.tsv'
-    log('Writing row embeddings to: %s', row_embedding_output_path)
+    row_vocab_path = config.input_base_path + "/row_vocab.txt"
+    row_embedding_output_path = config.output_base_path + "/row_embedding.tsv"
+    log("Writing row embeddings to: %s", row_embedding_output_path)
     write_embedding_tensor_to_disk(row_vocab_path, row_embedding_output_path,
                                    sess, model.row_embedding)
 
     # Column Embedding
-    col_vocab_path = config.input_base_path + '/col_vocab.txt'
-    col_embedding_output_path = config.output_base_path + '/col_embedding.tsv'
-    log('Writing column embeddings to: %s', col_embedding_output_path)
+    col_vocab_path = config.input_base_path + "/col_vocab.txt"
+    col_embedding_output_path = config.output_base_path + "/col_embedding.tsv"
+    log("Writing column embeddings to: %s", col_embedding_output_path)
     write_embedding_tensor_to_disk(col_vocab_path, col_embedding_output_path,
                                    sess, model.col_embedding)
 
@@ -204,10 +204,10 @@ class SwivelModel:
         self._config = config
 
         # Create paths to input data files
-        log('Reading model from: %s', config.input_base_path)
-        count_matrix_files = glob.glob(config.input_base_path + '/shard-*.pb')
-        row_sums_path = config.input_base_path + '/row_sums.txt'
-        col_sums_path = config.input_base_path + '/col_sums.txt'
+        log("Reading model from: %s", config.input_base_path)
+        count_matrix_files = glob.glob(config.input_base_path + "/shard-*.pb")
+        row_sums_path = config.input_base_path + "/row_sums.txt"
+        col_sums_path = config.input_base_path + "/col_sums.txt"
 
         # Read marginals
         row_sums = read_marginals_file(row_sums_path)
@@ -215,14 +215,14 @@ class SwivelModel:
 
         self.n_rows = len(row_sums)
         self.n_cols = len(col_sums)
-        log('Matrix dim: (%d,%d) SubMatrix dim: (%d,%d)',
+        log("Matrix dim: (%d,%d) SubMatrix dim: (%d,%d)",
             self.n_rows, self.n_cols, config.submatrix_rows,
             config.submatrix_cols)
         self.n_submatrices = (self.n_rows * self.n_cols /
                               (config.submatrix_rows * config.submatrix_cols))
-        log('n_submatrices: %d', self.n_submatrices)
+        log("n_submatrices: %d", self.n_submatrices)
 
-        with tf.device('/cpu:0'):
+        with tf.device("/cpu:0"):
             # ===== CREATE VARIABLES ======
             # Get input
             global_row, global_col, count = count_matrix_input(
@@ -233,13 +233,13 @@ class SwivelModel:
             self.row_embedding = embeddings_with_init(
                 embedding_dim=config.embedding_size,
                 vocab_size=self.n_rows,
-                name='row_embedding')
+                name="row_embedding")
             self.col_embedding = embeddings_with_init(
                 embedding_dim=config.embedding_size,
                 vocab_size=self.n_cols,
-                name='col_embedding')
-            tf.summary.histogram('row_emb', self.row_embedding)
-            tf.summary.histogram('col_emb', self.col_embedding)
+                name="col_embedding")
+            tf.summary.histogram("row_emb", self.row_embedding)
+            tf.summary.histogram("col_emb", self.col_embedding)
 
             matrix_log_sum = math.log(np.sum(row_sums) + 1)
             row_bias_init = [math.log(x + 1) for x in row_sums]
@@ -248,30 +248,30 @@ class SwivelModel:
                 row_bias_init, trainable=config.trainable_bias)
             self.col_bias = tf.Variable(
                 col_bias_init, trainable=config.trainable_bias)
-            tf.summary.histogram('row_bias', self.row_bias)
-            tf.summary.histogram('col_bias', self.col_bias)
+            tf.summary.histogram("row_bias", self.row_bias)
+            tf.summary.histogram("col_bias", self.col_bias)
 
             # Add optimizer
             l2_losses = []
             sigmoid_losses = []
-            self.global_step = tf.Variable(0, name='global_step')
+            self.global_step = tf.Variable(0, name="global_step")
             learning_rate = tf.Variable(config.learning_rate,
-                                        name='learning_rate')
-            opt = getattr(tf.train, FLAGS.optimizer + 'Optimizer')(
+                                        name="learning_rate")
+            opt = getattr(tf.train, FLAGS.optimizer + "Optimizer")(
                 learning_rate)
-            tf.summary.scalar('learning_rate', learning_rate)
+            tf.summary.scalar("learning_rate", learning_rate)
 
             all_grads = []
 
-        devices = ['/gpu:%d' % i for i in range(FLAGS.num_gpus)] \
+        devices = ["/gpu:%d" % i for i in range(FLAGS.num_gpus)] \
             if FLAGS.num_gpus > 0 else get_available_gpus()
         self.devices_number = len(devices)
         if not self.devices_number:
-            devices = ['/cpu:0']
+            devices = ["/cpu:0"]
             self.devices_number = 1
         for dev in devices:
             with tf.device(dev):
-                with tf.name_scope(dev[1:].replace(':', '_')):
+                with tf.name_scope(dev[1:].replace(":", "_")):
                     # ===== CREATE GRAPH =====
                     # Fetch embeddings.
                     selected_row_embedding = tf.nn.embedding_lookup(
@@ -322,7 +322,7 @@ class SwivelModel:
                     grads = opt.compute_gradients(loss)
                     all_grads.append(grads)
 
-        with tf.device('/cpu:0'):
+        with tf.device("/cpu:0"):
             # ===== MERGE LOSSES =====
             l2_loss = tf.reduce_mean(tf.concat(axis=0, values=l2_losses), 0,
                                      name="l2_loss")
@@ -348,7 +348,7 @@ class SwivelModel:
             self.saver = tf.train.Saver(sharded=True)
 
     def initialize_summary(self, sess):
-        log('creating TensorBoard stuff...')
+        log("creating TensorBoard stuff...")
         self.summary = tf.summary.merge_all()
         self.writer = tf.summary.FileWriter(FLAGS.logs, sess.graph)
         projector_config = \
@@ -357,7 +357,7 @@ class SwivelModel:
         length = min(10000, self.n_rows, self.n_cols)
         self.embedding10k = tf.Variable(
             tf.zeros((length, self._config.embedding_size)),
-            name='top10k_embedding')
+            name="top10k_embedding")
         embedding_config.tensor_name = self.embedding10k.name
         tf.contrib.tensorboard.plugins.projector.visualize_embeddings(
             self.writer, projector_config)
@@ -372,7 +372,7 @@ class SwivelModel:
             (self.summary, assignment, self.global_step))
         self.writer.add_summary(summary, global_step)
         self.saver.save(
-            sess, os.path.join(FLAGS.logs, 'embeddings10k.checkpoint'),
+            sess, os.path.join(FLAGS.logs, "embeddings10k.checkpoint"),
             global_step)
 
 
@@ -386,27 +386,27 @@ def main(_):
 
     # Create and run model
     with tf.Graph().as_default():
-        log('creating the model...')
+        log("creating the model...")
         model = SwivelModel(FLAGS)
 
         # Create a session for running Ops on the Graph.
         gpu_opts = {}
         if FLAGS.per_process_gpu_memory_fraction > 0:
-            gpu_opts['per_process_gpu_memory_fraction'] = \
+            gpu_opts["per_process_gpu_memory_fraction"] = \
                 FLAGS.per_process_gpu_memory_fraction
         else:
-            gpu_opts['allow_growth'] = True
+            gpu_opts["allow_growth"] = True
         gpu_options = tf.GPUOptions(**gpu_opts)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         if FLAGS.logs:
             model.initialize_summary(sess)
 
         # Run the Op to initialize the variables.
-        log('initializing the variables...')
+        log("initializing the variables...")
         sess.run(tf.global_variables_initializer())
 
         # Start feeding input
-        log('starting the input threads...')
+        log("starting the input threads...")
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
@@ -421,8 +421,8 @@ def main(_):
         n_steps_between_summary_updates = 10000
         status_i = [0, 0]
         status_lock = threading.Lock()
-        msg = ('%%%dd/%%d submatrices trained (%%.1f%%%%), '
-               '%%5.1f submatrices/sec | loss %%f') % \
+        msg = ("%%%dd/%%d submatrices trained (%%.1f%%%%), "
+               "%%5.1f submatrices/sec | loss %%f") % \
             len(str(n_submatrices_to_train))
 
         def TrainingFn():
@@ -472,5 +472,5 @@ def main(_):
     log("Elapsed: %s", time.time() - start_time)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tf.app.run()
