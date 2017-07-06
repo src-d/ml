@@ -171,7 +171,7 @@ def repo2nbow_entry(args):
 
 
 def repos2nbow_process(repo, args):
-    log = logging.getLogger("repos2coocc")
+    log = logging.getLogger("repos2nbow")
     args_ = deepcopy(args)
     outfile = os.path.join(args.output, repo.replace("/", "#"))
     args_.output = outfile
