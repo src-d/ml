@@ -12,7 +12,7 @@ import numpy
 from scipy.sparse import dok_matrix, csr_matrix, coo_matrix
 import tensorflow as tf
 
-from ast2vec.meta import generate_meta
+from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
 from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
 import ast2vec.swivel as swivel
 from ast2vec.repo2base import Transformer
@@ -96,7 +96,7 @@ def preprocess(args):
             "freqs": chosen_freqs,
             "docs": len(inputs),
             "meta": generate_meta("docfreq")
-        }).write_to(args.df, all_array_compression="zlib")
+        }).write_to(args.df, all_array_compression=ARRAY_COMPRESSION)
     del chosen_freqs
 
     if not os.path.exists(args.output):
@@ -250,4 +250,4 @@ def postprocess(args):
         "tokens": merge_strings(tokens),
         "embeddings": embeddings,
         "meta": generate_meta("id2vec")
-    }).write_to(args.result, all_array_compression="zlib")
+    }).write_to(args.result, all_array_compression=ARRAY_COMPRESSION)

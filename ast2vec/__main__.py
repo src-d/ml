@@ -57,7 +57,7 @@ def setup_logging(level):
         level = logging._nameToLevel[level]
 
     def ensure_utf8_stream(stream):
-        if not isinstance(stream, io.StringIO):
+        if not isinstance(stream, io.StringIO) and hasattr(stream, "buffer"):
             stream = codecs.getwriter("utf-8")(stream.buffer)
             stream.encoding = "utf-8"
         return stream
