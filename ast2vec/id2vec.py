@@ -26,11 +26,11 @@ class Id2Vec(Model):
     @property
     def tokens(self):
         """
-        List with the processed source code identifiers of length N tokens.
+        List with the processed source code identifiers.
         """
         return self._tokens
 
-    def token2index(self, item):
+    def __getitem__(self, item):
         """
         Returns the index of the specified processed source code identifier.
         """

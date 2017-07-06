@@ -62,7 +62,7 @@ class Repo2nBOW(Repo2Base):
             if self.SIMPLE_IDENTIFIER in node.roles:
                 for sub in self._process_token(node.token):
                     try:
-                        bag[self._id2vec.token2index(sub)] += 1
+                        bag[self._id2vec[sub]] += 1
                     except KeyError:
                         pass
             stack.extend(node.children)
