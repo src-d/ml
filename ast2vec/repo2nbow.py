@@ -130,8 +130,6 @@ class Repo2nBOWTransformer(Transformer):
                 self._process_repo(repo, outfile)
 
 
-
-
 def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
               bblfsh_endpoint=None, timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
               gcs_bucket=None):

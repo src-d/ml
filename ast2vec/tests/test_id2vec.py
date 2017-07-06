@@ -13,7 +13,7 @@ class Id2VecTests(unittest.TestCase):
             source=os.path.join(os.path.dirname(__file__), paths.ID2VEC))
 
     def test_embeddings(self):
-        embeddings = self.model.embeddings.copy()
+        embeddings = self.model.embeddings
         self.assertIsInstance(embeddings, numpy.ndarray)
         self.assertEqual(embeddings.shape, (1000, 300))
 

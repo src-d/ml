@@ -7,9 +7,9 @@ class Id2Vec(Model):
     """
     NAME = "id2vec"
 
-    def _load(self, npz):
-        self._embeddings = npz["embeddings"]
-        self._tokens = split_strings(npz["tokens"])
+    def _load(self, tree):
+        self._embeddings = tree["embeddings"].copy()
+        self._tokens = split_strings(tree["tokens"])
         self._log.info("Building the token index...")
         # numpy arrays of string are of fixed item size (max length) - fix this
         self._tokens = list(self._tokens)

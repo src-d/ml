@@ -76,22 +76,21 @@ class Model:
                 self._fetch(source, file_name)
                 source = file_name
             self._log.info("Reading %s...", source)
-            self._source = asdf.open(source)
-            tree = self._source.tree
-            self._meta = tree["meta"]
-            if self.NAME != self._meta["model"] and self.NAME is not None:
-                raise ValueError(
-                    "The supplied model is of the wrong type: needed "
-                    "%s, got %s." % (self.NAME, self._meta["model"]))
-            self._load(tree)
+            model = asdf.open(source)
+            try:
+                tree = model.tree
+                self._meta = tree["meta"]
+                if self.NAME != self._meta["model"] and self.NAME is not None:
+                    raise ValueError(
+                        "The supplied model is of the wrong type: needed "
+                        "%s, got %s." % (self.NAME, self._meta["model"]))
+                self._load(tree)
+            finally:
+                if self.NAME is not None:
+                    model.close()
         finally:
             if self.NAME is None:
                 shutil.rmtree(cache_dir)
-
-    def __del__(self):
-        source = getattr(self, "_source", None)
-        if source is not None:
-            source.close()
 
     @property
     def meta(self):
