@@ -29,6 +29,7 @@ class Repo2Base:
         .values_by_name["SIMPLE_IDENTIFIER"].number + 1  #: Id of SIMPLE_IDENTIFIER in Babelfish.
     # FIXME(vmarkovtsev): remove "+1"
     DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
+    MAX_FILE_SIZE = 200000
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT):
@@ -83,6 +84,13 @@ class Repo2Base:
                             # Check if filename is symlink
                             if os.path.islink(filename):
                                 filename = os.readlink(filename)
+
+                            size = os.stat(filename).st_size
+                            if size > self.MAX_FILE_SIZE:
+                                self._log.warning("%s is too big - %d",
+                                                  filename, size)
+                                queue_out.put_nowait(None)
+                                continue
 
                             uast = self._bblfsh[thread_index].parse_uast(
                                 filename, language=language,
