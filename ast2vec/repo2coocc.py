@@ -7,7 +7,7 @@ import os
 import asdf
 from scipy.sparse import dok_matrix
 
-from ast2vec.meta import generate_meta
+from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
 from ast2vec.model import disassemble_sparse_matrix, merge_strings, \
     split_strings
 from ast2vec.repo2base import Repo2Base, Transformer, repos2_entry, \
@@ -165,7 +165,7 @@ class Repo2CooccTransformer(Repo2Coocc, Transformer):
                 "tokens": merge_strings(vocabulary),
                 "matrix": disassemble_sparse_matrix(matrix),
                 "meta": generate_meta("co-occurrences")
-            }).write_to(outfile, all_array_compression="zlib")
+            }).write_to(outfile, all_array_compression=ARRAY_COMPRESSION)
         except:
             log = logging.getLogger(Repo2CooccTransformer.LOG_NAME)
             log.exception(
@@ -245,7 +245,7 @@ def repo2coocc_entry(args):
         "tokens": merge_strings(vocabulary),
         "matrix": disassemble_sparse_matrix(matrix),
         "meta": generate_meta("co-occurrences")
-    }).write_to(args.output, all_array_compression="zlib")
+    }).write_to(args.output, all_array_compression=ARRAY_COMPRESSION)
 
 
 def repos2coocc_process(repo, args):

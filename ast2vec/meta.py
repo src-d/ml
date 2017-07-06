@@ -4,6 +4,9 @@ import uuid
 import ast2vec
 
 
+ARRAY_COMPRESSION = "zlib"
+
+
 def generate_meta(name, *deps):
     """
     Creates the metadata tree for the given model name and the list of

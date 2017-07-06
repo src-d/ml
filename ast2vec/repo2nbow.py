@@ -6,7 +6,7 @@ import os
 
 import asdf
 
-from ast2vec.meta import generate_meta
+from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.repo2base import Repo2Base, Transformer, repos2_entry, \
@@ -167,7 +167,7 @@ def repo2nbow_entry(args):
     asdf.AsdfFile({
         "nbow": nbow,
         "meta": generate_meta("nbow", id2vec, df)
-    }).write_to(args.output, all_array_compression="zlib")
+    }).write_to(args.output, all_array_compression=ARRAY_COMPRESSION)
 
 
 def repos2nbow_process(repo, args):
