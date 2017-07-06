@@ -5,8 +5,10 @@ import os
 import sys
 import unittest
 
+import ast2vec.model as model
 from ast2vec.dump import dump_model
 import ast2vec.tests.models as paths
+from ast2vec.tests.fake_requests import FakeRequests
 
 
 @contextmanager
@@ -80,6 +82,30 @@ First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPad
 Number of words: 394
 First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']
 Matrix: , shape: [394, 394] number of non zero elements 20832
+"""
+        self.assertEqual(out.getvalue(), reference)
+
+    def test_id2vec_id(self):
+        def route(url):
+            if url.endswith(model.Model.INDEX_FILE):
+                return '{"models": {"id2vec": {' \
+                       '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
+                       '{"url": "https://xxx"}}}}'.encode()
+            self.assertEqual("https://xxx", url)
+            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+                return fin.read()
+
+        model.requests = FakeRequests(route)
+        with captured_output() as (out, err):
+            dump_model(self._get_args(
+                input="92609e70-f79c-46b5-8419-55726e873cfc"))
+        reference = """{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
+ 'dependencies': [],
+ 'model': 'id2vec',
+ 'uuid': '92609e70-f79c-46b5-8419-55726e873cfc',
+ 'version': [1, 0, 0]}
+Shape: (1000, 300)
+First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
 """
         self.assertEqual(out.getvalue(), reference)
 
