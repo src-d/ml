@@ -23,10 +23,7 @@ def captured_output():
 
 
 class DumpTests(unittest.TestCase):
-    def test_id2vec(self):
-        with captured_output() as (out, err):
-            dump_model(self._get_args(input=self._get_path(paths.ID2VEC)))
-        reference = """{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
+    ID2VEC_DUMP = """{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
  'dependencies': [],
  'model': 'id2vec',
  'uuid': '92609e70-f79c-46b5-8419-55726e873cfc',
@@ -34,12 +31,7 @@ class DumpTests(unittest.TestCase):
 Shape: (1000, 300)
 First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
 """
-        self.assertEqual(out.getvalue(), reference)
-
-    def test_docfreq(self):
-        with captured_output() as (out, err):
-            dump_model(self._get_args(input=self._get_path(paths.DOCFREQ)))
-        reference = """{'created_at': datetime.datetime(2017, 6, 19, 9, 59, 14, 766638),
+    DOCFREQ_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 59, 14, 766638),
  'dependencies': [],
  'model': 'docfreq',
  'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
@@ -47,12 +39,8 @@ First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value
 Number of words: 1000
 First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', 'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']
 """
-        self.assertEqual(out.getvalue(), reference)
 
-    def test_nbow(self):
-        with captured_output() as (out, err):
-            dump_model(self._get_args(input=self._get_path(paths.NBOW)))
-        reference = """{'created_at': datetime.datetime(2017, 6, 19, 9, 16, 8, 942880),
+    NBOW_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 16, 8, 942880),
  'dependencies': [{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
                    'dependencies': [],
                    'model': 'id2vec',
@@ -69,12 +57,8 @@ First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaa
 Shape: [1000, 999424]
 First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPadRT', 'wp-shortcake/shortcake', 'capaj/Moonridge', 'HugoGiraudel/hugogiraudel.github.com', 'crosswalk-project/crosswalk-website', 'apache/parquet-mr', 'dciccale/kimbo.js', 'processone/oneteam']
 """
-        self.assertEqual(out.getvalue(), reference)
 
-    def test_coocc(self):
-        with captured_output() as (out, err):
-            dump_model(self._get_args(input=self._get_path(paths.COOCC)))
-        reference = """{'created_at': datetime.datetime(2017, 7, 5, 18, 4, 5, 688259),
+    COOCC_DUMP = """{'created_at': datetime.datetime(2017, 7, 5, 18, 4, 5, 688259),
  'dependencies': [],
  'model': 'co-occurrences',
  'uuid': '215aadce-d98c-4391-b93f-90cae582e895',
@@ -83,7 +67,26 @@ Number of words: 394
 First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']
 Matrix: , shape: [394, 394] number of non zero elements 20832
 """
-        self.assertEqual(out.getvalue(), reference)
+
+    def test_id2vec(self):
+        with captured_output() as (out, err):
+            dump_model(self._get_args(input=self._get_path(paths.ID2VEC)))
+        self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
+
+    def test_docfreq(self):
+        with captured_output() as (out, err):
+            dump_model(self._get_args(input=self._get_path(paths.DOCFREQ)))
+        self.assertEqual(out.getvalue(), self.DOCFREQ_DUMP)
+
+    def test_nbow(self):
+        with captured_output() as (out, err):
+            dump_model(self._get_args(input=self._get_path(paths.NBOW)))
+        self.assertEqual(out.getvalue(), self.NBOW_DUMP)
+
+    def test_coocc(self):
+        with captured_output() as (out, err):
+            dump_model(self._get_args(input=self._get_path(paths.COOCC)))
+        self.assertEqual(out.getvalue(), self.COOCC_DUMP)
 
     def test_id2vec_id(self):
         def route(url):
@@ -99,15 +102,18 @@ Matrix: , shape: [394, 394] number of non zero elements 20832
         with captured_output() as (out, err):
             dump_model(self._get_args(
                 input="92609e70-f79c-46b5-8419-55726e873cfc"))
-        reference = """{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
- 'dependencies': [],
- 'model': 'id2vec',
- 'uuid': '92609e70-f79c-46b5-8419-55726e873cfc',
- 'version': [1, 0, 0]}
-Shape: (1000, 300)
-First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
-"""
-        self.assertEqual(out.getvalue(), reference)
+        self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
+
+    def test_id2vec_url(self):
+        def route(url):
+            self.assertEqual("https://xxx", url)
+            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+                return fin.read()
+
+        model.requests = FakeRequests(route)
+        with captured_output() as (out, err):
+            dump_model(self._get_args(input="https://xxx"))
+        self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
 
     @staticmethod
     def _get_args(input=None, gcs=None, dependency=tuple()):
