@@ -20,14 +20,14 @@ python:
 - '3.6'
 before_install:
 - openssl aes-256-cbc -K $encrypted_fc69f8f90972_key -iv $encrypted_fc69f8f90972_iv
-  -in .gcs.json.enc -out gcs.json -d || true
+  -in .gcs.json.enc -out gcs.json -d || rm -f gcs.json
 - gcloud version || true
 - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export
   CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
 - source /home/travis/google-cloud-sdk/path.bash.inc
 - gcloud version
 - pip2 install google-compute-engine
-- if [ -e gcs.json ]; then gcloud auth activate-service-account --key-file=gcs.json; fi
+- if [ -f gcs.json ]; then gcloud auth activate-service-account --key-file=gcs.json; fi
 install:
 - gimme 1.8
 - source ~/.gimme/envs/latest.env
