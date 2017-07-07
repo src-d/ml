@@ -1,7 +1,5 @@
-import io
 import json
 import logging
-import math
 import os
 import time
 import uuid
@@ -33,7 +31,7 @@ class FileReadTracker:
     def size(self):
         return self._size
 
-    def read(self, size):
+    def read(self, size=None):
         result = self._file.read(size)
         self._position += len(result)
         self._progress.show(self._position)
@@ -59,7 +57,10 @@ def publish_model(args):
     meta = tree["meta"]
     log.info("Locking the bucket...")
     transaction = uuid.uuid4().hex.encode()
-    client = Client()
+    if args.credentials:
+        client = Client.from_service_account_json(args.credentials)
+    else:
+        client = Client()
     bucket = client.get_bucket(args.gcs)
     sentinel = bucket.blob("index.lock")
     locked = False
@@ -92,7 +93,7 @@ def publish_model(args):
                 tracker.done()
         blob.make_public()
         model_url = blob.public_url
-        log.info("Uploaded as %s", blob.path)
+        log.info("Uploaded as %s", model_url)
         log.info("Updating the models index...")
         blob = bucket.get_blob(Model.INDEX_FILE)
         index = json.loads(blob.download_as_string().decode("utf-8"))

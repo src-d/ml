@@ -39,10 +39,9 @@ class PreprocessTransformer(Transformer):
         if isinstance(X, str):
             X = [X]
 
-        d = {'vocabulary_size': self.vocabulary_size, 'input': X, 'df': df,
-             'shard_size': self.shard_size, 'output': output}
-
-        args = Namespace(d)
+        args = Namespace(vocabulary_size=self.vocabulary_size,
+                         input=X, df=df, shard_size=self.shard_size,
+                         output=output)
         preprocess(args)
 
 

@@ -241,6 +241,8 @@ def main():
                                 help="Set this model as the default one.")
     publish_parser.add_argument("--force", action="store_true",
                                 help="Overwrite existing models.")
+    publish_parser.add_argument("--credentials",
+                                help="Path to a Google Cloud service account JSON.")
 
     list_parser = subparsers.add_parser(
         "list-models", help="Lists all the models in the registry.")

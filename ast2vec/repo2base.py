@@ -66,8 +66,7 @@ class Repo2Base:
         try:
             self._log.info("Classifying the files...")
             classified = self._classify_files(target_dir)
-            self._log.info("Result: %s",
-                           {k: len(v) for k, v in classified.items()})
+            self._log.info("Result: %s", {k: len(v) for k, v in classified.items()})
             self._log.info("Fetching and processing UASTs...")
 
             def uast_generator():
@@ -88,17 +87,14 @@ class Repo2Base:
 
                             size = os.stat(filename).st_size
                             if size > self.MAX_FILE_SIZE:
-                                self._log.warning("%s is too big - %d",
-                                                  filename, size)
+                                self._log.warning("%s is too big - %d", filename, size)
                                 queue_out.put_nowait(None)
                                 continue
 
                             uast = self._bblfsh[thread_index].parse_uast(
-                                filename, language=language,
-                                timeout=self._timeout)
+                                filename, language=language, timeout=self._timeout)
                             if uast is None:
-                                self._log.warning("bblfsh timed out on %s",
-                                                  filename)
+                                self._log.warning("bblfsh timed out on %s", filename)
                             queue_out.put_nowait(uast)
                         except:
                             self._log.exception(

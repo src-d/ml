@@ -1,6 +1,7 @@
 import argparse
 from contextlib import contextmanager
 from io import StringIO
+import logging
 import os
 import sys
 import unittest
@@ -13,13 +14,17 @@ from ast2vec.tests.fake_requests import FakeRequests
 
 @contextmanager
 def captured_output():
+    log = StringIO()
+    log_handler = logging.StreamHandler(log)
+    logging.getLogger().addHandler(log_handler)
     new_out, new_err = StringIO(), StringIO()
     old_out, old_err = sys.stdout, sys.stderr
     try:
         sys.stdout, sys.stderr = new_out, new_err
-        yield sys.stdout, sys.stderr
+        yield sys.stdout, sys.stderr, log
     finally:
         sys.stdout, sys.stderr = old_out, old_err
+        logging.getLogger().removeHandler(log_handler)
 
 
 class DumpTests(unittest.TestCase):
@@ -69,22 +74,22 @@ Matrix: , shape: [394, 394] number of non zero elements 20832
 """
 
     def test_id2vec(self):
-        with captured_output() as (out, err):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=self._get_path(paths.ID2VEC)))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
 
     def test_docfreq(self):
-        with captured_output() as (out, err):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=self._get_path(paths.DOCFREQ)))
         self.assertEqual(out.getvalue(), self.DOCFREQ_DUMP)
 
     def test_nbow(self):
-        with captured_output() as (out, err):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=self._get_path(paths.NBOW)))
         self.assertEqual(out.getvalue(), self.NBOW_DUMP)
 
     def test_coocc(self):
-        with captured_output() as (out, err):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=self._get_path(paths.COOCC)))
         self.assertEqual(out.getvalue(), self.COOCC_DUMP)
 
@@ -99,7 +104,7 @@ Matrix: , shape: [394, 394] number of non zero elements 20832
                 return fin.read()
 
         model.requests = FakeRequests(route)
-        with captured_output() as (out, err):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(
                 input="92609e70-f79c-46b5-8419-55726e873cfc"))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
@@ -111,7 +116,7 @@ Matrix: , shape: [394, 394] number of non zero elements 20832
                 return fin.read()
 
         model.requests = FakeRequests(route)
-        with captured_output() as (out, err):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input="https://xxx"))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
 
