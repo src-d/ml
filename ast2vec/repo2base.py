@@ -56,7 +56,8 @@ class Repo2Base:
             self._log.info("Cloning from %s...", url_or_path)
             try:
                 subprocess.check_call(
-                    ["git", "clone", "--depth=1", url_or_path, target_dir])
+                    ["git", "clone", "--depth=1", url_or_path, target_dir],
+                    stdin=subprocess.DEVNULL)
             except Exception as e:
                 shutil.rmtree(target_dir)
                 raise e from None
