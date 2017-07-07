@@ -144,8 +144,18 @@ class Repo2CooccTransformer(Repo2Coocc, Transformer):
         vocabulary, matrix = obj.convert_repository(url_or_path)
         return vocabulary, matrix
 
+    @classmethod
+    def process_entry(cls, url_or_path, args, output):
+        pid = os.fork()
+        if pid == 0:
+            cls._process_entry(url_or_path, args, output)
+            import sys
+            sys.exit()
+        else:
+            os.waitpid(pid, 0)
+
     @staticmethod
-    def process_entry(url_or_path, args, output):
+    def _process_entry(url_or_path, args, output):
         """
         Pipeline for one repository:
         1) prepare filename
@@ -158,6 +168,7 @@ class Repo2CooccTransformer(Repo2Coocc, Transformer):
         """
         outfile = Repo2CooccTransformer.prepare_filename(url_or_path,
                                                          output)
+
         try:
             vocabulary, matrix = Repo2CooccTransformer.process_repo(
                 url_or_path, args)
