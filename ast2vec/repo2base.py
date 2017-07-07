@@ -105,7 +105,7 @@ class Repo2Base:
                                 "Error while processing %s.", task)
                             queue_out.put_nowait(None)
 
-                pool = [threading.Thread(target=thread_loop, args=(i,))
+                pool = [threading.Thread(target=thread_loop, args=(i,), name="%s@%d" % (url_or_path, i))
                         for i in range(multiprocessing.cpu_count())]
                 for thread in pool:
                     thread.start()
