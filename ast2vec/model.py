@@ -53,7 +53,7 @@ class Model:
             model_id = self.DEFAULT_NAME if not is_uuid else source
             file_name = model_id + self.DEFAULT_FILE_EXT
             file_name = os.path.join(os.path.expanduser(cache_dir), file_name)
-            if os.path.exists(file_name):
+            if os.path.exists(file_name) and not os.path.exists(source):
                 source = file_name
             elif source is None or is_uuid:
                 buffer = io.BytesIO()

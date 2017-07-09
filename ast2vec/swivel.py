@@ -144,7 +144,7 @@ def count_matrix_input(filenames, submatrix_rows, submatrix_cols):
     sparse_indices = tf.concat(axis=1, values=[tf.expand_dims(sparse_local_row, 1),
                                                tf.expand_dims(sparse_local_col, 1)])
     count = tf.sparse_to_dense(sparse_indices, [submatrix_rows, submatrix_cols],
-                               sparse_count)
+                               sparse_count, validate_indices=False)
 
     queued_global_row, queued_global_col, queued_count = tf.train.batch(
         [global_row, global_col, count],

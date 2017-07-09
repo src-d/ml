@@ -288,7 +288,6 @@ def postprocess(args):
                 embeddings.append((erow + ecol) / 2)
     log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
-    tokens = numpy.array(tokens, dtype=str)
     log.info("Writing %s...", args.result)
     asdf.AsdfFile({
         "tokens": merge_strings(tokens),

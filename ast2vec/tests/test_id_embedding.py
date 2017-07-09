@@ -1,5 +1,6 @@
 import argparse
 import os
+import subprocess
 import tempfile
 import unittest
 
@@ -8,20 +9,21 @@ import numpy
 from scipy.sparse import coo_matrix
 import tensorflow as tf
 
-from ast2vec import DocumentFrequencies
-from ast2vec.id_embedding import preprocess
+from ast2vec import DocumentFrequencies, swivel, Id2Vec
+from ast2vec.id_embedding import preprocess, run_swivel, postprocess
 from ast2vec.model import split_strings, assemble_sparse_matrix
 from ast2vec.tests.test_dump import captured_output
 
 
 class IdEmbeddingTests(unittest.TestCase):
+    VOCAB = 4096
+    
     def test_preprocess(self):
-        VOCAB = 4096
         with tempfile.TemporaryDirectory() as tmpdir:
             args = argparse.Namespace(
                 output=tmpdir, df=os.path.join(tmpdir, "docfreq.asdf"),
                 input=[os.path.join(os.path.dirname(__file__), "coocc")],
-                vocabulary_size=VOCAB, shard_size=VOCAB)
+                vocabulary_size=self.VOCAB, shard_size=self.VOCAB)
             with captured_output() as (out, err, log):
                 preprocess(args)
             self.assertFalse(out.getvalue())
@@ -33,7 +35,7 @@ class IdEmbeddingTests(unittest.TestCase):
                 ["col_sums.txt", "col_vocab.txt", "docfreq.asdf", "row_sums.txt", "row_vocab.txt",
                  "shard-000-000.pb"])
             df = DocumentFrequencies(source=os.path.join(tmpdir, "docfreq.asdf"))
-            self.assertEqual(len(df), VOCAB)
+            self.assertEqual(len(df), self.VOCAB)
             self.assertEqual(df.docs, len(os.listdir(args.input[0])) - 1)
             with open(os.path.join(tmpdir, "col_sums.txt")) as fin:
                 col_sums = fin.read()
@@ -52,8 +54,8 @@ class IdEmbeddingTests(unittest.TestCase):
                 features = tf.parse_single_example(
                     fin.read(),
                     features={
-                        "global_row": tf.FixedLenFeature([VOCAB], dtype=tf.int64),
-                        "global_col": tf.FixedLenFeature([VOCAB], dtype=tf.int64),
+                        "global_row": tf.FixedLenFeature([self.VOCAB], dtype=tf.int64),
+                        "global_col": tf.FixedLenFeature([self.VOCAB], dtype=tf.int64),
                         "sparse_local_row": tf.VarLenFeature(dtype=tf.int64),
                         "sparse_local_col": tf.VarLenFeature(dtype=tf.int64),
                         "sparse_value": tf.VarLenFeature(dtype=tf.float32)
@@ -62,15 +64,15 @@ class IdEmbeddingTests(unittest.TestCase):
                 global_row, global_col, local_row, local_col, value = session.run(
                     [features[n] for n in ("global_row", "global_col", "sparse_local_row",
                                            "sparse_local_col", "sparse_value")])
-            self.assertEqual(set(range(VOCAB)), set(global_row))
-            self.assertEqual(set(range(VOCAB)), set(global_col))
+            self.assertEqual(set(range(self.VOCAB)), set(global_row))
+            self.assertEqual(set(range(self.VOCAB)), set(global_col))
             nnz = 1421193
             self.assertEqual(value.values.shape, (nnz,))
             self.assertEqual(local_row.values.shape, (nnz,))
             self.assertEqual(local_col.values.shape, (nnz,))
             numpy.random.seed(0)
             all_tokens = row_vocab.split("\n")
-            chosen_indices = numpy.random.choice(list(range(VOCAB)), 128, replace=False)
+            chosen_indices = numpy.random.choice(list(range(self.VOCAB)), 128, replace=False)
             chosen = [all_tokens[i] for i in chosen_indices]
             freqs = numpy.zeros((len(chosen),) * 2, dtype=int)
             index = {w: i for i, w in enumerate(chosen)}
@@ -91,9 +93,43 @@ class IdEmbeddingTests(unittest.TestCase):
             matrix = coo_matrix((
                 value.values, ([global_row[row] for row in local_row.values],
                                [global_col[col] for col in local_col.values])),
-                shape=(VOCAB, VOCAB))
+                shape=(self.VOCAB, self.VOCAB))
             matrix = matrix.tocsr()[chosen_indices][:, chosen_indices].todense().astype(int)
             self.assertTrue((matrix == freqs).all())
+
+    def test_swivel(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = swivel.FLAGS
+            args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
+            if not os.path.exists(os.path.join(args.input_base_path, "shard-000-000.pb")):
+                subprocess.check_call([
+                    "gzip", "-dk", os.path.join(args.input_base_path, "shard-000-000.pb.gz")])
+            args.output_base_path = tmpdir
+            args.embedding_size = 50
+            args.num_epochs = 20
+            run_swivel(args)
+            files = sorted(os.listdir(tmpdir))
+            self.assertEqual(files, ["col_embedding.tsv", "row_embedding.tsv"])
+            with open(os.path.join(tmpdir, "col_embedding.tsv")) as fin:
+                col_embedding = fin.read().split("\n")
+            self.assertEqual(len(col_embedding), self.VOCAB + 1)
+            with open(os.path.join(tmpdir, "row_embedding.tsv")) as fin:
+                row_embedding = fin.read().split("\n")
+            self.assertEqual(len(row_embedding), self.VOCAB + 1)
+
+    def test_postproc(self):
+        with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
+            args = argparse.Namespace(
+                swivel_output_directory=os.path.join(os.path.dirname(__file__), "postproc"),
+                result=tmp.name)
+            for name in ("col_embedding.tsv", "row_embedding.tsv"):
+                if not os.path.exists(os.path.join(args.swivel_output_directory, name)):
+                    subprocess.check_call([
+                        "gzip", "-dk", os.path.join(args.swivel_output_directory, name + ".gz")])
+            postprocess(args)
+            id2vec = Id2Vec(source=tmp.name)
+            self.assertEqual(len(id2vec.tokens), self.VOCAB)
+            self.assertEqual(id2vec.embeddings.shape, (self.VOCAB, 50))
 
 
 if __name__ == "__main__":
