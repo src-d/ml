@@ -36,6 +36,12 @@ class DocumentFrequencies(Model):
         """
         return self._df.get(item, default)
 
+    def tokens(self):
+        """
+        Returns the sorted list of tokens.
+        """
+        return sorted(self._df)
+
     def __len__(self):
         """
         Returns the number of tokens in the model.

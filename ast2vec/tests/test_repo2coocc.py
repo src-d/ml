@@ -38,6 +38,7 @@ class Repo2CooccTests(unittest.TestCase):
             self.assertIn("meta", data.tree)
             self.assertIn("matrix", data.tree)
             self.assertIn("tokens", data.tree)
+            self.assertEqual(data.tree["meta"]["model"], "co-occurrences")
 
 
 if __name__ == "__main__":

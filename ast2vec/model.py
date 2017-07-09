@@ -8,10 +8,11 @@ import tempfile
 import uuid
 
 import asdf
-from clint.textui import progress
 import numpy
 import requests
 import scipy.sparse
+
+from ast2vec.progress_bar import progress_bar
 
 
 class Model:
@@ -76,8 +77,7 @@ class Model:
                 self._fetch(source, file_name)
                 source = file_name
             self._log.info("Reading %s...", source)
-            model = asdf.open(source)
-            try:
+            with asdf.open(source) as model:
                 tree = model.tree
                 self._meta = tree["meta"]
                 if self.NAME != self._meta["model"] and self.NAME is not None:
@@ -85,9 +85,6 @@ class Model:
                         "The supplied model is of the wrong type: needed "
                         "%s, got %s." % (self.NAME, self._meta["model"]))
                 self._load(tree)
-            finally:
-                if self.NAME is not None:
-                    model.close()
         finally:
             if self.NAME is None:
                 shutil.rmtree(cache_dir)
@@ -124,9 +121,9 @@ class Model:
             if num_chunks == 1:
                 f.write(r.content)
             else:
-                for chunk in progress.bar(
+                for chunk in progress_bar(
                         r.iter_content(chunk_size=chunk_size),
-                        expected_size=num_chunks):
+                        self._log, expected_size=num_chunks):
                     if chunk:
                         f.write(chunk)
         finally:

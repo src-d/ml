@@ -164,6 +164,7 @@ def repo2nbow_entry(args):
     nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
                      bblfsh_endpoint=args.bblfsh, timeout=args.timeout,
                      gcs_bucket=args.gcs)
+    logging.getLogger("repo2nbow").info("Writing %s...", args.output)
     asdf.AsdfFile({
         "nbow": nbow,
         "meta": generate_meta("nbow", id2vec, df)

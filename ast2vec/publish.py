@@ -19,12 +19,14 @@ class FileReadTracker:
     Wrapper around Python fileobj which records the file position and updates
     the console progressbar.
     """
-    def __init__(self, file):
+    def __init__(self, file, logger):
         self._file = file
         self._position = 0
         file.seek(0, 2)
         self._size = file.tell()
-        self._progress = progress.Bar(expected_size=self._size)
+        self._enabled = logger.isEnabledFor(logging.INFO)
+        if self._enabled:
+            self._progress = progress.Bar(expected_size=self._size)
         file.seek(0)
 
     @property
@@ -34,14 +36,16 @@ class FileReadTracker:
     def read(self, size=None):
         result = self._file.read(size)
         self._position += len(result)
-        self._progress.show(self._position)
+        if self._enabled:
+            self._progress.show(self._position)
         return result
 
     def tell(self):
         return self._position
 
     def done(self):
-        self._progress.done()
+        if self._enabled:
+            self._progress.done()
 
 
 def publish_model(args):
@@ -84,7 +88,7 @@ def publish_model(args):
         log.info("Uploading %s from %s...", meta["model"],
                  os.path.abspath(args.model))
         with open(args.model, "rb") as fin:
-            tracker = FileReadTracker(fin)
+            tracker = FileReadTracker(fin, log)
             try:
                 blob.upload_from_file(
                     tracker, content_type="application/x-yaml",

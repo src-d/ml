@@ -27,7 +27,7 @@ class Repo2NBOWTests(unittest.TestCase):
             os.path.join(basedir, "..", ".."),
             id2vec=id2vec, df=df, linguist=tests.ENRY, timeout=600)
         self.assertIsInstance(nbow, dict)
-        self.assertAlmostEqual(nbow[0], 14.234776549829204)
+        self.assertAlmostEqual(nbow[0], 14.635478748983617)
 
     def test_asdf(self):
         basedir = os.path.dirname(__file__)

@@ -252,6 +252,7 @@ def repo2coocc_entry(args):
     vocabulary, matrix = repo2coocc(
         args.repository, linguist=args.linguist, bblfsh_endpoint=args.bblfsh,
         timeout=args.timeout)
+    logging.getLogger("repo2coocc").info("Writing %s...", args.output)
     asdf.AsdfFile({
         "tokens": merge_strings(vocabulary),
         "matrix": disassemble_sparse_matrix(matrix),

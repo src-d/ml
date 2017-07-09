@@ -22,6 +22,13 @@ class DocumentFrequenciesTests(unittest.TestCase):
         self.assertEqual(self.model.get("aaaaaaa", 0), 341)
         self.assertEqual(self.model.get("xaaaaaa", 100500), 100500)
 
+    def test_tokens(self):
+        tokens = self.model.tokens()
+        self.assertEqual(sorted(tokens), tokens)
+        for t in tokens:
+            self.assertGreater(self.model[t], 0)
+
+
     def test_len(self):
         # the remaining 20 are not unique - the model was generated badly
         self.assertEqual(len(self.model), 980)

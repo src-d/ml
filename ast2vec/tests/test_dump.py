@@ -104,10 +104,11 @@ Matrix: , shape: [394, 394] number of non zero elements 20832
                 return fin.read()
 
         model.requests = FakeRequests(route)
-        with captured_output() as (out, _, _):
+        with captured_output() as (out, err, _):
             dump_model(self._get_args(
                 input="92609e70-f79c-46b5-8419-55726e873cfc"))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
+        self.assertFalse(err.getvalue())
 
     def test_id2vec_url(self):
         def route(url):
@@ -122,7 +123,8 @@ Matrix: , shape: [394, 394] number of non zero elements 20832
 
     @staticmethod
     def _get_args(input=None, gcs=None, dependency=tuple()):
-        return argparse.Namespace(input=input, gcs=gcs, dependency=dependency)
+        return argparse.Namespace(input=input, gcs=gcs, dependency=dependency,
+                                  log_level="WARNING")
 
     @staticmethod
     def _get_path(name):

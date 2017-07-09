@@ -7,13 +7,13 @@ import os
 import sys
 
 import asdf
-from clint.textui import progress
 import numpy
-from scipy.sparse import dok_matrix, csr_matrix, coo_matrix
+from scipy.sparse import csr_matrix
 import tensorflow as tf
 
 from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
 from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
+from ast2vec.progress_bar import progress_bar
 import ast2vec.swivel as swivel
 from ast2vec.repo2base import Transformer
 from ast2vec.repo2nbow import Repo2nBOW
@@ -64,9 +64,15 @@ def preprocess(args):
             inputs.append(i)
     log.info("Reading word indices from %d files...", len(inputs))
     all_words = defaultdict(int)
-    for i, path in progress.bar(enumerate(inputs), expected_size=len(inputs)):
-        for w in split_strings(asdf.open(path).tree["tokens"]):
-            all_words[w] += 1
+    skipped = 0
+    for i, path in progress_bar(enumerate(inputs), log, expected_size=len(inputs)):
+        with asdf.open(path) as model:
+            if model.tree["meta"]["model"] != "co-occurrences":
+                log.warning("Skipped %s", path)
+                skipped += 1
+                continue
+            for w in split_strings(model.tree["tokens"]):
+                all_words[w] += 1
     vs = args.vocabulary_size
     if len(all_words) < vs:
         vs = len(all_words)
@@ -81,10 +87,16 @@ def preprocess(args):
         freqs, len(freqs) - vs)[len(freqs) - vs:]
     chosen_freqs = freqs[chosen_indices]
     chosen_words = words[chosen_indices]
+    border_freq = chosen_freqs.min()
+    border_mask = chosen_freqs == border_freq
+    border_num = border_mask.sum()
+    border_words = words[freqs == border_freq]
+    border_words = numpy.sort(border_words)
+    chosen_words[border_mask] = border_words[:border_num]
     del words
     del freqs
     log.info("Sorting the vocabulary...")
-    sorted_indices = numpy.argsort(-chosen_freqs)
+    sorted_indices = numpy.argsort(chosen_words)
     chosen_freqs = chosen_freqs[sorted_indices]
     chosen_words = chosen_words[sorted_indices]
     word_indices = {w: i for i, w in enumerate(chosen_words)}
@@ -93,7 +105,7 @@ def preprocess(args):
         asdf.AsdfFile({
             "tokens": merge_strings(chosen_words),
             "freqs": chosen_freqs,
-            "docs": len(inputs),
+            "docs": len(inputs) - skipped,
             "meta": generate_meta("docfreq")
         }).write_to(args.df, all_array_compression=ARRAY_COMPRESSION)
     del chosen_freqs
@@ -110,10 +122,15 @@ def preprocess(args):
 
     del chosen_words
     log.info("Combining individual co-occurrence matrices...")
-    ccmatrix = dok_matrix((vs, vs), dtype=numpy.int64)
-    for i, path in progress.bar(enumerate(inputs), expected_size=len(inputs)):
-        with open(path, "rb") as fin:
-            tree = asdf.open(path).tree
+    ccmatrix = csr_matrix((vs, vs), dtype=numpy.int64)
+    for i, path in progress_bar(enumerate(inputs), log, expected_size=len(inputs)):
+        with asdf.open(path) as model:
+            if model.tree["meta"]["model"] != "co-occurrences":
+                log.warning("Skipped %s", path)
+                continue
+            tree = model.tree
+
+            # Stage 1 - extract the tokens, map them to the global vocabulary
             words = split_strings(tree["tokens"])
             indices = []
             mapped_indices = []
@@ -122,15 +139,43 @@ def preprocess(args):
                 if gi is not None:
                     indices.append(i)
                     mapped_indices.append(gi)
+            indices = numpy.array(indices)
+            mapped_indices = numpy.array(mapped_indices)
 
-            matrix = csr_matrix(assemble_sparse_matrix(tree["matrix"])
-                                .tocsr()[indices, indices])
-            for ri, rs, rf in zip(mapped_indices, matrix.indptr,
-                                  matrix.indptr[1:]):
-                for ii, v in zip(matrix.indices[rs:rf], matrix.data[rs:rf]):
-                    ccmatrix[ri, mapped_indices[ii]] += v
+            # Stage 2 - sort the matched tokens by the index in the vocabulary
+            order = numpy.argsort(mapped_indices)
+            indices = indices[order]
+            mapped_indices = mapped_indices[order]
+
+            # Stage 3 - produce the csr_matrix with the matched tokens **only**
+            matrix = assemble_sparse_matrix(tree["matrix"]).tocsr()[indices][:, indices]
+
+            # Stage 4 - convert this matrix to the global (ccmatrix) coordinates
+            csr_indices = matrix.indices
+            for i, v in enumerate(csr_indices):
+                # Here we use the fact that indices and mapped_indices are in the same order
+                csr_indices[i] = mapped_indices[v]
+            csr_indptr = matrix.indptr
+            new_indptr = [0]
+            for i, v in enumerate(mapped_indices):
+                prev_ptr = csr_indptr[i]
+                ptr = csr_indptr[i + 1]
+
+                # Handle missing rows
+                prev = (mapped_indices[i - 1] + 1) if i > 0 else 0
+                for z in range(prev, v):
+                    new_indptr.append(prev_ptr)
+
+                new_indptr.append(ptr)
+            for z in range(mapped_indices[-1] + 1, ccmatrix.shape[0]):
+                new_indptr.append(csr_indptr[-1])
+            matrix.indptr = numpy.array(new_indptr)
+            matrix._shape = ccmatrix.shape
+
+            # Stage 5 - simply add this converted matrix to the global one
+            ccmatrix += matrix
+
     log.info("Planning the sharding...")
-    ccmatrix = ccmatrix.tocsr()
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
     with open(os.path.join(args.output, "row_sums.txt"), "w") as out:
         out.write('\n'.join(map(str, bool_sums.tolist())))
@@ -142,7 +187,7 @@ def preprocess(args):
     log.info("Writing the shards...")
     os.makedirs(args.output, exist_ok=True)
     nshards = vs // args.shard_size
-    for row in progress.bar(range(nshards), expected_size=nshards):
+    for row in progress_bar(range(nshards), log, expected_size=nshards):
         for col in range(nshards):
             def _int64s(xs):
                 return tf.train.Feature(
@@ -154,11 +199,11 @@ def preprocess(args):
 
             indices_row = reorder[row::nshards]
             indices_col = reorder[col::nshards]
-            shard = coo_matrix(ccmatrix[indices_row, indices_col])
+            shard = ccmatrix[indices_row][:, indices_col].tocoo()
 
             example = tf.train.Example(features=tf.train.Features(feature={
-                "global_row": _int64s(row + nshards * i for i in range(sz)),
-                "global_col": _int64s(col + nshards * i for i in range(sz)),
+                "global_row": _int64s(indices_row),
+                "global_col": _int64s(indices_col),
                 "sparse_local_row": _int64s(shard.row),
                 "sparse_local_col": _int64s(shard.col),
                 "sparse_value": _floats(shard.data)}))
