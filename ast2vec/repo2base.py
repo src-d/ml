@@ -315,7 +315,7 @@ class RepoTransformer(Transformer):
         os.makedirs(output, exist_ok=True)
 
         with multiprocessing.Pool(processes=num_processes) as pool:
-            pool.starmap(RepoTransformer.process_entry,
+            pool.starmap(type(self).process_entry,
                          zip(inputs, [self._args] * len(inputs),
                              [output] * len(inputs)))
 
