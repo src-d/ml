@@ -11,6 +11,7 @@ import numpy
 from scipy.sparse import csr_matrix
 import tensorflow as tf
 
+from ast2vec.coocc import Cooccurrences
 from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
 from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
 from ast2vec.progress_bar import progress_bar
@@ -129,68 +130,17 @@ def preprocess(args):
     log.info("Combining individual co-occurrence matrices...")
     ccmatrix = csr_matrix((vs, vs), dtype=numpy.int64)
     for i, path in progress_bar(enumerate(inputs), log, expected_size=len(inputs)):
-        with asdf.open(path) as model:
-            if model.tree["meta"]["model"] != "co-occurrences" or \
-                            model.tree["tokens"]["lengths"].shape[0] == 0:
-                log.warning("Skipped %s", path)
-                continue
-            tree = model.tree
-
-            try:
-                # Stage 1 - extract the tokens, map them to the global
-                # vocabulary
-                words = split_strings(tree["tokens"])
-                indices = []
-                mapped_indices = []
-                for i, w in enumerate(words):
-                    gi = word_indices.get(w)
-                    if gi is not None:
-                        indices.append(i)
-                        mapped_indices.append(gi)
-                indices = numpy.array(indices)
-                mapped_indices = numpy.array(mapped_indices)
-
-                # Stage 2 - sort the matched tokens by the index in the
-                # vocabulary
-                order = numpy.argsort(mapped_indices)
-                indices = indices[order]
-                mapped_indices = mapped_indices[order]
-
-                # Stage 3 - produce the csr_matrix with the matched tokens
-                # **only**
-                matrix = (assemble_sparse_matrix(tree["matrix"])
-                          .tocsr()[indices][:, indices])
-
-                # Stage 4 - convert this matrix to the global (ccmatrix)
-                # coordinates
-                csr_indices = matrix.indices
-                for i, v in enumerate(csr_indices):
-                    # Here we use the fact that indices and mapped_indices are
-                    # in the same order
-                    csr_indices[i] = mapped_indices[v]
-                csr_indptr = matrix.indptr
-                new_indptr = [0]
-                for i, v in enumerate(mapped_indices):
-                    prev_ptr = csr_indptr[i]
-                    ptr = csr_indptr[i + 1]
-
-                    # Handle missing rows
-                    prev = (mapped_indices[i - 1] + 1) if i > 0 else 0
-                    for z in range(prev, v):
-                        new_indptr.append(prev_ptr)
-
-                    new_indptr.append(ptr)
-                for z in range(mapped_indices[-1] + 1, ccmatrix.shape[0]):
-                    new_indptr.append(csr_indptr[-1])
-                matrix.indptr = numpy.array(new_indptr)
-                matrix._shape = ccmatrix.shape
-
-                # Stage 5 - simply add this converted matrix to the global one
-                ccmatrix += matrix
-            except ValueError:
-                # to handle exception if archive is corrupted:
-                # https://github.com/spacetelescope/asdf/blob/master/asdf/block.py#L637
-                log.warning("Skipped %s", path)
+        try:
+            model = Cooccurrences(path)
+        except ValueError:
+            log.warning("Skipped %s", path)
+            continue
+        if len(model) == 0:
+            log.warning("Skipped %s", path)
+            continue
+        matrix = _extract_coocc_matrix(ccmatrix.shape, word_indices, model)
+        # Stage 5 - simply add this converted matrix to the global one
+        ccmatrix += matrix
 
     log.info("Planning the sharding...")
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
@@ -230,6 +180,47 @@ def preprocess(args):
                       "wb") as out:
                 out.write(example.SerializeToString())
     log.info("Success")
+
+
+def _extract_coocc_matrix(global_shape, word_indices, model):
+    # Stage 1 - extract the tokens, map them to the global vocabulary
+    indices = []
+    mapped_indices = []
+    for i, w in enumerate(model.tokens):
+        gi = word_indices.get(w)
+        if gi is not None:
+            indices.append(i)
+            mapped_indices.append(gi)
+    indices = numpy.array(indices)
+    mapped_indices = numpy.array(mapped_indices)
+    # Stage 2 - sort the matched tokens by the index in the vocabulary
+    order = numpy.argsort(mapped_indices)
+    indices = indices[order]
+    mapped_indices = mapped_indices[order]
+    # Stage 3 - produce the csr_matrix with the matched tokens **only**
+    matrix = model.matrix.tocsr()[indices][:, indices]
+    # Stage 4 - convert this matrix to the global (ccmatrix) coordinates
+    csr_indices = matrix.indices
+    for i, v in enumerate(csr_indices):
+        # Here we use the fact that indices and mapped_indices are in the same order
+        csr_indices[i] = mapped_indices[v]
+    csr_indptr = matrix.indptr
+    new_indptr = [0]
+    for i, v in enumerate(mapped_indices):
+        prev_ptr = csr_indptr[i]
+        ptr = csr_indptr[i + 1]
+
+        # Handle missing rows
+        prev = (mapped_indices[i - 1] + 1) if i > 0 else 0
+        for z in range(prev, v):
+            new_indptr.append(prev_ptr)
+
+        new_indptr.append(ptr)
+    for z in range(mapped_indices[-1] + 1, global_shape[0]):
+        new_indptr.append(csr_indptr[-1])
+    matrix.indptr = numpy.array(new_indptr)
+    matrix._shape = global_shape
+    return matrix
 
 
 class SwivelTransformer(Transformer):
