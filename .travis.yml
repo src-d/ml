@@ -15,9 +15,9 @@ cache:
   - "$HOME/.cache/pip"
   - "$HOME/google-cloud-sdk"
 python:
-- '3.4'
-- '3.5'
-- '3.6'
+  - "3.4"
+  - "3.5"
+  - "3.6"
 before_install:
 - openssl aes-256-cbc -K $encrypted_fc69f8f90972_key -iv $encrypted_fc69f8f90972_iv
   -in .gcs.json.enc -out gcs.json -d || rm -f gcs.json
