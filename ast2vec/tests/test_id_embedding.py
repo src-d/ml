@@ -30,6 +30,7 @@ class IdEmbeddingTests(unittest.TestCase):
             self.assertFalse(err.getvalue())
             self.assertIn("Skipped", log.getvalue())
             self.assertIn("error.asdf", log.getvalue())
+            self.assertIn("empty_coocc.asdf", log.getvalue())
             self.assertEqual(
                 sorted(os.listdir(tmpdir)),
                 ["col_sums.txt", "col_vocab.txt", "docfreq.asdf", "row_sums.txt", "row_vocab.txt",
