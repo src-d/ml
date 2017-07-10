@@ -71,8 +71,13 @@ def preprocess(args):
                 log.warning("Skipped %s", path)
                 skipped += 1
                 continue
-            for w in split_strings(model.tree["tokens"]):
-                all_words[w] += 1
+            try:
+                for w in split_strings(model.tree["tokens"]):
+                    all_words[w] += 1
+            except ValueError:
+                # to handle exception if archive is corrupted:
+                # https://github.com/spacetelescope/asdf/blob/master/asdf/block.py#L637
+                log.warning("Skipped %s", path)
     vs = args.vocabulary_size
     if len(all_words) < vs:
         vs = len(all_words)
