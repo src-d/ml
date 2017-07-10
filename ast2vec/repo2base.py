@@ -53,6 +53,12 @@ class Repo2Base:
         self._timeout = timeout
 
     def convert_repository(self, url_or_path):
+        """
+        Queries bblfsh for the UASTs and produces smth useful from them.
+
+        :param url_or_path: Fiel system path to the repository or a URL to clone.
+        :return: Some object(s) which are returned from convert_uasts().
+        """
         temp = not os.path.exists(url_or_path)
         if temp:
             env = os.environ.copy()
@@ -230,6 +236,19 @@ class RepoTransformer(Transformer):
 
     @classmethod
     def process_entry(cls, url_or_path, args, outdir):
+        """
+        Invokes process_repo() in a separate process. The reason we do this is that grpc
+        starts hanging background threads for every channel which poll(). Those threads
+        do not exit when the channel is destroyed. It is fine for a single repository, but
+        quickly hits the system limit in case of many.
+
+        This method is intended for the batch processing.
+
+        :param url_or_path: File system path or a URL to clone.
+        :param args: :class:`dict`-like container with the arguments to cls().
+        :param outdir: The output directory.
+        :return:
+        """
         pid = os.fork()
         if pid == 0:
             outfile = cls.prepare_filename(url_or_path, outdir)
@@ -244,6 +263,7 @@ class RepoTransformer(Transformer):
         """
         Remove prefixes from the repo name, so later it can be used to create
         file for each repository + replace slashes ("/") with sharps ("#").
+
         :param repo: name of repository
         :param output: output folder
         :return: converted repository name (removed "http://", etc.)
@@ -261,10 +281,11 @@ class RepoTransformer(Transformer):
 
     def process_repo(self, url_or_path, output):
         """
-        Pipeline for one repository:
-        1) prepare filename
-        2) extract vocabulary and co-occurrence matrix from repository
-        3) save result
+        Pipeline for a single repository:
+
+        1. Initialize the implementation class instance.
+        2. Extract vocabulary and co-occurrence matrix from the repository.
+        3. Save the result as ASDF.
 
         :param url_or_path: Repository URL or file system path.
         :param output: Path to file where to store the result.
@@ -284,8 +305,9 @@ class RepoTransformer(Transformer):
 
     def transform(self, repos, output, num_processes=None):
         """
-        Extract co-occurrence matrices & list of tokens for each repository ->
-        save to output folder.
+        Extracts co-occurrence matrices & list of tokens for each repository ->
+        saves to the output directory.
+
         :param repos: "repos" is the list of repository URLs or paths or \
                   files with repository URLS or paths.
         :param output: "output" is the output directory where to store the \
@@ -320,6 +342,12 @@ class RepoTransformer(Transformer):
                              [output] * len(inputs)))
 
     def result_to_tree(self, result):
+        """
+        Converts the "result" object from parse_uasts() to a tree-like structure for ASDF.
+
+        :param result: The object returned from parse_uasts().
+        :return: :class:`dict` with "meta" and some custom nodes.
+        """
         raise NotImplementedError
 
 
@@ -350,6 +378,15 @@ def _sanitize_kwargs(args, *blacklist):
 
 
 def repo2_entry(args, payload_class):
+    """
+    Invokes payload_class(\*\*args).process_repo() on the specified repository.
+
+    :param args: :class:`argparse.Namespace` with "repository" and "output". \
+                 "repository" is a file system path or a URL. "output" is the path \
+                 to the file with the resulting model.
+    :param payload_class: :class:`Transformer` inheritor to call.
+    :return: None
+    """
     ensure_bblfsh_is_running_noexc()
     payload_args = _sanitize_kwargs(args, "repository")
     payload_class(**payload_args).process_repo(args.repository, args.output)
@@ -357,13 +394,13 @@ def repo2_entry(args, payload_class):
 
 def repos2_entry(args, payload_class):
     """
-    Invokes payload_func for every repository in parallel processes.
+    Invokes payload_class(\*\*args).transform() for every repository in parallel processes.
 
     :param args: :class:`argparse.Namespace` with "input" and "output". \
                  "input" is the list of repository URLs or paths or files \
                  with repository URLS or paths. "output" is the output \
                  directory where to store the results.
-    :param payload_class: :class:`Transformer` inheritor to use.
+    :param payload_class: :class:`Transformer` inheritor to call.
     :return: None
     """
     ensure_bblfsh_is_running_noexc()
