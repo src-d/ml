@@ -10,10 +10,14 @@ import subprocess
 import tempfile
 import threading
 
+import asdf
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
 import Stemmer
+
+from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
+from ast2vec.model import disassemble_sparse_matrix, merge_strings
 
 
 class Repo2Base:
@@ -21,7 +25,7 @@ class Repo2Base:
     Base class for repsitory features extraction. Abstracts from
     `Babelfish <https://doc.bblf.sh/>`_ and source code identifier processing.
     """
-    LOG_NAME = None  #: Must be defined in the children.
+    MODEL_CLASS = None  #: Must be defined in the children.
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")  #: Regexp to split source code identifiers.
     STEM_THRESHOLD = 6  #: We do not stem splitted parts shorter than or equal to this size.
     MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than thi value.
@@ -33,7 +37,7 @@ class Repo2Base:
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT):
-        self._log = logging.getLogger(self.LOG_NAME)
+        self._log = logging.getLogger("repo2" + self.MODEL_CLASS.NAME)
         self._log.setLevel(log_level)
         self._stemmer = Stemmer.Stemmer("english")
         self._stemmer.maxCacheSize = 0
@@ -204,6 +208,121 @@ class Transformer:
         return NotImplementedError()
 
 
+class RepoTransformer(Transformer):
+    WORKER_CLASS = None
+    DEFAULT_NUM_PROCESSES = 2
+
+    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, **args):
+        super(RepoTransformer, self).__init__()
+        self._args = args
+        self._log = logging.getLogger(self.WORKER_CLASS.MODEL_CLASS.NAME + "_transformer")
+        self._num_processes = num_processes
+
+    @property
+    def num_processes(self):
+        return self._num_processes
+
+    @num_processes.setter
+    def num_processes(self, value):
+        if not isinstance(value, int):
+            raise TypeError("num_processes must be an integer")
+        self._num_processes = value
+
+    @classmethod
+    def process_entry(cls, url_or_path, args, outdir):
+        pid = os.fork()
+        if pid == 0:
+            outfile = cls.prepare_filename(url_or_path, outdir)
+            cls(**args).process_repo(url_or_path, outfile)
+            import sys
+            sys.exit()
+        else:
+            os.waitpid(pid, 0)
+
+    @classmethod
+    def prepare_filename(cls, repo, output):
+        """
+        Remove prefixes from the repo name, so later it can be used to create
+        file for each repository + replace slashes ("/") with sharps ("#").
+        :param repo: name of repository
+        :param output: output folder
+        :return: converted repository name (removed "http://", etc.)
+        """
+        prefixes = ["https://", "http://"]
+        for prefix in prefixes:
+            if repo.startswith(prefix):
+                repo_name = repo[len(prefix):]
+                break
+        else:
+            repo_name = repo
+        outfile = os.path.join(output, "%s_%s.asdf" % (
+            cls.WORKER_CLASS.MODEL_CLASS.NAME, repo_name.replace("/", "&")))
+        return outfile
+
+    def process_repo(self, url_or_path, output):
+        """
+        Pipeline for one repository:
+        1) prepare filename
+        2) extract vocabulary and co-occurrence matrix from repository
+        3) save result
+
+        :param url_or_path: Repository URL or file system path.
+        :param output: Path to file where to store the result.
+        """
+        repo2 = self.WORKER_CLASS(**self._args)
+        try:
+            result = repo2.convert_repository(url_or_path)
+            self._log.info("Writing %s...", output)
+            asdf.AsdfFile(self.result_to_tree(result)).write_to(
+                output, all_array_compression=ARRAY_COMPRESSION)
+        except subprocess.CalledProcessError as e:
+            self._log.error("Failed to clone %s: %s", url_or_path, e)
+        except:
+            self._log.exception(
+                "Unhandled error in %s.process_repo() at %s." % (
+                    type(self).__name__, url_or_path))
+
+    def transform(self, repos, output, num_processes=None):
+        """
+        Extract co-occurrence matrices & list of tokens for each repository ->
+        save to output folder.
+        :param repos: "repos" is the list of repository URLs or paths or \
+                  files with repository URLS or paths.
+        :param output: "output" is the output directory where to store the \
+                        results.
+        :param num_processes: number of processes to use, if negative - use all \
+               CPUs.
+        :return: None
+        """
+        if num_processes is None:
+            num_processes = self.num_processes
+        if num_processes < 0:
+            num_processes = multiprocessing.cpu_count()
+
+        inputs = []
+
+        if isinstance(repos, str):
+            repos = [repos]
+
+        for repo in repos:
+            # check if it's a text file
+            if os.path.isfile(repo):
+                with open(repo) as f:
+                    inputs.extend(l.strip() for l in f)
+            else:
+                inputs.append(repo)
+
+        os.makedirs(output, exist_ok=True)
+
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            pool.starmap(RepoTransformer.process_entry,
+                         zip(inputs, [self._args] * len(inputs),
+                             [output] * len(inputs)))
+
+    def result_to_tree(self, result):
+        raise NotImplementedError
+
+
 def ensure_bblfsh_is_running_noexc():
     """
     Launches the Babelfish server, if it is possible and needed.
@@ -221,7 +340,15 @@ def ensure_bblfsh_is_running_noexc():
             log.warning(message)
 
 
-def repos2_entry(args, payload_func):
+def repo2_entry(args, payload_class):
+    ensure_bblfsh_is_running_noexc()
+    payload_args = getattr(args, "__dict__", args).copy()
+    del payload_args["repository"]
+    del payload_args["output"]
+    payload_class(**payload_args).process_repo(args.repository, args.output)
+
+
+def repos2_entry(args, payload_class):
     """
     Invokes payload_func for every repository in parallel processes.
 
@@ -229,23 +356,11 @@ def repos2_entry(args, payload_func):
                  "input" is the list of repository URLs or paths or files \
                  with repository URLS or paths. "output" is the output \
                  directory where to store the results.
-    :param payload_func: :func:`callable` which accepts (repo, args). \
-                         repo is a repository URL or path, args bypassed \
-                         through.
+    :param payload_class: :class:`Transformer` inheritor to use.
     :return: None
     """
     ensure_bblfsh_is_running_noexc()
-    inputs = []
-
-    for i in args.input:
-        # check if it's a text file
-        if os.path.isfile(i):
-            with open(i) as f:
-                inputs.extend(l.strip() for l in f)
-        else:
-            inputs.append(i)
-
-    os.makedirs(args.output, exist_ok=True)
-
-    with multiprocessing.Pool(processes=args.processes) as pool:
-        pool.starmap(payload_func, itertools.product(inputs, [args]))
+    payload_args = getattr(args, "__dict__", args).copy()
+    del payload_args["input"]
+    del payload_args["output"]
+    payload_class(**payload_args).transform(args.input, args.output)
