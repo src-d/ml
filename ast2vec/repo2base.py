@@ -51,13 +51,15 @@ class Repo2Base:
     def convert_repository(self, url_or_path):
         temp = not os.path.exists(url_or_path)
         if temp:
+            env = os.environ.copy()
+            env["GIT_TERMINAL_PROMPT"] = "0"
             target_dir = tempfile.mkdtemp(
                 prefix="repo2nbow-", dir=self._tempdir)
             self._log.info("Cloning from %s...", url_or_path)
             try:
                 subprocess.check_call(
                     ["git", "clone", "--depth=1", url_or_path, target_dir],
-                    stdin=subprocess.DEVNULL)
+                    env=env, stdin=subprocess.DEVNULL)
             except Exception as e:
                 shutil.rmtree(target_dir)
                 raise e from None
