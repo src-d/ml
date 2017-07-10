@@ -102,7 +102,7 @@ def main():
     repo2nbow_parser.add_argument(
         "-o", "--output", required=True,
         help="Output path where the .asdf will be stored.")
-    repo2nbow_parser.add_argument("--gcs", default=None,
+    repo2nbow_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
                                   help="GCS bucket to use.")
 
     repos2nbow_parser = subparsers.add_parser(
@@ -127,7 +127,7 @@ def main():
     repos2nbow_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
-    repos2nbow_parser.add_argument("--gcs", default=None,
+    repos2nbow_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
                                    help="GCS bucket to use.")
     repos2nbow_parser.add_argument(
         "-p", "--processes", type=int, default=2, dest="num_processes",

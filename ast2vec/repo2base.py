@@ -340,11 +340,18 @@ def ensure_bblfsh_is_running_noexc():
             log.warning(message)
 
 
+def _sanitize_kwargs(args, *blacklist):
+    payload_args = getattr(args, "__dict__", args).copy()
+    blacklist += ("output", "command", "handler")
+    for arg in blacklist:
+        if arg in payload_args:
+            del payload_args[arg]
+    return payload_args
+
+
 def repo2_entry(args, payload_class):
     ensure_bblfsh_is_running_noexc()
-    payload_args = getattr(args, "__dict__", args).copy()
-    del payload_args["repository"]
-    del payload_args["output"]
+    payload_args = _sanitize_kwargs(args, "repository")
     payload_class(**payload_args).process_repo(args.repository, args.output)
 
 
@@ -360,7 +367,5 @@ def repos2_entry(args, payload_class):
     :return: None
     """
     ensure_bblfsh_is_running_noexc()
-    payload_args = getattr(args, "__dict__", args).copy()
-    del payload_args["input"]
-    del payload_args["output"]
+    payload_args = _sanitize_kwargs(args, "input")
     payload_class(**payload_args).transform(args.input, args.output)
