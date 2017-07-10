@@ -61,7 +61,7 @@ class Repo2Base:
                     ["git", "clone", "--depth=1", url_or_path, target_dir],
                     env=env, stdin=subprocess.DEVNULL)
             except Exception as e:
-                shutil.rmtree(target_dir)
+                shutil.rmtree(target_dir, ignore_errors=True)
                 raise e from None
         else:
             target_dir = url_or_path
