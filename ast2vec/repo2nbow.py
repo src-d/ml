@@ -1,5 +1,4 @@
 from collections import defaultdict
-from copy import deepcopy
 import logging
 import math
 import os
@@ -9,15 +8,16 @@ import asdf
 from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
-from ast2vec.repo2base import Repo2Base, Transformer, repos2_entry, \
-    ensure_bblfsh_is_running_noexc
+from ast2vec.nbow import NBOW
+from ast2vec.repo2base import Repo2Base, RepoTransformer, repos2_entry, \
+    ensure_bblfsh_is_running_noexc, repo2_entry
 
 
 class Repo2nBOW(Repo2Base):
     """
     Implements the step repository -> :class:`ast2vec.nbow.NBOW`.
     """
-    LOG_NAME = "repo2nbow"
+    MODEL_CLASS = NBOW
 
     def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
                  log_level=logging.INFO, bblfsh_endpoint=None,
@@ -69,119 +69,27 @@ class Repo2nBOW(Repo2Base):
         return bag
 
 
-class Repo2nBOWTransformer(Transformer):
+class Repo2nBOWTransformer(RepoTransformer):
     """
     Wrap the step: repository -> :class:`ast2vec.nbow.NBOW`.
     """
-    LOG_NAME = "repo2nbow_transformer"
+    WORKER_CLASS = Repo2nBOW
 
-    def __init__(self, id2vec=None, docfreq=None, linguist=None,
-                 gcs_bucket=None, bblfsh_endpoint=None,
-                 timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
-        self.repo2nbow = self.init_repo2nbow(id2vec=id2vec, linguist=linguist,
-                                             docfreq=docfreq, timeout=timeout,
-                                             bblfsh_endpoint=bblfsh_endpoint,
-                                             gcs_bucket=gcs_bucket)
+    def __init__(self, id2vec=None, docfreq=None, gcs_bucket=None, **kwargs):
+        self._id2vec = kwargs["id2vec"] = Id2Vec(id2vec or None, gcs_bucket=gcs_bucket)
+        self._df = kwargs["docfreq"] = DocumentFrequencies(docfreq or None, gcs_bucket=gcs_bucket)
+        super(Repo2nBOWTransformer, self).__init__(**kwargs)
 
-
-    @staticmethod
-    def init_repo2nbow(id2vec=None, docfreq=None, linguist=None,
-              bblfsh_endpoint=None, timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
-              gcs_bucket=None):
-        """
-        Performs the step repository -> :class:`ast2vec.nbow.NBOW`.
-
-        :param url_or_path: Repository URL or file system path.
-        :param id2vec: :class:`ast2vec.Id2Vec` model.
-        :param docfreq: :class:`ast2vec.DocumentFrequencies` model.
-        :param linguist: path to githib/linguist or src-d/enry.
-        :param bblfsh_endpoint: Babelfish server's address.
-        :param timeout: Babelfish server request timeout.
-        :param gcs_bucket: GCS bucket name where the models are stored.
-        :return: Repo2nBOW instance initialized with id2vec & df & etc.
-        :rtype: Repo2nBOW
-        """
-        id2vec = Id2Vec(id2vec or None, gcs_bucket=gcs_bucket)
-        docfreq = DocumentFrequencies(docfreq or None, gcs_bucket=gcs_bucket)
-
-        obj = Repo2nBOW(id2vec, docfreq, linguist=linguist,
-                        bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
-
-        return obj
-
-    def _process_repo(self, repo, outfile):
-        nbow = self.repo2nbow.convert_repository(repo)
-        asdf.AsdfFile({
-            "nbow": nbow,
-            "meta": generate_meta("nbow", self.repo2nbow.id2vec,
-                                  self.repo2nbow.docfreq)
-        }).write_to(outfile, all_array_compression="zlib")
-
-    def transform(self, X, output):
-        if isinstance(X, str):
-            # write result to file output
-            outfile = output
-            self._process_repo(X, outfile)
-        elif isinstance(X, list):
-            # write files to folder output
-            os.makedirs(output, exist_ok=True)
-            for repo in X:
-                outfile = os.path.join(output, repo.replace("/", "#"))
-                self._process_repo(repo, outfile)
-
-
-def repo2nbow(url_or_path, id2vec=None, df=None, linguist=None,
-              bblfsh_endpoint=None, timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
-              gcs_bucket=None):
-    """
-    Performs the step repository -> :class:`ast2vec.nbow.NBOW`.
-
-    :param url_or_path: Repository URL or file system path.
-    :param id2vec: :class:`ast2vec.Id2Vec` model.
-    :param df: :class:`ast2vec.DocumentFrequencies` model.
-    :param linguist: path to githib/linguist or src-d/enry.
-    :param bblfsh_endpoint: Babelfish server's address.
-    :param timeout: Babelfish server request timeout.
-    :param gcs_bucket: GCS bucket name where the models are stored.
-    :return: {token: weight}
-    :rtype: dict
-    """
-    if id2vec is None:
-        id2vec = Id2Vec(gcs_bucket=gcs_bucket)
-    if df is None:
-        df = DocumentFrequencies(gcs_bucket=gcs_bucket)
-    obj = Repo2nBOW(id2vec, df, linguist=linguist,
-                    bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
-    nbow = obj.convert_repository(url_or_path)
-    return nbow
+    def result_to_tree(self, result):
+        return {
+            "nbow": result,
+            "meta": generate_meta(self.WORKER_CLASS.MODEL_CLASS.NAME, self._id2vec, self._df)
+        }
 
 
 def repo2nbow_entry(args):
-    ensure_bblfsh_is_running_noexc()
-    id2vec = Id2Vec(args.id2vec or None, gcs_bucket=args.gcs)
-    df = DocumentFrequencies(args.df or None, gcs_bucket=args.gcs)
-    linguist = args.linguist or None
-    nbow = repo2nbow(args.repository, id2vec=id2vec, df=df, linguist=linguist,
-                     bblfsh_endpoint=args.bblfsh, timeout=args.timeout,
-                     gcs_bucket=args.gcs)
-    logging.getLogger("repo2nbow").info("Writing %s...", args.output)
-    asdf.AsdfFile({
-        "nbow": nbow,
-        "meta": generate_meta("nbow", id2vec, df)
-    }).write_to(args.output, all_array_compression=ARRAY_COMPRESSION)
-
-
-def repos2nbow_process(repo, args):
-    log = logging.getLogger("repos2nbow")
-    args_ = deepcopy(args)
-    outfile = os.path.join(args.output, repo.replace("/", "#"))
-    args_.output = outfile
-    args_.repository = repo
-    try:
-        repo2nbow_entry(args_)
-    except:
-        log.exception("Unhandled error in repo2nbow_entry().")
+    return repo2_entry(args, Repo2nBOWTransformer)
 
 
 def repos2nbow_entry(args):
-    return repos2_entry(args, repos2nbow_process)
+    return repos2_entry(args, Repo2nBOWTransformer)

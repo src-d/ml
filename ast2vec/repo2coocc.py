@@ -1,17 +1,11 @@
 from collections import defaultdict
-from copy import deepcopy
-import multiprocessing
-import logging
-import os
 
-import asdf
 from scipy.sparse import dok_matrix
 
-from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
-from ast2vec.model import disassemble_sparse_matrix, merge_strings, \
-    split_strings
-from ast2vec.repo2base import Repo2Base, Transformer, repos2_entry, \
-    ensure_bblfsh_is_running_noexc
+from ast2vec.coocc import Cooccurrences
+from ast2vec.meta import generate_meta
+from ast2vec.model import disassemble_sparse_matrix, merge_strings
+from ast2vec.repo2base import Repo2Base, RepoTransformer, repos2_entry, repo2_entry
 
 
 class Repo2Coocc(Repo2Base):
@@ -19,7 +13,7 @@ class Repo2Coocc(Repo2Base):
     Convert UAST to tuple (list of unique words, list of triplets (word1_ind,
     word2_ind, cnt)).
     """
-    LOG_NAME = "repo2coocc"
+    MODEL_CLASS = Cooccurrences
 
     def convert_uasts(self, uast_generator):
         word2ind = dict()
@@ -104,185 +98,22 @@ class Repo2Coocc(Repo2Base):
             new_stack = []
 
 
-class Repo2CooccTransformer(Repo2Coocc, Transformer):
-    num_processes = 2
-    LOG_NAME = "repos2coocc"
-
-    @staticmethod
-    def prepare_filename(repo, output):
-        """
-        Remove prefixes from the repo name, so later it can be used to create
-        file for each repository + replace slashes ("/") with sharps ("#").
-        :param repo: name of repository
-        :param output: output folder
-        :return: converted repository name (removed "http://", etc.)
-        """
-        prefixes = ["https://", "http://"]
-        for prefix in prefixes:
-            if repo.startswith(prefix):
-                repo_name = repo[len(prefix):]
-                break
-        else:
-            repo_name = repo
-        outfile = os.path.join(output,
-                               repo_name.replace("/", "&") + ".asdf")
-
-        return outfile
-
-    @staticmethod
-    def process_repo(url_or_path, args):
-        """
-        Extract vocabulary and co-occurrence matrix from repository.
-        :param url_or_path: Repository URL or file system path.
-        :param args: parameters to initialize Repo2Coocc: linguist,
-               bblfsh_endpoint, timeout.
-        :return: (list of source code identifiers, scipy.sparse co-occurrences
-                 matrix)
-        :rtype: tuple
-        """
-        obj = Repo2Coocc(**args)
-        vocabulary, matrix = obj.convert_repository(url_or_path)
-        return vocabulary, matrix
+class Repo2CooccTransformer(RepoTransformer):
+    WORKER_CLASS = Repo2Coocc
 
     @classmethod
-    def process_entry(cls, url_or_path, args, output):
-        pid = os.fork()
-        if pid == 0:
-            cls._process_entry(url_or_path, args, output)
-            import sys
-            sys.exit()
-        else:
-            os.waitpid(pid, 0)
-
-    @staticmethod
-    def _process_entry(url_or_path, args, output):
-        """
-        Pipeline for one repository:
-        1) prepare filename
-        2) extract vocabulary and co-occurrence matrix from repository
-        3) save result
-        :param url_or_path: Repository URL or file system path.
-        :param args: parameters to initialize Repo2Coocc: linguist,
-               bblfsh_endpoint, timeout.
-        :param output: folder to store results
-        """
-        outfile = Repo2CooccTransformer.prepare_filename(url_or_path,
-                                                         output)
-
-        try:
-            vocabulary, matrix = Repo2CooccTransformer.process_repo(
-                url_or_path, args)
-            asdf.AsdfFile({
-                "tokens": merge_strings(vocabulary),
-                "matrix": disassemble_sparse_matrix(matrix),
-                "meta": generate_meta("co-occurrences")
-            }).write_to(outfile, all_array_compression=ARRAY_COMPRESSION)
-        except:
-            log = logging.getLogger(Repo2CooccTransformer.LOG_NAME)
-            log.exception(
-                "Unhandled error in Repo2CooccTransformer.process_entry() "
-                "at %s." % url_or_path)
-
-    def transform(self, repos, output, num_processes=None):
-        """
-        Extract co-occurrence matrices & list of tokens for each repository ->
-        save to output folder.
-        :param repos: "repos" is the list of repository URLs or paths or \
-                  files with repository URLS or paths.
-        :param output: "output" is the output directory where to store the \
-                        results.
-        :param num_processes: number of threads to use, if negative - use all \
-               CPUs.
-        :return: None
-        """
-        if num_processes is None:
-            num_processes = self.num_processes
-        self.num_processes = num_processes
-        if num_processes < 0:
-            num_processes = multiprocessing.cpu_count()
-
-        inputs = []
-
-        if isinstance(repos, str):
-            repos = [repos]
-
-        for repo in repos:
-            # check if it's a text file
-            if os.path.isfile(repo):
-                with open(repo) as f:
-                    inputs.extend(l.strip() for l in f)
-            else:
-                inputs.append(repo)
-
-        os.makedirs(output, exist_ok=True)
-
-        args = self._make_args()
-
-        with multiprocessing.Pool(processes=num_processes) as pool:
-            pool.starmap(Repo2CooccTransformer.process_entry,
-                         zip(inputs, [args] * len(inputs),
-                             [output] * len(inputs)))
-
-    def _make_args(self):
-        endpoint = self._bblfsh[0]._channel._channel.target()
-        return {"linguist": self._linguist, "bblfsh_endpoint": endpoint,
-                "timeout": self._timeout}
-
-
-def repo2coocc(url_or_path, linguist=None, bblfsh_endpoint=None,
-               timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
-    """
-    Extract vocabulary and co-occurrence matrix from repository.
-    :param url_or_path: Repository URL or file system path.
-    :param linguist: path to githib/linguist or src-d/enry.
-    :param bblfsh_endpoint: Babelfish server's address.
-    :param timeout: Babelfish server request timeout.
-    :return: (list of source code identifiers, scipy.sparse co-occurrences
-             matrix)
-    :rtype: tuple
-    """
-    return Repo2CooccTransformer.process_repo(
-        url_or_path, {"linguist": linguist,
-                      "bblfsh_endpoint": bblfsh_endpoint,
-                      "timeout": timeout})
+    def result_to_tree(cls, result):
+        vocabulary, matrix = result
+        return {
+            "tokens": merge_strings(vocabulary),
+            "matrix": disassemble_sparse_matrix(matrix),
+            "meta": generate_meta(cls.WORKER_CLASS.MODEL_CLASS.NAME)
+        }
 
 
 def repo2coocc_entry(args):
-    ensure_bblfsh_is_running_noexc()
-    vocabulary, matrix = repo2coocc(
-        args.repository, linguist=args.linguist, bblfsh_endpoint=args.bblfsh,
-        timeout=args.timeout)
-    logging.getLogger("repo2coocc").info("Writing %s...", args.output)
-    asdf.AsdfFile({
-        "tokens": merge_strings(vocabulary),
-        "matrix": disassemble_sparse_matrix(matrix),
-        "meta": generate_meta("co-occurrences")
-    }).write_to(args.output, all_array_compression=ARRAY_COMPRESSION)
-
-
-def repos2coocc_process(repo, args):
-    log = logging.getLogger("repos2coocc")
-    args_ = deepcopy(args)
-
-    outfile = Repo2CooccTransformer.prepare_filename(repo, args.output)
-
-    args_.output = outfile
-    args_.repository = repo
-    try:
-        repo2coocc_entry(args_)
-    except:
-        log.exception("Unhandled error in repo2coocc_entry().")
+    return repo2_entry(args, Repo2CooccTransformer)
 
 
 def repos2coocc_entry(args):
-    return repos2_entry(args, repos2coocc_process)
-
-
-def print_coocc(tree, dependencies):
-    words = split_strings(tree["tokens"])
-    m_shape = tree["matrix"]["shape"]
-    nnz = tree["matrix"]["data"][0].shape[0]
-
-    print("Number of words:", len(words))
-    print("First 10 words:", words[:10])
-    print("Matrix:", ", shape:", m_shape, "number of non zero elements", nnz)
+    return repos2_entry(args, Repo2CooccTransformer)

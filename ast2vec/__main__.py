@@ -90,11 +90,12 @@ def main():
     repo2nbow_parser.add_argument(
         "--id2vec", help="URL or path to the identifier embeddings.")
     repo2nbow_parser.add_argument(
-        "--df", help="URL or path to the document frequencies.")
+        "--df", dest="docfreq", help="URL or path to the document frequencies.")
     repo2nbow_parser.add_argument(
         "--linguist", help="Path to github/linguist-like executable.")
     repo2nbow_parser.add_argument(
-        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
+        dest="bblfsh_endpoint")
     repo2nbow_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
@@ -112,19 +113,24 @@ def main():
         "-i", "--input", required=True, nargs="+",
         help="List of repositories or path to file with list of repositories.")
     repos2nbow_parser.add_argument(
+        "--id2vec", help="URL or path to the identifier embeddings.")
+    repos2nbow_parser.add_argument(
+        "--df", dest="docfreq", help="URL or path to the document frequencies.")
+    repos2nbow_parser.add_argument(
         "--linguist", help="Path to github/linguist-like executable.")
     repos2nbow_parser.add_argument(
         "-o", "--output", required=True,
         help="Output folder where .asdf results will be stored.")
     repos2nbow_parser.add_argument(
-        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
+        dest="bblfsh_endpoint")
     repos2nbow_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
     repos2nbow_parser.add_argument("--gcs", default=None,
                                    help="GCS bucket to use.")
     repos2nbow_parser.add_argument(
-        "--processes", type=int, default=2,
+        "-p", "--processes", type=int, default=2, dest="num_processes",
         help="Number of parallel processes to run. Since every process "
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
@@ -142,7 +148,8 @@ def main():
         "-o", "--output", required=True,
         help="Output path where .asdf result will be stored.")
     repo2coocc_parser.add_argument(
-        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
+        dest="bblfsh_endpoint")
     repo2coocc_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
@@ -160,12 +167,13 @@ def main():
         "-o", "--output", required=True,
         help="Output folder where .asdf results will be stored.")
     repos2coocc_parser.add_argument(
-        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
+        dest="bblfsh_endpoint")
     repos2coocc_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
     repos2coocc_parser.add_argument(
-        "--processes", type=int, default=2,
+        "-p", "--processes", type=int, default=2, dest="num_processes",
         help="Number of parallel processes to run. Since every process "
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")

@@ -1,18 +1,18 @@
 import logging
 from pprint import pprint
 
-from ast2vec.df import print_df
+from ast2vec.df import DocumentFrequencies, print_df
 from ast2vec.model import Model
-from ast2vec.nbow import print_nbow
-from ast2vec.id2vec import print_id2vec
-from ast2vec.repo2coocc import print_coocc
+from ast2vec.nbow import NBOW, print_nbow
+from ast2vec.id2vec import Id2Vec, print_id2vec
+from ast2vec.coocc import Cooccurrences, print_coocc
 
 
 PRINTERS = {
-    "nbow": print_nbow,
-    "id2vec": print_id2vec,
-    "docfreq": print_df,
-    "co-occurrences": print_coocc
+    NBOW.NAME: print_nbow,
+    Id2Vec.NAME: print_id2vec,
+    DocumentFrequencies.NAME: print_df,
+    Cooccurrences.NAME: print_coocc
 }
 
 
