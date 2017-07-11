@@ -1,4 +1,3 @@
-import itertools
 import json
 import logging
 import multiprocessing
@@ -16,8 +15,14 @@ from bblfsh.launcher import ensure_bblfsh_is_running
 from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
 import Stemmer
 
-from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
-from ast2vec.model import disassemble_sparse_matrix, merge_strings
+from ast2vec.meta import ARRAY_COMPRESSION
+
+
+class LinguistFailedError(Exception):
+    """
+    Raised when we fail to classify the source files.
+    """
+    pass
 
 
 class Repo2Base:
@@ -48,6 +53,12 @@ class Repo2Base:
             self._linguist = shutil.which("enry", path=os.getcwd())
         if self._linguist is None:
             self._linguist = "enry"
+        full_path = shutil.which(self._linguist)
+        if not full_path:
+            raise FileNotFoundError("%s was not found. Install it: python3 -m ast2vec enry" %
+                                    self._linguist)
+        with open(full_path, "rb") as fin:
+            self._is_enry = fin.read(15) != b"#!/usr/bin/ruby"
         self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
                         for _ in range(multiprocessing.cpu_count())]
         self._timeout = timeout
@@ -155,7 +166,15 @@ class Repo2Base:
 
     def _classify_files(self, target_dir):
         target_dir = os.path.abspath(target_dir)
-        bjson = subprocess.check_output([self._linguist, target_dir, "--json"])
+        cmdline = [self._linguist]
+        if self._is_enry:
+            cmdline += [target_dir]
+        else:
+            cmdline += [target_dir, "--json"]
+        try:
+            bjson = subprocess.check_output(cmdline)
+        except subprocess.CalledProcessError:
+            raise LinguistFailedError() from None
         classified = json.loads(bjson.decode("utf-8"))
         return classified
 

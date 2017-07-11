@@ -43,6 +43,12 @@ class Repo2CooccTests(unittest.TestCase):
             repo2coocc_entry(args)
             validate_asdf_file(self, file.name)
 
+    def test_linguist(self):
+        with self.assertRaises(FileNotFoundError):
+            Repo2Coocc(linguist="xxx", timeout=600)
+        with self.assertRaises(FileNotFoundError):
+            Repo2Coocc(linguist=__file__, timeout=600)
+
 
 class Repo2CooccTransformerTests(unittest.TestCase):
 
