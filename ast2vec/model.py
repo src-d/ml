@@ -129,8 +129,8 @@ class Model:
         finally:
             if isinstance(where, str):
                 f.close()
-                
-                
+
+
 def merge_strings(list_of_strings):
     """
     Packs the list of strings into two arrays: the concatenated chars and the

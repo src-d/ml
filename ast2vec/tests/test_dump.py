@@ -42,8 +42,7 @@ First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value
  'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
  'version': [1, 0, 0]}
 Number of words: 1000
-First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', 'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']
-"""
+""" + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', 'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\n"  # nopep8
 
     NBOW_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 16, 8, 942880),
  'dependencies': [{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
@@ -60,8 +59,7 @@ First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaa
  'uuid': '1e3da42a-28b6-4b33-94a2-a5671f4102f4',
  'version': [1, 0, 0]}
 Shape: [1000, 999424]
-First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPadRT', 'wp-shortcake/shortcake', 'capaj/Moonridge', 'HugoGiraudel/hugogiraudel.github.com', 'crosswalk-project/crosswalk-website', 'apache/parquet-mr', 'dciccale/kimbo.js', 'processone/oneteam']
-"""
+""" + "First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPadRT', 'wp-shortcake/shortcake', 'capaj/Moonridge', 'HugoGiraudel/hugogiraudel.github.com', 'crosswalk-project/crosswalk-website', 'apache/parquet-mr', 'dciccale/kimbo.js', 'processone/oneteam']\n"  # nopep8
 
     COOCC_DUMP = """{'created_at': datetime.datetime(2017, 7, 5, 18, 4, 5, 688259),
  'dependencies': [],
@@ -69,9 +67,9 @@ First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPad
  'uuid': '215aadce-d98c-4391-b93f-90cae582e895',
  'version': [1, 0, 0]}
 Number of words: 394
-First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']
-Matrix: , shape: [394, 394] number of non zero elements 20832
-"""
+""" + ("First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']\n" +  # nopep8
+"""Matrix: , shape: [394, 394] number of non zero elements 20832
+""")
 
     def test_id2vec(self):
         with captured_output() as (out, _, _):

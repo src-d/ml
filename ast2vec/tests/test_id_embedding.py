@@ -17,7 +17,7 @@ from ast2vec.tests.test_dump import captured_output
 
 class IdEmbeddingTests(unittest.TestCase):
     VOCAB = 4096
-    
+
     def test_preprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = argparse.Namespace(
