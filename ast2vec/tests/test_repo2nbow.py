@@ -28,14 +28,15 @@ class Repo2NBOWTests(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         id2vec = Id2Vec(os.path.join(basedir, ID2VEC))
         df = DocumentFrequencies(os.path.join(basedir, DOCFREQ))
-        df._df["document"] = 10
-        id2vec.tokens[0] = "document"
-        id2vec._token2index["document"] = 0
-        repo2nbow = Repo2nBOW(
+        df._df["xxyyzz"] = 10
+        id2vec._token2index[id2vec.tokens[0]] = 1
+        id2vec.tokens[0] = "xxyyzz"
+        id2vec._token2index["xxyyzz"] = 0
+        xxyyzz = Repo2nBOW(
             id2vec=id2vec, docfreq=df, linguist=tests.ENRY, timeout=600)
-        nbow = repo2nbow.convert_repository(os.path.join(basedir, "..", ".."))
+        nbow = xxyyzz.convert_repository(os.path.join(basedir, "..", ".."))
         self.assertIsInstance(nbow, dict)
-        self.assertAlmostEqual(nbow[0], 14.635478748983617)
+        self.assertAlmostEqual(nbow[0], 5.059296557734522)
 
     def test_asdf(self):
         basedir = os.path.dirname(__file__)
