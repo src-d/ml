@@ -113,14 +113,15 @@ class Repo2Base:
                                 "Error while processing %s.", task)
                             queue_out.put_nowait(None)
 
-                pool = [threading.Thread(target=thread_loop, args=(i,), name="%s@%d" % (url_or_path, i))
+                pool = [threading.Thread(target=thread_loop, args=(i,),
+                                         name="%s@%d" % (url_or_path, i))
                         for i in range(multiprocessing.cpu_count())]
                 for thread in pool:
                     thread.start()
                 tasks = 0
                 lang_list = ("Python", "Java")
                 for lang, files in classified.items():
-                    # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved
+                    # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved # nopep8
                     if lang not in lang_list:
                         continue
                     for f in files:

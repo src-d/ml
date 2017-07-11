@@ -66,7 +66,7 @@ class Repo2Coocc(Repo2Base):
             self._update_dict(self._process_token(ch.token), word2ind, tokens)
 
         if (root.token.strip() is not None and root.token.strip() != "" and
-                    self.SIMPLE_IDENTIFIER in root.roles):
+                self.SIMPLE_IDENTIFIER in root.roles):
             self._update_dict(self._process_token(root.token), word2ind,
                               tokens)
 

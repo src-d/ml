@@ -232,9 +232,9 @@ def main():
     dump_parser.add_argument(
         "input", help="Path to the model file, URL or UUID.")
     dump_parser.add_argument(
-        "-d", "--dependency", nargs="+", help=
-        "Paths to the models which were used to generate the dumped model in "
-        "the order they appear in the metadata.")
+        "-d", "--dependency", nargs="+",
+        help="Paths to the models which were used to generate the dumped model in "
+             "the order they appear in the metadata.")
     dump_parser.add_argument("--gcs", default=None, help="GCS bucket to use.")
 
     publish_parser = subparsers.add_parser(

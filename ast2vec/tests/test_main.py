@@ -5,6 +5,7 @@ import unittest
 
 import ast2vec.__main__ as main
 
+
 class MainTests(unittest.TestCase):
     def test_handlers(self):
         handlers = [False] * 11
