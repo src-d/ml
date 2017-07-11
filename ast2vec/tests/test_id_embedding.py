@@ -10,14 +10,35 @@ from scipy.sparse import coo_matrix
 import tensorflow as tf
 
 from ast2vec import DocumentFrequencies, swivel, Id2Vec
-from ast2vec.id_embedding import preprocess, run_swivel, postprocess, SwivelTransformer
+from ast2vec.id_embedding import preprocess, run_swivel, postprocess, SwivelTransformer, \
+    PostprocessTransformer
 from ast2vec.model import split_strings, assemble_sparse_matrix
 from ast2vec.tests.test_dump import captured_output
 
 
-def check_shard(folder):
-    if not os.path.exists(os.path.join(folder, "shard-000-000.pb")):
-        subprocess.check_call(["gzip", "-dk", os.path.join(folder, "shard-000-000.pb.gz")])
+def prepare_file(path):
+    """
+    Check if file doesn't exist -> try to extract: path + ".gz"
+    :param path: path to file
+    :return: None
+    """
+    if not os.path.exists(path):
+        subprocess.check_call(["gzip", "-dk", path + ".gz"])
+
+
+def prepare_shard(folder):
+    prepare_file(os.path.join(folder, "shard-000-000.pb"))
+
+
+def prepare_postproc_files(folder):
+    for name in ("col_embedding.tsv", "row_embedding.tsv"):
+        prepare_file(os.path.join(folder, name))
+
+
+def check_postproc_results(obj, id2vec_loc):
+    id2vec = Id2Vec(source=id2vec_loc)
+    obj.assertEqual(len(id2vec.tokens), obj.VOCAB)
+    obj.assertEqual(id2vec.embeddings.shape, (obj.VOCAB, 50))
 
 
 def check_swivel_results(obj, folder):
@@ -118,7 +139,7 @@ class IdEmbeddingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = swivel.FLAGS
             args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
-            check_shard(args.input_base_path)
+            prepare_shard(args.input_base_path)
             args.output_base_path = tmpdir
             args.embedding_size = 50
             args.num_epochs = 20
@@ -130,7 +151,7 @@ class IdEmbeddingTests(unittest.TestCase):
             sw = SwivelTransformer()
             args = dict()
             args["input_base_path"] = os.path.join(os.path.dirname(__file__), "swivel")
-            check_shard(args["input_base_path"])
+            prepare_shard(args["input_base_path"])
             args["output_base_path"] = tmpdir
             args["embedding_size"] = 50
             args["num_epochs"] = 20
@@ -142,14 +163,23 @@ class IdEmbeddingTests(unittest.TestCase):
             args = argparse.Namespace(
                 swivel_output_directory=os.path.join(os.path.dirname(__file__), "postproc"),
                 result=tmp.name)
-            for name in ("col_embedding.tsv", "row_embedding.tsv"):
-                if not os.path.exists(os.path.join(args.swivel_output_directory, name)):
-                    subprocess.check_call([
-                        "gzip", "-dk", os.path.join(args.swivel_output_directory, name + ".gz")])
+            prepare_postproc_files(args.swivel_output_directory)
+
             postprocess(args)
-            id2vec = Id2Vec(source=tmp.name)
-            self.assertEqual(len(id2vec.tokens), self.VOCAB)
-            self.assertEqual(id2vec.embeddings.shape, (self.VOCAB, 50))
+
+            check_postproc_results(self, tmp.name)
+
+    def test_postproc_transformer(self):
+        with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
+            args = dict()
+            args["swivel_output_directory"] = os.path.join(os.path.dirname(__file__), "postproc")
+            args["result"] = tmp.name
+            prepare_postproc_files(args["swivel_output_directory"])
+
+            postproc = PostprocessTransformer()
+            postproc.transform(**args)
+
+            check_postproc_results(self, tmp.name)
 
 
 if __name__ == "__main__":
