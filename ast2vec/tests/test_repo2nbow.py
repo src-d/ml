@@ -5,10 +5,18 @@ import unittest
 
 import asdf
 
-from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies
+from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies, \
+    Repo2nBOWTransformer
 from ast2vec.repo2nbow import repo2nbow_entry
 import ast2vec.tests as tests
 from ast2vec.tests.models import ID2VEC, DOCFREQ
+
+
+def validate_asdf_file(obj, filename):
+    data = asdf.open(filename)
+    obj.assertIn("meta", data.tree)
+    obj.assertIn("nbow", data.tree)
+    obj.assertEqual(2, len(data.tree["meta"]["dependencies"]))
 
 
 class Repo2NBOWTests(unittest.TestCase):
@@ -39,10 +47,28 @@ class Repo2NBOWTests(unittest.TestCase):
                 repository=os.path.join(basedir, "..", ".."))
             repo2nbow_entry(args)
             self.assertTrue(os.path.isfile(file.name))
-            data = asdf.open(file.name)
-            self.assertIn("meta", data.tree)
-            self.assertIn("nbow", data.tree)
-            self.assertEqual(2, len(data.tree["meta"]["dependencies"]))
+            validate_asdf_file(self, file.name)
+
+
+class Repo2NBOWTransformerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        tests.setup()
+
+    def test_transform(self):
+        basedir = os.path.dirname(__file__)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo2nbow = Repo2nBOWTransformer(
+                id2vec=os.path.join(basedir, ID2VEC),
+                docfreq=os.path.join(basedir, DOCFREQ), linguist=tests.ENRY,
+                gcs_bucket=None,
+                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
+                timeout=None
+            )
+            outfile = repo2nbow.prepare_filename(str(basedir), str(tmpdir))
+            repo2nbow.transform(repos=str(basedir), output=tmpdir)
+            self.assertTrue(os.path.isfile(outfile))
+            validate_asdf_file(self, outfile)
 
 
 if __name__ == "__main__":
