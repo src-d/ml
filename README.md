@@ -45,8 +45,7 @@ Transformers (keras/sklearn style): [Repo2nBOWTransformer](ast2vec/repo2nbow.py#
 We build the source code identifier co-occurrence matrix for every repository.
 
 1. Clone or read the repository from disk.
-2. Classify files using [enry](https://github.com/src-d/enry) or
-[linguist](https://github.com/github/linguist).
+2. Classify files using [enry](https://github.com/src-d/enry).
 3. Extract [UAST](https://doc.bblf.sh/uast/specification.html) from each supported file.
 4. [Split and stem](ast2vec/repo2base.py#L160) all the identifiers in each tree.
 5. [Traverse UAST](ast2vec/repo2coocc.py#L86), collapse all non-identifier paths and record all
@@ -69,8 +68,7 @@ We represent every repository as a weighted bag-of-vectors, provided by we've go
 frequencies ("docfreq") and identifier embeddings ("id2vec").
 
 1. Clone or read the repository from disk.
-2. Classify files using [enry](https://github.com/src-d/enry) or
-[linguist](https://github.com/github/linguist).
+2. Classify files using [enry](https://github.com/src-d/enry).
 3. Extract [UAST](https://doc.bblf.sh/uast/specification.html) from each supported file.
 4. [Split and stem](ast2vec/repo2base.py#L160) all the identifiers in each tree.
 5. Leave only those identifiers which are present in "docfreq" and "id2vec".

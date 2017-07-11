@@ -92,7 +92,7 @@ def main():
     repo2nbow_parser.add_argument(
         "--df", dest="docfreq", help="URL or path to the document frequencies.")
     repo2nbow_parser.add_argument(
-        "--linguist", help="Path to github/linguist-like executable.")
+        "--linguist", help="Path to src-d/enry executable.")
     repo2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
         dest="bblfsh_endpoint")
@@ -117,7 +117,7 @@ def main():
     repos2nbow_parser.add_argument(
         "--df", dest="docfreq", help="URL or path to the document frequencies.")
     repos2nbow_parser.add_argument(
-        "--linguist", help="Path to github/linguist-like executable.")
+        "--linguist", help="Path to src-d/enry executable.")
     repos2nbow_parser.add_argument(
         "-o", "--output", required=True,
         help="Output folder where .asdf results will be stored.")
@@ -143,7 +143,7 @@ def main():
         "-r", "--repository", required=True,
         help="URL or path to a Git repository.")
     repo2coocc_parser.add_argument(
-        "--linguist", help="Path to github/linguist-like executable.")
+        "--linguist", help="Path to src-d/enry executable.")
     repo2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="Output path where .asdf result will be stored.")
@@ -162,7 +162,7 @@ def main():
         "-i", "--input", required=True, nargs="+",
         help="List of repositories or path to file with list of repositories.")
     repos2coocc_parser.add_argument(
-        "--linguist", help="Path to github/linguist-like executable.")
+        "--linguist", help="Path to src-d/enry executable.")
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="Output folder where .asdf results will be stored.")
