@@ -250,19 +250,17 @@ def run_swivel(args):
 
 
 class PostprocessTransformer(Transformer):
-    def transform(self, X, output):
+    def transform(self, swivel_output_directory, result):
         """
         Merges row and column embeddings produced by Swivel and writes the
         Id2Vec model.
 
-        :param X: folder that contains files after swivel training. The files \
-                  are read from this folder and the model is written to the\
-                  'output'.
-        :param output: file to store results
+        :param swivel_output_directory: folder that contains files after swivel training. The \
+                                        files are read from this folder and the model is written \
+                                        to the 'result'.
+        :param result: file to store results
         :return: None
         """
-        swivel_output_directory = X
-        result = output
         args = Namespace(swivel_output_directory=swivel_output_directory,
                          result=result)
         postprocess(args)
