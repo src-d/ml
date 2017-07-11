@@ -82,6 +82,7 @@ frequencies ("docfreq") and identifier embeddings ("id2vec").
 1-8 is performed with `repo2nbow` tool / `Repo2nBOWTransformer` class and 9 with `publish`.
 
 ## Contributions
+[![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
 
 We use [PEP8](https://www.python.org/dev/peps/pep-0008/) with line length 99 and ". All the tests
 must pass:
