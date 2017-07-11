@@ -225,10 +225,13 @@ def _extract_coocc_matrix(global_shape, word_indices, model):
 
 class SwivelTransformer(Transformer):
     def transform(self, **kwargs):
-        flags = copy(swivel.FLAGS)
+        flags = type(swivel.FLAGS)()
+        flags.__dict__ = swivel.FLAGS.__dict__.copy()
+
         for key, val in kwargs.items():
             if val is not None:
                 setattr(flags, key, val)
+
         run_swivel(flags)
 
 

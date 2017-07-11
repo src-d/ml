@@ -10,9 +10,25 @@ from scipy.sparse import coo_matrix
 import tensorflow as tf
 
 from ast2vec import DocumentFrequencies, swivel, Id2Vec
-from ast2vec.id_embedding import preprocess, run_swivel, postprocess
+from ast2vec.id_embedding import preprocess, run_swivel, postprocess, SwivelTransformer
 from ast2vec.model import split_strings, assemble_sparse_matrix
 from ast2vec.tests.test_dump import captured_output
+
+
+def check_shard(folder):
+    if not os.path.exists(os.path.join(folder, "shard-000-000.pb")):
+        subprocess.check_call(["gzip", "-dk", os.path.join(folder, "shard-000-000.pb.gz")])
+
+
+def check_swivel_results(obj, folder):
+    files = sorted(os.listdir(folder))
+    obj.assertEqual(files, ["col_embedding.tsv", "row_embedding.tsv"])
+    with open(os.path.join(folder, "col_embedding.tsv")) as fin:
+        col_embedding = fin.read().split("\n")
+    obj.assertEqual(len(col_embedding), obj.VOCAB + 1)
+    with open(os.path.join(folder, "row_embedding.tsv")) as fin:
+        row_embedding = fin.read().split("\n")
+    obj.assertEqual(len(row_embedding), obj.VOCAB + 1)
 
 
 class IdEmbeddingTests(unittest.TestCase):
@@ -102,21 +118,24 @@ class IdEmbeddingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = swivel.FLAGS
             args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
-            if not os.path.exists(os.path.join(args.input_base_path, "shard-000-000.pb")):
-                subprocess.check_call([
-                    "gzip", "-dk", os.path.join(args.input_base_path, "shard-000-000.pb.gz")])
+            check_shard(args.input_base_path)
             args.output_base_path = tmpdir
             args.embedding_size = 50
             args.num_epochs = 20
             run_swivel(args)
-            files = sorted(os.listdir(tmpdir))
-            self.assertEqual(files, ["col_embedding.tsv", "row_embedding.tsv"])
-            with open(os.path.join(tmpdir, "col_embedding.tsv")) as fin:
-                col_embedding = fin.read().split("\n")
-            self.assertEqual(len(col_embedding), self.VOCAB + 1)
-            with open(os.path.join(tmpdir, "row_embedding.tsv")) as fin:
-                row_embedding = fin.read().split("\n")
-            self.assertEqual(len(row_embedding), self.VOCAB + 1)
+            check_swivel_results(self, tmpdir)
+
+    def test_swivel_transformer(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sw = SwivelTransformer()
+            args = dict()
+            args["input_base_path"] = os.path.join(os.path.dirname(__file__), "swivel")
+            check_shard(args["input_base_path"])
+            args["output_base_path"] = tmpdir
+            args["embedding_size"] = 50
+            args["num_epochs"] = 20
+            sw.transform(**args)
+            check_swivel_results(self, tmpdir)
 
     def test_postproc(self):
         with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
