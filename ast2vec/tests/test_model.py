@@ -1,5 +1,6 @@
 import datetime
 import os
+import pickle
 import unittest
 
 import numpy
@@ -8,14 +9,30 @@ from scipy.sparse import csr_matrix
 from ast2vec.dump import GenericModel
 import ast2vec.model
 from ast2vec.model import merge_strings, split_strings, \
-    assemble_sparse_matrix, disassemble_sparse_matrix
+    assemble_sparse_matrix, disassemble_sparse_matrix, Model
 import ast2vec.tests.models as paths
 from ast2vec.tests.fake_requests import FakeRequests
 
 
+class Model1(Model):
+    def _load(self, tree):
+        pass
+
+
+class Model2(Model):
+    NAME = "model2"
+
+    def _load(self, tree):
+        pass
+
+
+def get_path(name):
+    return os.path.join(os.path.dirname(__file__), name)
+
+
 class ModelTests(unittest.TestCase):
     def test_file(self):
-        model = GenericModel(source=self._get_path(paths.ID2VEC))
+        model = GenericModel(source=get_path(paths.ID2VEC))
         self._validate_meta(model)
 
     def test_id(self):
@@ -25,7 +42,7 @@ class ModelTests(unittest.TestCase):
                        '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
                        '{"url": "https://xxx"}}}}'.encode()
             self.assertEqual("https://xxx", url)
-            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+            with open(get_path(paths.ID2VEC), "rb") as fin:
                 return fin.read()
 
         ast2vec.model.requests = FakeRequests(route)
@@ -35,7 +52,7 @@ class ModelTests(unittest.TestCase):
     def test_url(self):
         def route(url):
             self.assertEqual("https://xxx", url)
-            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+            with open(get_path(paths.ID2VEC), "rb") as fin:
                 return fin.read()
 
         ast2vec.model.requests = FakeRequests(route)
@@ -54,16 +71,20 @@ class ModelTests(unittest.TestCase):
                        '"default": "92609e70-f79c-46b5-8419-55726e873cfc"' \
                        '}}}'.encode()
             self.assertEqual("https://xxx", url)
-            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+            with open(get_path(paths.ID2VEC), "rb") as fin:
                 return fin.read()
 
         ast2vec.model.requests = FakeRequests(route)
         model = FakeModel()
         self._validate_meta(model)
 
-    @staticmethod
-    def _get_path(name):
-        return os.path.join(os.path.dirname(__file__), name)
+    def test_init_with_model(self):
+        model1 = Model1(source=get_path(paths.ID2VEC))
+        # init with correct model
+        Model1(source=model1)
+        # init with wrong model
+        with self.assertRaises(TypeError):
+            Model2(source=model1)
 
     def _validate_meta(self, model):
         meta = model.meta
@@ -132,6 +153,15 @@ class SerializationTests(unittest.TestCase):
         self.assertTrue((mat.indptr == tree["data"][2]).all())
         self.assertEqual(mat.shape, (3, 10))
         self.assertEqual(mat.dtype, numpy.int)
+
+    def test_pickle(self):
+        id2vec = GenericModel(source=get_path(paths.ID2VEC))
+        id2vec.tree = {"meta": id2vec.tree["meta"]}
+        res = pickle.dumps(id2vec)
+        id2vec_rec = pickle.loads(res)
+
+        for k in id2vec.__dict__:
+            self.assertEqual(id2vec.__dict__[k], id2vec_rec.__dict__[k])
 
 
 if __name__ == "__main__":

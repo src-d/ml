@@ -37,6 +37,13 @@ class Model:
         :param gcs_bucket: The name of the Google Cloud Storage bucket to use.
         :param log_level: The logging level applied to this instance.
         """
+        if isinstance(source, Model):
+            if not isinstance(source, type(self)):
+                raise TypeError("Incompatible model instance: %s <> %s" %
+                                (type(source), type(self)))
+            self.__dict__ = source.__dict__
+            return
+
         self._log = logging.getLogger(self.NAME)
         self._log.setLevel(log_level)
         if cache_dir is None:
@@ -98,6 +105,17 @@ class Model:
 
     def __str__(self):
         return str(self._meta)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_log"] = self._log.level
+        return state
+
+    def __setstate__(self, state):
+        log_level = state["_log"]
+        self.__dict__.update(state)
+        self._log = logging.getLogger(self.NAME)
+        self._log.setLevel(log_level)
 
     @classmethod
     def compose_index_url(cls, gcs=None):
