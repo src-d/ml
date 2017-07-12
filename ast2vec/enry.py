@@ -57,4 +57,4 @@ def install_enry(args=None, target="./enry", tempdir=None):
              "gopkg.in/src-d/enry.v1/..."], env=env)
         shutil.copyfile(os.path.join(tmp, "bin", "enry"), target)
         os.chmod(target, 0o777)
-    log.info("Installed %s", target)
+    log.info("Installed %s", os.path.abspath(target))
