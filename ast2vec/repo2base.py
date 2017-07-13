@@ -121,7 +121,7 @@ class Repo2Base:
                             queue_out.put_nowait(uast)
                         except:
                             self._log.exception(
-                                "Error while processing %s.", task)
+                                "Error while processing %s", task)
                             queue_out.put_nowait(None)
 
                 pool = [threading.Thread(target=thread_loop, args=(i,),
@@ -130,6 +130,7 @@ class Repo2Base:
                 for thread in pool:
                     thread.start()
                 tasks = 0
+                empty = True
                 lang_list = ("Python", "Java")
                 for lang, files in classified.items():
                     # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved # nopep8
@@ -137,6 +138,7 @@ class Repo2Base:
                         continue
                     for f in files:
                         tasks += 1
+                        empty = False
                         queue_in.put_nowait(
                             (os.path.join(target_dir, f), lang))
                 report_interval = max(1, tasks // 100)
@@ -152,6 +154,9 @@ class Repo2Base:
                                        tasks)
                 for thread in pool:
                     thread.join()
+
+                if empty:
+                    self._log.warning("No files were processed")
 
             return self.convert_uasts(uast_generator())
         finally:
@@ -313,8 +318,13 @@ class RepoTransformer(Transformer):
         repo2 = self.WORKER_CLASS(**self._args)
         try:
             result = repo2.convert_repository(url_or_path)
+            try:
+                tree = self.result_to_tree(result)
+            except ValueError:
+                self._log.warning("Not written: %s", output)
+                return
             self._log.info("Writing %s...", output)
-            asdf.AsdfFile(self.result_to_tree(result)).write_to(
+            asdf.AsdfFile(tree).write_to(
                 output, all_array_compression=ARRAY_COMPRESSION)
         except subprocess.CalledProcessError as e:
             self._log.error("Failed to clone %s: %s", url_or_path, e)

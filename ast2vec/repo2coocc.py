@@ -104,6 +104,8 @@ class Repo2CooccTransformer(RepoTransformer):
     @classmethod
     def result_to_tree(cls, result):
         vocabulary, matrix = result
+        if not vocabulary:
+            raise ValueError("Empty vocabulary")
         return {
             "tokens": merge_strings(vocabulary),
             "matrix": disassemble_sparse_matrix(matrix),

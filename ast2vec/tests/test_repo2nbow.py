@@ -40,10 +40,15 @@ class Repo2NBOWTests(unittest.TestCase):
 
     def test_asdf(self):
         basedir = os.path.dirname(__file__)
+        id2vec = Id2Vec(os.path.join(basedir, ID2VEC))
+        del id2vec._token2index[id2vec.tokens[0]]
+        id2vec.tokens[0] = "test"
+        id2vec._token2index["test"] = 0
+        df = DocumentFrequencies(os.path.join(basedir, DOCFREQ))
+        df._df["test"] = 10
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
-                id2vec=os.path.join(basedir, ID2VEC),
-                docfreq=os.path.join(basedir, DOCFREQ), linguist=tests.ENRY,
+                id2vec=id2vec, docfreq=df, linguist=tests.ENRY,
                 gcs_bucket=None, output=file.name, bblfsh_endpoint=None, timeout=None,
                 repository=os.path.join(basedir, "..", ".."))
             repo2nbow_entry(args)
@@ -58,6 +63,25 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
 
     def test_transform(self):
         basedir = os.path.dirname(__file__)
+        id2vec = Id2Vec(os.path.join(basedir, ID2VEC))
+        del id2vec._token2index[id2vec.tokens[0]]
+        id2vec.tokens[0] = "test"
+        id2vec._token2index["test"] = 0
+        df = DocumentFrequencies(os.path.join(basedir, DOCFREQ))
+        df._df["test"] = 10
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo2nbow = Repo2nBOWTransformer(
+                id2vec=id2vec, docfreq=df, linguist=tests.ENRY, gcs_bucket=None,
+                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
+                timeout=None
+            )
+            outfile = repo2nbow.prepare_filename(basedir, tmpdir)
+            repo2nbow.transform(repos=basedir, output=tmpdir)
+            self.assertTrue(os.path.isfile(outfile))
+            validate_asdf_file(self, outfile)
+
+    def test_empty(self):
+        basedir = os.path.dirname(__file__)
         with tempfile.TemporaryDirectory() as tmpdir:
             repo2nbow = Repo2nBOWTransformer(
                 id2vec=os.path.join(basedir, ID2VEC),
@@ -66,11 +90,8 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
                 bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
                 timeout=None
             )
-            outfile = repo2nbow.prepare_filename(str(basedir), str(tmpdir))
-            repo2nbow.transform(repos=str(basedir), output=tmpdir)
-            self.assertTrue(os.path.isfile(outfile))
-            validate_asdf_file(self, outfile)
-
+            repo2nbow.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
+            self.assertFalse(os.listdir(tmpdir))
 
 if __name__ == "__main__":
     unittest.main()

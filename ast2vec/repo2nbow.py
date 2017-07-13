@@ -81,6 +81,8 @@ class Repo2nBOWTransformer(RepoTransformer):
         super(Repo2nBOWTransformer, self).__init__(**kwargs)
 
     def result_to_tree(self, result):
+        if not result:
+            raise ValueError("Empty bag")
         return {
             "nbow": result,
             "meta": generate_meta(self.WORKER_CLASS.MODEL_CLASS.NAME, self._id2vec, self._df)

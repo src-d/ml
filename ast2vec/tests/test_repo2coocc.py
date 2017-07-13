@@ -51,6 +51,9 @@ class Repo2CooccTests(unittest.TestCase):
 
 
 class Repo2CooccTransformerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        tests.setup()
 
     def test_transform(self):
         basedir = os.path.dirname(__file__)
@@ -58,13 +61,22 @@ class Repo2CooccTransformerTests(unittest.TestCase):
             r2cc = Repo2CooccTransformer(
                 bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
                 linguist=tests.ENRY, timeout=600)
-            r2cc.transform(repos=str(basedir), output=tmpdir)
+            r2cc.transform(repos=basedir, output=tmpdir)
 
             # check that output file exists
-            outfile = r2cc.prepare_filename(str(basedir), tmpdir)
+            outfile = r2cc.prepare_filename(basedir, tmpdir)
             self.assertEqual(os.path.exists(outfile), 1)
 
             validate_asdf_file(self, outfile)
+
+    def test_empty(self):
+        basedir = os.path.dirname(__file__)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            r2cc = Repo2CooccTransformer(
+                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
+                linguist=tests.ENRY, timeout=600)
+            r2cc.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
+            self.assertFalse(os.listdir(tmpdir))
 
 if __name__ == "__main__":
     unittest.main()
