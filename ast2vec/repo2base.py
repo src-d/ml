@@ -12,7 +12,6 @@ import threading
 import asdf
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
 import Stemmer
 
 from ast2vec.meta import ARRAY_COMPRESSION
@@ -34,9 +33,6 @@ class Repo2Base:
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")  #: Regexp to split source code identifiers.
     STEM_THRESHOLD = 6  #: We do not stem splitted parts shorter than or equal to this size.
     MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than thi value.
-    SIMPLE_IDENTIFIER = DESCRIPTOR.enum_types_by_name["Role"] \
-        .values_by_name["SIMPLE_IDENTIFIER"].number + 1  #: Id of SIMPLE_IDENTIFIER in Babelfish.
-    # FIXME(vmarkovtsev): remove "+1"
     DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
     MAX_FILE_SIZE = 200000
 

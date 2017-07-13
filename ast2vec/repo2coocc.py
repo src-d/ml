@@ -6,6 +6,7 @@ from ast2vec.coocc import Cooccurrences
 from ast2vec.meta import generate_meta
 from ast2vec.model import disassemble_sparse_matrix, merge_strings
 from ast2vec.repo2base import Repo2Base, RepoTransformer, repos2_entry, repo2_entry
+from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
 
 
 class Repo2Coocc(Repo2Base):
@@ -37,7 +38,7 @@ class Repo2Coocc(Repo2Base):
         ids = []
         stack = list(root.children)
         for node in stack:
-            if self.SIMPLE_IDENTIFIER in node.roles:
+            if SIMPLE_IDENTIFIER in node.roles:
                 ids.append(node)
             else:
                 stack.extend(node.children)
@@ -66,7 +67,7 @@ class Repo2Coocc(Repo2Base):
             self._update_dict(self._process_token(ch.token), word2ind, tokens)
 
         if (root.token.strip() is not None and root.token.strip() != "" and
-                self.SIMPLE_IDENTIFIER in root.roles):
+                SIMPLE_IDENTIFIER in root.roles):
             self._update_dict(self._process_token(root.token), word2ind,
                               tokens)
 
@@ -78,7 +79,7 @@ class Repo2Coocc(Repo2Base):
         queue = [root]
         while queue:
             node = queue.pop()
-            if self.SIMPLE_IDENTIFIER in node.roles:
+            if SIMPLE_IDENTIFIER in node.roles:
                 yield node.token
             for child in node.children:
                 queue.append(child)

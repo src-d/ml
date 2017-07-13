@@ -1,19 +1,16 @@
 from collections import defaultdict
 import logging
 import math
-import os
 
-import asdf
-
-from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
+from ast2vec.meta import generate_meta
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.nbow import NBOW
-from ast2vec.repo2base import Repo2Base, RepoTransformer, repos2_entry, \
-    ensure_bblfsh_is_running_noexc, repo2_entry
+from ast2vec.repo2base import RepoTransformer, repos2_entry, repo2_entry
+from ast2vec.repo2xbow import Repo2xBOW
 
 
-class Repo2nBOW(Repo2Base):
+class Repo2nBOW(Repo2xBOW):
     """
     Implements the step repository -> :class:`ast2vec.nbow.NBOW`.
     """
@@ -21,10 +18,11 @@ class Repo2nBOW(Repo2Base):
 
     def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
                  log_level=logging.INFO, bblfsh_endpoint=None,
-                 timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
+                 timeout=Repo2xBOW.DEFAULT_BBLFSH_TIMEOUT):
         super(Repo2nBOW, self).__init__(
             tempdir=tempdir, linguist=linguist, log_level=log_level,
-            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
+            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout,
+            vocabulary=id2vec)
         self._id2vec = id2vec
         self._docfreq = docfreq
 
@@ -53,20 +51,6 @@ class Repo2nBOW(Repo2Base):
         for key in missing:
             del freqs[key]
         return dict(freqs)
-
-    def _uast_to_bag(self, uast):
-        stack = [uast]
-        bag = defaultdict(int)
-        while stack:
-            node = stack.pop(0)
-            if self.SIMPLE_IDENTIFIER in node.roles:
-                for sub in self._process_token(node.token):
-                    try:
-                        bag[self._id2vec[sub]] += 1
-                    except KeyError:
-                        pass
-            stack.extend(node.children)
-        return bag
 
 
 class Repo2nBOWTransformer(RepoTransformer):
