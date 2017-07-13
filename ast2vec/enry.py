@@ -7,7 +7,7 @@ import tempfile
 MIN_GO_VERSION = 1, 8, 0
 
 
-def install_enry(args=None, target="./enry", tempdir=None):
+def install_enry(args=None, target="./enry", tempdir=None, warn_exists=True):
     """
     Deploys src-d/enry at the specified path.
 

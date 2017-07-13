@@ -168,7 +168,7 @@ class Repo2Base:
         target_dir = os.path.abspath(target_dir)
         cmdline = [self._linguist]
         if self._is_enry:
-            cmdline += [target_dir]
+            cmdline += ["-json", target_dir]
         else:
             cmdline += [target_dir, "--json"]
         try:

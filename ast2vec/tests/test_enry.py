@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -10,16 +9,7 @@ from ast2vec.enry import install_enry
 
 
 class EnryTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.gitdir = tempfile.mkdtemp()
-        subprocess.check_call([
-            "git", "clone", "-b", "develop",
-            "https://github.com/src-d/ast2vec", cls.gitdir])
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.gitdir)
+    gitdir = os.path.join(os.path.dirname(__file__), "..", "..")
 
     def test_install_enry(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -37,7 +27,7 @@ class EnryTests(unittest.TestCase):
         enry = os.path.join(tmpdir, "enry")
         self.assertTrue(os.path.isfile(enry))
         self.assertEqual(os.stat(enry).st_mode & 0o777, 0o777)
-        output = subprocess.check_output([enry, self.gitdir, "--json"])
+        output = subprocess.check_output([enry, "-json", self.gitdir])
         files = json.loads(output.decode("utf-8"))
         self.assertIn("Python", files)
 
