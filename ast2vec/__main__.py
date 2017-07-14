@@ -50,6 +50,7 @@ def setup_logging(level):
     Makes stdout and stderr unicode friendly in case of misconfigured
     environments, initializes the logging and enables colored logs if it is
     appropriate.
+
     :param level: The logging level, can be either an int or a string.
     :return: None
     """
@@ -74,6 +75,7 @@ def setup_logging(level):
 def main():
     """
     Creates all the argparse-rs and invokes the function from set_defaults().
+
     :return: The result of the function from set_defaults().
     """
     parser = argparse.ArgumentParser()
@@ -258,6 +260,7 @@ def main():
     list_parser.add_argument("--gcs", default=None, help="GCS bucket to use.")
 
     args = parser.parse_args()
+    args.log_level = logging._nameToLevel[args.log_level]
     setup_logging(args.log_level)
     try:
         handler = args.handler
