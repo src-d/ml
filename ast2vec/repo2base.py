@@ -110,7 +110,7 @@ class Repo2Base:
                                 queue_out.put_nowait(None)
                                 continue
 
-                            uast = self._bblfsh[thread_index].parse_uast(
+                            uast = self._bblfsh[thread_index].parse(
                                 filename, language=language, timeout=self._timeout)
                             if uast is None:
                                 self._log.warning("bblfsh timed out on %s", filename)
