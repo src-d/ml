@@ -1,6 +1,8 @@
-from ast2vec.model import Model, split_strings
+from modelforge.model import Model, split_strings
+from modelforge.models import register_model
 
 
+@register_model
 class DocumentFrequencies(Model):
     """
     Document frequencies - number of times a source code identifier appeared
@@ -8,13 +10,19 @@ class DocumentFrequencies(Model):
     """
     NAME = "docfreq"
 
-    def _load(self, tree):
+    def load(self, tree):
         self._docs = tree["docs"]
         tokens = split_strings(tree["tokens"])
         freqs = tree["freqs"]
         self._log.info("Building the docfreq dictionary...")
         self._df = dict(zip(tokens, freqs))
         del tokens
+
+    def dump(self):
+        return """Number of words: %d
+First 10 words: %s
+Number of documents: %d""" % (
+            len(self._df), self.tokens()[:10], self.docs)
 
     @property
     def docs(self):
@@ -47,16 +55,3 @@ class DocumentFrequencies(Model):
         Returns the number of tokens in the model.
         """
         return len(self._df)
-
-
-def print_df(tree, dependencies):
-    """
-    Prints the brief information about :class:`DocumentFrequencies` model.
-
-    :param tree: Internal loaded tree of the model.
-    :param dependencies: Not used.
-    :return: None
-    """
-    words = split_strings(tree["tokens"])
-    print("Number of words:", len(words))
-    print("First 10 words:", words[:10])

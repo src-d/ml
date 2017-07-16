@@ -6,7 +6,8 @@ import os
 import sys
 import unittest
 
-import ast2vec.model as model
+import modelforge.gcs_backend as gcs_backend
+
 from ast2vec.dump import dump_model
 import ast2vec.tests.models as paths
 from ast2vec.tests.fake_requests import FakeRequests
@@ -41,8 +42,9 @@ First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value
  'model': 'docfreq',
  'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
  'version': [1, 0, 0]}
-Number of words: 1000
-""" + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', 'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\n"  # nopep8
+Number of words: 980
+""" + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', " \
+      "'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\nNumber of documents: 1000\n"
 
     NBOW_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 16, 8, 942880),
  'dependencies': [{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
@@ -58,7 +60,7 @@ Number of words: 1000
  'model': 'nbow',
  'uuid': '1e3da42a-28b6-4b33-94a2-a5671f4102f4',
  'version': [1, 0, 0]}
-Shape: [1000, 999424]
+Shape: (1000, 999424)
 """ + "First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPadRT', 'wp-shortcake/shortcake', 'capaj/Moonridge', 'HugoGiraudel/hugogiraudel.github.com', 'crosswalk-project/crosswalk-website', 'apache/parquet-mr', 'dciccale/kimbo.js', 'processone/oneteam']\n"  # nopep8
 
     COOCC_DUMP = """{'created_at': datetime.datetime(2017, 7, 5, 18, 4, 5, 688259),
@@ -68,7 +70,7 @@ Shape: [1000, 999424]
  'version': [1, 0, 0]}
 Number of words: 394
 """ + ("First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']\n" +  # nopep8
-"""Matrix: , shape: [394, 394] number of non zero elements 20832
+"""Matrix: shape: (394, 394) non-zero: 20832
 """)
 
     def test_id2vec(self):
@@ -93,7 +95,7 @@ Number of words: 394
 
     def test_id2vec_id(self):
         def route(url):
-            if url.endswith(model.Model.INDEX_FILE):
+            if url.endswith(gcs_backend.INDEX_FILE):
                 return '{"models": {"id2vec": {' \
                        '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
                        '{"url": "https://xxx"}}}}'.encode()
@@ -101,7 +103,7 @@ Number of words: 394
             with open(self._get_path(paths.ID2VEC), "rb") as fin:
                 return fin.read()
 
-        model.requests = FakeRequests(route)
+        gcs_backend.requests = FakeRequests(route)
         with captured_output() as (out, err, _):
             dump_model(self._get_args(
                 input="92609e70-f79c-46b5-8419-55726e873cfc"))
@@ -114,7 +116,7 @@ Number of words: 394
             with open(self._get_path(paths.ID2VEC), "rb") as fin:
                 return fin.read()
 
-        model.requests = FakeRequests(route)
+        gcs_backend.requests = FakeRequests(route)
         with captured_output() as (out, _, _):
             dump_model(self._get_args(input="https://xxx"))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)

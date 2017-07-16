@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 import asdf
+from modelforge.model import split_strings, assemble_sparse_matrix
 import numpy
 from scipy.sparse import coo_matrix
 import tensorflow as tf
@@ -12,7 +13,6 @@ import tensorflow as tf
 from ast2vec import DocumentFrequencies, swivel, Id2Vec
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, SwivelTransformer, \
     PostprocessTransformer
-from ast2vec.model import split_strings, assemble_sparse_matrix
 from ast2vec.tests.test_dump import captured_output
 
 

@@ -1,15 +1,23 @@
-from ast2vec.model import Model, split_strings, assemble_sparse_matrix
+from modelforge.model import Model, split_strings, assemble_sparse_matrix
+from modelforge.models import register_model
 
 
+@register_model
 class Cooccurrences(Model):
     """
     Co-occurrence matrix.
     """
     NAME = "co-occurrences"
 
-    def _load(self, tree):
+    def load(self, tree):
         self._tokens = split_strings(tree["tokens"])
         self._matrix = assemble_sparse_matrix(tree["matrix"])
+
+    def dump(self):
+        return """Number of words: %d
+First 10 words: %s
+Matrix: shape: %s non-zero: %d""" % (
+            len(self.tokens), self.tokens[:10], self.matrix.shape, self.matrix.getnnz())
 
     @property
     def tokens(self):
@@ -30,21 +38,3 @@ class Cooccurrences(Model):
         Returns the number of tokens in the model.
         """
         return len(self._tokens)
-
-
-def print_coocc(tree, dependencies):
-    """
-    Prints the brief information about :class:`Cooccurrences` model.
-
-    :param tree: Internal loaded tree of the model.
-    :param dependencies: Not used.
-    :return: None
-    """
-
-    words = split_strings(tree["tokens"])
-    m_shape = tree["matrix"]["shape"]
-    nnz = tree["matrix"]["data"][0].shape[0]
-
-    print("Number of words:", len(words))
-    print("First 10 words:", words[:10])
-    print("Matrix:", ", shape:", m_shape, "number of non zero elements", nnz)

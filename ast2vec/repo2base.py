@@ -9,12 +9,11 @@ import subprocess
 import tempfile
 import threading
 
-import asdf
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 import Stemmer
 
-from ast2vec.meta import ARRAY_COMPRESSION
+from modelforge.model import write_model
 
 
 class LinguistFailedError(Exception):
@@ -320,8 +319,7 @@ class RepoTransformer(Transformer):
                 self._log.warning("Not written: %s", output)
                 return
             self._log.info("Writing %s...", output)
-            asdf.AsdfFile(tree).write_to(
-                output, all_array_compression=ARRAY_COMPRESSION)
+            write_model(tree["meta"], tree, output)
         except subprocess.CalledProcessError as e:
             self._log.error("Failed to clone %s: %s", url_or_path, e)
         except:

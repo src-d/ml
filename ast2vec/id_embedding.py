@@ -1,20 +1,19 @@
 from argparse import Namespace
-from copy import copy
 import shutil
 from collections import defaultdict
 import logging
 import os
 import sys
 
-import asdf
+from modelforge.meta import generate_meta
+from modelforge.model import merge_strings, write_model
+from modelforge.progress_bar import progress_bar
 import numpy
 from scipy.sparse import csr_matrix
 import tensorflow as tf
 
+import ast2vec
 from ast2vec.coocc import Cooccurrences
-from ast2vec.meta import generate_meta, ARRAY_COMPRESSION
-from ast2vec.model import merge_strings, split_strings, assemble_sparse_matrix
-from ast2vec.progress_bar import progress_bar
 import ast2vec.swivel as swivel
 from ast2vec.repo2base import Transformer
 from ast2vec.repo2nbow import Repo2nBOW
@@ -67,18 +66,14 @@ def preprocess(args):
     all_words = defaultdict(int)
     skipped = 0
     for i, path in progress_bar(enumerate(inputs), log, expected_size=len(inputs)):
-        with asdf.open(path) as model:
-            if model.tree["meta"]["model"] != "co-occurrences":
-                log.warning("Skipped %s", path)
-                skipped += 1
-                continue
-            try:
-                for w in split_strings(model.tree["tokens"]):
-                    all_words[w] += 1
-            except ValueError:
-                # to handle exception if archive is corrupted:
-                # https://github.com/spacetelescope/asdf/blob/master/asdf/block.py#L637
-                log.warning("Skipped %s", path)
+        try:
+            model = Cooccurrences(source=path)
+        except ValueError:
+            skipped += 1
+            log.warning("Skipped %s", path)
+            continue
+        for w in model.tokens:
+            all_words[w] += 1
     vs = args.vocabulary_size
     if len(all_words) < vs:
         vs = len(all_words)
@@ -108,12 +103,11 @@ def preprocess(args):
     word_indices = {w: i for i, w in enumerate(chosen_words)}
     if args.df is not None:
         log.info("Writing the document frequencies to %s...", args.df)
-        asdf.AsdfFile({
+        write_model(generate_meta("docfreq", ast2vec.__version__), {
             "tokens": merge_strings(chosen_words),
             "freqs": chosen_freqs,
-            "docs": len(inputs) - skipped,
-            "meta": generate_meta("docfreq")
-        }).write_to(args.df, all_array_compression=ARRAY_COMPRESSION)
+            "docs": len(inputs) - skipped
+        }, args.df)
     del chosen_freqs
 
     if not os.path.exists(args.output):
@@ -298,8 +292,7 @@ def postprocess(args):
     log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
     log.info("Writing %s...", args.result)
-    asdf.AsdfFile({
+    write_model(generate_meta("id2vec", ast2vec.__version__), {
         "tokens": merge_strings(tokens),
-        "embeddings": embeddings,
-        "meta": generate_meta("id2vec")
-    }).write_to(args.result, all_array_compression=ARRAY_COMPRESSION)
+        "embeddings": embeddings
+    }, args.result)

@@ -1,10 +1,11 @@
 from collections import defaultdict
 
+from modelforge.meta import generate_meta
+from modelforge.model import disassemble_sparse_matrix, merge_strings
 from scipy.sparse import dok_matrix
 
+import ast2vec
 from ast2vec.coocc import Cooccurrences
-from ast2vec.meta import generate_meta
-from ast2vec.model import disassemble_sparse_matrix, merge_strings
 from ast2vec.repo2base import Repo2Base, RepoTransformer, repos2_entry, repo2_entry
 from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
 
@@ -110,7 +111,7 @@ class Repo2CooccTransformer(RepoTransformer):
         return {
             "tokens": merge_strings(vocabulary),
             "matrix": disassemble_sparse_matrix(matrix),
-            "meta": generate_meta(cls.WORKER_CLASS.MODEL_CLASS.NAME)
+            "meta": generate_meta(cls.WORKER_CLASS.MODEL_CLASS.NAME, ast2vec.__version__)
         }
 
 

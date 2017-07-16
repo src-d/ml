@@ -1,4 +1,4 @@
-from ast2vec.__main__ import setup_logging
+import modelforge.configuration
 from ast2vec.df import DocumentFrequencies
 from ast2vec.enry import install_enry
 from ast2vec.id2vec import Id2Vec
@@ -9,3 +9,4 @@ from ast2vec.repo2nbow import Repo2nBOW, Repo2nBOWTransformer
 
 
 __version__ = 1, 0, 0
+modelforge.configuration.refresh()

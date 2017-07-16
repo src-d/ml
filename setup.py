@@ -1,5 +1,11 @@
+import sys
+
 from setuptools import setup, find_packages
 
+if sys.version_info < (3, 5, 0):
+    typing = ["typing"]
+else:
+    typing = []
 
 setup(
     name="ast2vec",
@@ -23,7 +29,8 @@ setup(
                       "asdf>=1.2,<2.0",
                       "google-cloud-storage>=1.0,<2.0",
                       "python-dateutil",
-                      "bblfsh"],
+                      "modelforge>=1.0.0",
+                      "bblfsh"] + typing,
     package_data={"": ["LICENSE", "README.md"]},
     classifiers=[
         "Development Status :: 4 - Beta",
