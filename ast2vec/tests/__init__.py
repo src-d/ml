@@ -2,7 +2,9 @@ import os
 import shutil
 import tempfile
 
-from ast2vec import ensure_bblfsh_is_running_noexc, install_enry, setup_logging
+from modelforge.logs import setup_logging
+
+from ast2vec import ensure_bblfsh_is_running_noexc, install_enry
 
 
 ENRY = None

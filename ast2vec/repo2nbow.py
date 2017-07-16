@@ -2,7 +2,10 @@ from collections import defaultdict
 import logging
 import math
 
-from ast2vec.meta import generate_meta
+from modelforge.backends import create_backend
+from modelforge.meta import generate_meta
+
+import ast2vec
 from ast2vec.id2vec import Id2Vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.nbow import NBOW
@@ -60,8 +63,12 @@ class Repo2nBOWTransformer(RepoTransformer):
     WORKER_CLASS = Repo2nBOW
 
     def __init__(self, id2vec=None, docfreq=None, gcs_bucket=None, **kwargs):
-        self._id2vec = kwargs["id2vec"] = Id2Vec(id2vec or None, gcs_bucket=gcs_bucket)
-        self._df = kwargs["docfreq"] = DocumentFrequencies(docfreq or None, gcs_bucket=gcs_bucket)
+        if gcs_bucket:
+            backend = create_backend("gcs", "bucket=" + gcs_bucket)
+        else:
+            backend = None
+        self._id2vec = kwargs["id2vec"] = Id2Vec(id2vec or None, backend=backend)
+        self._df = kwargs["docfreq"] = DocumentFrequencies(docfreq or None, backend=backend)
         super(Repo2nBOWTransformer, self).__init__(**kwargs)
 
     def result_to_tree(self, result):
@@ -69,7 +76,8 @@ class Repo2nBOWTransformer(RepoTransformer):
             raise ValueError("Empty bag")
         return {
             "nbow": result,
-            "meta": generate_meta(self.WORKER_CLASS.MODEL_CLASS.NAME, self._id2vec, self._df)
+            "meta": generate_meta(self.WORKER_CLASS.MODEL_CLASS.NAME,
+                                  ast2vec.__version__, self._id2vec, self._df)
         }
 
 
