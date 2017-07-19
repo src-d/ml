@@ -52,15 +52,36 @@ def check_swivel_results(obj, folder):
     obj.assertEqual(len(row_embedding), obj.VOCAB + 1)
 
 
+def default_swivel_args(tmpdir):
+    args = swivel.FLAGS
+    args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
+    prepare_shard(args.input_base_path)
+    args.output_base_path = tmpdir
+    args.embedding_size = 50
+    args.num_epochs = 20
+    return args
+
+
+def default_preprocess_params(tmpdir, vocab):
+    args = argparse.Namespace(
+        output=tmpdir, df=os.path.join(tmpdir, "docfreq.asdf"),
+        input=[os.path.join(os.path.dirname(__file__), "coocc")],
+        vocabulary_size=vocab, shard_size=vocab)
+    return args
+
+
 class IdEmbeddingTests(unittest.TestCase):
     VOCAB = 4096
 
+    def test_preprocess_bad_params(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = default_preprocess_params(tmpdir, self.VOCAB)
+            args.shard_size = self.VOCAB + 1
+            self.assertRaises(ValueError, lambda: preprocess(args))
+
     def test_preprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            args = argparse.Namespace(
-                output=tmpdir, df=os.path.join(tmpdir, "docfreq.asdf"),
-                input=[os.path.join(os.path.dirname(__file__), "coocc")],
-                vocabulary_size=self.VOCAB, shard_size=self.VOCAB)
+            args = default_preprocess_params(tmpdir, self.VOCAB)
             with captured_output() as (out, err, log):
                 preprocess(args)
             self.assertFalse(out.getvalue())
@@ -135,14 +156,19 @@ class IdEmbeddingTests(unittest.TestCase):
             matrix = matrix.tocsr()[chosen_indices][:, chosen_indices].todense().astype(int)
             self.assertTrue((matrix == freqs).all())
 
+    def test_swivel_bad_params_submatrix_cols(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = default_swivel_args(tmpdir)
+            args.submatrix_cols = 4097
+            self.assertRaises(ValueError, lambda: run_swivel(args))
+
+            args.submatrix_cols = 4096
+            args.submatrix_rows = 4097
+            self.assertRaises(ValueError, lambda: run_swivel(args))
+
     def test_swivel(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            args = swivel.FLAGS
-            args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
-            prepare_shard(args.input_base_path)
-            args.output_base_path = tmpdir
-            args.embedding_size = 50
-            args.num_epochs = 20
+            args = default_swivel_args(tmpdir)
             run_swivel(args)
             check_swivel_results(self, tmpdir)
 

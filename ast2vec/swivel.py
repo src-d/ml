@@ -218,6 +218,14 @@ class SwivelModel:
         log("Matrix dim: (%d,%d) SubMatrix dim: (%d,%d)",
             self.n_rows, self.n_cols, config.submatrix_rows,
             config.submatrix_cols)
+        if self.n_cols < config.submatrix_cols:
+            raise ValueError(
+                "submatrix_cols={0} can not be bigger than columns number={1} "
+                "(specify submatrix_cols={1})".format(config.submatrix_cols, self.n_cols))
+        if self.n_rows < config.submatrix_rows:
+            raise ValueError(
+                "submatrix_rows={0} can not be bigger than rows number={1} "
+                "(specify submatrix_rows={1})".format(config.submatrix_rows, self.n_cols))
         self.n_submatrices = (self.n_rows * self.n_cols /
                               (config.submatrix_rows * config.submatrix_cols))
         log("n_submatrices: %d", self.n_submatrices)
