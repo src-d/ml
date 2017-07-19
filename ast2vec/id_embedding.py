@@ -78,6 +78,11 @@ def preprocess(args):
     if len(all_words) < vs:
         vs = len(all_words)
     sz = args.shard_size
+    if vs < sz:
+        raise ValueError(
+            "vocabulary_size={0} is less than shard_size={1}. "
+            "You should specify smaller shard_size "
+            "(pass shard_size={0} argument).".format(vs, sz))
     vs -= vs % sz
     log.info("Effective vocabulary size: %d", vs)
     log.info("Truncating the vocabulary...")
