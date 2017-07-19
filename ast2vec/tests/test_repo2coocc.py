@@ -33,6 +33,7 @@ class Repo2CooccTests(unittest.TestCase):
         self.assertIn("document", coocc[0])
         self.assertIsInstance(coocc[1], coo_matrix)
         self.assertEqual(coocc[1].shape, (len(coocc[0]),) * 2)
+        self.assertGreater(coocc[1].getnnz(), 20000)
 
     def test_asdf(self):
         basedir = os.path.dirname(__file__)
