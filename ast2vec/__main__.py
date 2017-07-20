@@ -6,6 +6,7 @@ import sys
 from ast2vec.vw_dataset import nbow2vw_entry
 from modelforge.logs import setup_logging
 
+from ast2vec.cloning import clone_repositories
 from ast2vec.dump import dump_model
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
@@ -25,6 +26,29 @@ def main():
                         choices=logging._nameToLevel,
                         help="Logging verbosity.")
     subparsers = parser.add_subparsers(help="Commands", dest="command")
+
+    clone_parser = subparsers.add_parser(
+        "clone", help="Clone multiple repositories. By default saves all files, including "
+        "`.git`. Use --linguist and --languages options to narrow files down.")
+    clone_parser.set_defaults(handler=clone_repositories)
+    clone_parser.add_argument(
+        "-i", "--input", required=True, nargs="+", help="URLs or files with URLs.")
+    clone_parser.add_argument(
+        "--ignore", action="store_true",
+        help="Ignore failed to download repositories. An error message is logged as usual.")
+    clone_parser.add_argument(
+        "--linguist", help="Path to src-d/enry executable. If specified will save only files "
+        "classified by enry.")
+    clone_parser.add_argument(
+        "--languages", nargs="*", default=["Python", "Java"], help="Specifies languages to be "
+        "used by enry.")
+    clone_parser.add_argument(
+        "-o", "--output", required=True, help="Output directory.")
+    clone_parser.add_argument(
+        "--redownload", action="store_true", help="Redownload existing repositories.")
+    clone_parser.add_argument(
+        "-t", "--threads", type=int, required=True, help="Number of downloading threads.")
+
     repo2nbow_parser = subparsers.add_parser(
         "repo2nbow", help="Produce the nBOW from a Git repository.")
     repo2nbow_parser.set_defaults(handler=repo2nbow_entry)

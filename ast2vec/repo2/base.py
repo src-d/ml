@@ -16,15 +16,10 @@ import Stemmer
 
 from modelforge.model import write_model
 
-GeneratorResponse = namedtuple('GeneratorResponse',
-                               ['filepath', 'filename', 'response'])
+from ast2vec.cloning import RepoCloner
 
-
-class LinguistFailedError(Exception):
-    """
-    Raised when we fail to classify the source files.
-    """
-    pass
+GeneratorResponse = namedtuple("GeneratorResponse",
+                               ["filepath", "filename", "response"])
 
 
 class Repo2Base:
@@ -47,72 +42,26 @@ class Repo2Base:
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = self.STEM_THRESHOLD
         self._tempdir = tempdir
-        self._linguist = linguist
-        if self._linguist is None:
-            self._linguist = shutil.which("enry", path=os.getcwd())
-        if self._linguist is None:
-            self._linguist = "enry"
-        full_path = shutil.which(self._linguist)
-        if not full_path:
-            raise FileNotFoundError("%s was not found. Install it: python3 -m ast2vec enry" %
-                                    self._linguist)
-        with open(full_path, "rb") as fin:
-            self._is_enry = fin.read(15) != b"#!/usr/bin/ruby"
+        self._cloner = RepoCloner(linguist=linguist, redownload=True, log_level=log_level)
         self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
                         for _ in range(multiprocessing.cpu_count())]
         self._timeout = timeout
-
-    def clone_repository(self, url, save_dir=None):
-        """
-        Clones repository from provided url and saves it to directory target_dir.
-        if target_dir is not provided it saves to temp folder and return it name
-
-        :param url: a URL to clone
-        :param save_dir: path to save cloned repo
-        :return: target_dir or temp folder path
-        """
-        if save_dir is None:
-            target_dir = tempfile.mkdtemp(prefix="repo2base-", dir=self._tempdir)
-        else:
-            target_dir = save_dir
-        url = type(self).prepare_reponame(url)
-        env = os.environ.copy()
-        env["GIT_TERMINAL_PROMPT"] = "0"
-        self._log.info("Cloning from %s...", url)
-        try:
-            subprocess.check_output(
-                ["git", "clone", "--depth=1", url, target_dir],
-                env=env, stdin=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            if save_dir is None:
-                shutil.rmtree(target_dir, ignore_errors=True)
-            self._log.error("Git failed to clone repo. git stderr:\n\t" +
-                            "\n\t".join(e.output.decode("utf8").split("\n")))
-            raise e from None
-        except Exception as e:
-            if save_dir is None:
-                shutil.rmtree(target_dir, ignore_errors=True)
-            self._log.error("Unknown error in %s.clone_repository()." % type(self).__name__ +
-                            " Git failed to clone repo.")
-            raise e from None
-
-        return target_dir
 
     def convert_repository(self, url_or_path):
         """
         Queries bblfsh for the UASTs and produces smth useful from them.
 
-        :param url_or_path: Fiel system path to the repository or a URL to clone.
+        :param url_or_path: File system path to the repository or a URL to clone.
         :return: Some object(s) which are returned from convert_uasts().
         """
         temp = not os.path.exists(url_or_path)
         if temp:
-            target_dir = self.clone_repository(url_or_path)
+            target_dir = tempfile.mkdtemp(prefix="repo2-", dir=self._tempdir)
+            target_dir = self._cloner.clone_repo(url_or_path, ignore=False, target_dir=target_dir)
         else:
             target_dir = url_or_path
         try:
-            classified = self._classify_files(target_dir)
-
+            classified = self._cloner.classify_repo(target_dir)
             self._log.info("Fetching and processing UASTs...")
 
             def file_uast_generator():
@@ -167,8 +116,7 @@ class Repo2Base:
                     for f in files:
                         tasks += 1
                         empty = False
-                        queue_in.put_nowait(
-                            (target_dir, f, lang))
+                        queue_in.put_nowait((target_dir, f, lang))
                 report_interval = max(1, tasks // 100)
                 for _ in pool:
                     queue_in.put_nowait(None)
@@ -195,22 +143,6 @@ class Repo2Base:
 
     def convert_uasts(self, file_uast_generator):
         raise NotImplementedError()
-
-    def _classify_files(self, target_dir):
-        self._log.info("Classifying the files...")
-        target_dir = os.path.abspath(target_dir)
-        cmdline = [self._linguist]
-        if self._is_enry:
-            cmdline += ["-json", target_dir]
-        else:
-            cmdline += [target_dir, "--json"]
-        try:
-            bjson = subprocess.check_output(cmdline)
-        except subprocess.CalledProcessError:
-            raise LinguistFailedError() from None
-        classified = json.loads(bjson.decode("utf-8"))
-        self._log.info("Result: %s", {k: len(v) for k, v in classified.items()})
-        return classified
 
     def _process_token(self, token):
         for word in self._split(token):
@@ -257,22 +189,6 @@ class Repo2Base:
             last = part[pos:]
             if last:
                 yield from ret(last)
-
-    @staticmethod
-    def prepare_reponame(reponame: str) -> str:
-        """
-        Prepare name of repository for operations with git.
-        Remove '\n', '/' and '\' in the end of string
-        Add '.git' to the end of name if necessary
-        Add 'https://' in the beginning
-        :param reponame: raw name of repository
-        :return: good ready for use name
-        """
-        bad_endings = "\n\r\\/"
-        reponame = reponame.rstrip(bad_endings)
-        if not reponame.startswith("https://") and not reponame.startswith("http://"):
-            reponame = "https://" + reponame
-        return reponame
 
 
 class Transformer:
