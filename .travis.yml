@@ -1,0 +1,37 @@
+language: python
+sudo: false
+dist: trusty
+services:
+- docker
+cache:
+  directories:
+  - "$HOME/.cache/pip"
+_install: &_install
+  - gimme 1.8
+  - source ~/.gimme/envs/latest.env
+  - pip install --upgrade pip
+  - pip install -r requirements.txt codecov
+  - pip install -e .
+_coverage: &_coverage
+  - SCRIPT="coverage run -m unittest discover"
+matrix:
+  include:
+    - python: 3.4
+      env: *_coverage
+      install: *_install
+    - python: 3.5
+      env: *_coverage
+      install: *_install
+    - python: 3.6
+      env: SCRIPT="pep8 --max-line-length=99 ."
+      install: pip install pep8
+    - python: 3.6
+      env: *_coverage
+      install: *_install
+      after_success:
+        - codecov
+  fast_finish: true
+script:
+- (eval "$SCRIPT")
+notifications:
+  email: false
