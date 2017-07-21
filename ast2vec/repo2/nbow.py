@@ -37,10 +37,10 @@ class Repo2nBOW(Repo2xBOW):
     def docfreq(self):
         return self._docfreq
 
-    def convert_uasts(self, uast_generator):
+    def convert_uasts(self, file_uast_generator):
         freqs = defaultdict(int)
-        for uast in uast_generator:
-            bag = self._uast_to_bag(uast.uast)
+        for file_uast in file_uast_generator:
+            bag = self._uast_to_bag(file_uast.response.uast)
             for key, freq in bag.items():
                 freqs[key] += freq
         missing = []
