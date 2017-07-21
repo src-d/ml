@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 
+from ast2vec.vw_dataset import nbow2vw_entry
 from modelforge.logs import setup_logging
 
 from ast2vec.dump import dump_model
@@ -159,6 +160,16 @@ def main():
     postproc_parser.set_defaults(handler=postprocess)
     postproc_parser.add_argument("swivel_output_directory")
     postproc_parser.add_argument("result")
+
+    nbow2vw_parser = subparsers.add_parser(
+        "nbow2vw", help="Convert an nBOW model to the dataset in Vowpal Wabbit format.")
+    nbow2vw_parser.set_defaults(handler=nbow2vw_entry)
+    nbow2vw_parser.add_argument(
+        "-i", "--nbow", required=True, help="URL or path to the nBOW model.")
+    nbow2vw_parser.add_argument(
+        "--id2vec", help="URL or path to the identifier embeddings.")
+    nbow2vw_parser.add_argument(
+        "-o", "--output", required=True, help="Path to the output file.")
 
     enry_parser = subparsers.add_parser(
         "enry", help="Install src-d/enry to the current working directory.")
