@@ -1,13 +1,11 @@
-import argparse
 import os
-import tempfile
 import unittest
 
 import asdf
 from scipy.sparse import coo_matrix
 
-from ast2vec.repo2voccoocc import Repo2VocCoocc
 import ast2vec.tests as tests
+from ast2vec.repo2.repo2voccoocc import Repo2VocCoocc
 
 
 def validate_asdf_file(obj, filename):

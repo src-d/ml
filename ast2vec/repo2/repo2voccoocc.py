@@ -1,7 +1,7 @@
 import logging
 
+from ast2vec.repo2.repo2cooccbase import Repo2CooccBase
 from ast2vec.voccoocc import VocabularyCooccurrences
-from ast2vec.repo2cooccbase import Repo2CooccBase
 
 
 class Repo2VocCoocc(Repo2CooccBase):
