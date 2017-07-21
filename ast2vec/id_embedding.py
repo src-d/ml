@@ -15,8 +15,8 @@ from scipy.sparse import csr_matrix
 import ast2vec
 import ast2vec.swivel as swivel
 from ast2vec.coocc import Cooccurrences
-from ast2vec.repo2.repo2base import Transformer
-from ast2vec.repo2.repo2nbow import Repo2nBOW
+from ast2vec.repo2.base import Transformer
+from ast2vec.repo2.nbow import Repo2nBOW
 
 
 class PreprocessTransformer(Transformer):

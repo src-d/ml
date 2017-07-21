@@ -8,7 +8,7 @@ from scipy.sparse import coo_matrix
 
 import ast2vec.tests as tests
 from ast2vec import Repo2Coocc, Repo2CooccTransformer
-from ast2vec.repo2.repo2coocc import repo2coocc_entry
+from ast2vec.repo2.coocc import repo2coocc_entry
 
 
 def validate_asdf_file(obj, filename):

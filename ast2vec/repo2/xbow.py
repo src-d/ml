@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
-from ast2vec.repo2.repo2base import Repo2Base
+from ast2vec.repo2.base import Repo2Base
 
 
 class Repo2xBOW(Repo2Base):

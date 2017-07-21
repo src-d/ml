@@ -5,7 +5,7 @@ import asdf
 from scipy.sparse import coo_matrix
 
 import ast2vec.tests as tests
-from ast2vec.repo2.repo2voccoocc import Repo2VocCoocc
+from ast2vec.repo2.voccoocc import Repo2VocCoocc
 
 
 def validate_asdf_file(obj, filename):
