@@ -5,10 +5,10 @@ import unittest
 
 import asdf
 
+import ast2vec.tests as tests
 from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies, \
     Repo2nBOWTransformer
-from ast2vec.repo2nbow import repo2nbow_entry
-import ast2vec.tests as tests
+from ast2vec.repo2.repo2nbow import repo2nbow_entry
 from ast2vec.tests.models import ID2VEC, DOCFREQ
 
 

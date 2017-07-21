@@ -1,22 +1,22 @@
-from argparse import Namespace
-import shutil
-from collections import defaultdict
 import logging
 import os
+import shutil
 import sys
+from argparse import Namespace
+from collections import defaultdict
 
+import numpy
+import tensorflow as tf
 from modelforge.meta import generate_meta
 from modelforge.model import merge_strings, write_model
 from modelforge.progress_bar import progress_bar
-import numpy
 from scipy.sparse import csr_matrix
-import tensorflow as tf
 
 import ast2vec
-from ast2vec.coocc import Cooccurrences
 import ast2vec.swivel as swivel
-from ast2vec.repo2base import Transformer
-from ast2vec.repo2nbow import Repo2nBOW
+from ast2vec.coocc import Cooccurrences
+from ast2vec.repo2.repo2base import Transformer
+from ast2vec.repo2.repo2nbow import Repo2nBOW
 
 
 class PreprocessTransformer(Transformer):

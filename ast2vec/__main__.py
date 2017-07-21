@@ -5,12 +5,12 @@ import sys
 
 from modelforge.logs import setup_logging
 
+from ast2vec.dump import dump_model
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
-from ast2vec.repo2base import Repo2Base
-from ast2vec.repo2coocc import repo2coocc_entry, repos2coocc_entry
-from ast2vec.repo2nbow import repo2nbow_entry, repos2nbow_entry
-from ast2vec.dump import dump_model
+from ast2vec.repo2.repo2base import Repo2Base
+from ast2vec.repo2.repo2coocc import repo2coocc_entry, repos2coocc_entry
+from ast2vec.repo2.repo2nbow import repo2nbow_entry, repos2nbow_entry
 
 
 def main():

@@ -3,8 +3,8 @@ from collections import defaultdict
 import numpy
 from scipy.sparse import coo_matrix
 
-from ast2vec.repo2base import Repo2Base
 from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
+from ast2vec.repo2.repo2base import Repo2Base
 
 
 class Repo2CooccBase(Repo2Base):
