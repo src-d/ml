@@ -33,8 +33,8 @@ It exposes several tools to generate the models and setup the environment.
 API is divided into two domains: models and training. The first is about using while the second
 is about creating. Models: [Id2Vec](ast2vec/id2vec.py),
 [DocumentFrequencies](ast2vec/df.py), [NBOW](ast2vec/nbow.py), [Cooccurrences](ast2vec/coocc.py).
-Transformers (keras/sklearn style): [Repo2nBOWTransformer](ast2vec/repo2/repo2nbow.py#L72),
-[Repo2CooccTransformer](ast2vec/repo2/repo2coocc.py#L101),
+Transformers (keras/sklearn style): [Repo2nBOWTransformer](ast2vec/repo2/nbow.py#L72),
+[Repo2CooccTransformer](ast2vec/repo2/coocc.py#L101),
 [PreprocessTransformer](ast2vec/id_embedding.py#L22),
 [SwivelTransformer](ast2vec/id_embedding.py#L218) and
 [PostprocessTransformer](ast2vec/id_embedding.py#L241).
@@ -48,8 +48,8 @@ We build the source code identifier co-occurrence matrix for every repository.
 1. Clone or read the repository from disk.
 2. Classify files using [enry](https://github.com/src-d/enry).
 3. Extract [UAST](https://doc.bblf.sh/uast/specification.html) from each supported file.
-4. [Split and stem](ast2vec/repo2/repo2base.py#L160) all the identifiers in each tree.
-5. [Traverse UAST](ast2vec/repo2/repo2coocc.py#L86), collapse all non-identifier paths and record all
+4. [Split and stem](ast2vec/repo2/base.py#L160) all the identifiers in each tree.
+5. [Traverse UAST](ast2vec/repo2/coocc.py#L86), collapse all non-identifier paths and record all
 identifiers on the same level as co-occurring. Besides, connect them with their immediate parents.
 6. Write the individual co-occurrence matrices.
 7. [Merge](ast2vec/id_embedding.py#L50) co-occurrence matrices from all repositories. Write the
@@ -71,7 +71,7 @@ frequencies ("docfreq") and identifier embeddings ("id2vec").
 1. Clone or read the repository from disk.
 2. Classify files using [enry](https://github.com/src-d/enry).
 3. Extract [UAST](https://doc.bblf.sh/uast/specification.html) from each supported file.
-4. [Split and stem](ast2vec/repo2/repo2base.py#L160) all the identifiers in each tree.
+4. [Split and stem](ast2vec/repo2/base.py#L160) all the identifiers in each tree.
 5. Leave only those identifiers which are present in "docfreq" and "id2vec".
 6. Set the weight of each such identifier as TF-IDF.
 7. Set the value of each such identifier as the corresponding embedding vector.

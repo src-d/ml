@@ -9,8 +9,8 @@ import ast2vec
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
 from ast2vec.nbow import NBOW
-from ast2vec.repo2.repo2base import RepoTransformer, repos2_entry, repo2_entry
-from ast2vec.repo2.repo2xbow import Repo2xBOW
+from ast2vec.repo2.base import RepoTransformer, repos2_entry, repo2_entry
+from ast2vec.repo2.xbow import Repo2xBOW
 
 
 class Repo2nBOW(Repo2xBOW):
