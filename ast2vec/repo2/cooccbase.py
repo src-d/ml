@@ -12,11 +12,11 @@ class Repo2CooccBase(Repo2Base):
     Converts UASTs to co-occurrence matrices.
     """
 
-    def convert_uasts(self, uast_generator):
+    def convert_uasts(self, file_uast_generator):
         word2ind = self._get_vocabulary()
         dok_matrix = defaultdict(int)
-        for uast in uast_generator:
-            self._traverse_uast(uast.uast, word2ind, dok_matrix)
+        for file_uast in file_uast_generator:
+            self._traverse_uast(file_uast.response.uast, word2ind, dok_matrix)
 
         n_tokens = len(word2ind)
         mat = coo_matrix((n_tokens, n_tokens), dtype=numpy.float32)
