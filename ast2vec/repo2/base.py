@@ -17,7 +17,7 @@ import Stemmer
 from modelforge.model import write_model
 
 GeneratorResponse = namedtuple('GeneratorResponse',
-                               ['filepath', 'filename', 'response'], verbose=True)
+                               ['filepath', 'filename', 'response'])
 
 
 class LinguistFailedError(Exception):
