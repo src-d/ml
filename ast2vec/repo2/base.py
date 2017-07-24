@@ -8,12 +8,16 @@ import shutil
 import subprocess
 import tempfile
 import threading
+from collections import namedtuple
 
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 import Stemmer
 
 from modelforge.model import write_model
+
+GeneratorResponse = namedtuple('GeneratorResponse',
+                               ['filepath', 'filename', 'response'], verbose=True)
 
 
 class LinguistFailedError(Exception):
@@ -58,6 +62,42 @@ class Repo2Base:
                         for _ in range(multiprocessing.cpu_count())]
         self._timeout = timeout
 
+    def clone_repository(self, url, save_dir=None):
+        """
+        Clones repository from provided url and saves it to directory target_dir.
+        if target_dir is not provided it saves to temp folder and return it name
+
+        :param url: a URL to clone
+        :param save_dir: path to save cloned repo
+        :return: target_dir or temp folder path
+        """
+        if save_dir is None:
+            target_dir = tempfile.mkdtemp(prefix="repo2base-", dir=self._tempdir)
+        else:
+            target_dir = save_dir
+        url = type(self).prepare_reponame(url)
+        env = os.environ.copy()
+        env["GIT_TERMINAL_PROMPT"] = "0"
+        self._log.info("Cloning from %s...", url)
+        try:
+            subprocess.check_output(
+                ["git", "clone", "--depth=1", url, target_dir],
+                env=env, stdin=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            if save_dir is None:
+                shutil.rmtree(target_dir, ignore_errors=True)
+            self._log.error("Git failed to clone repo. git stderr:\n\t" +
+                            "\n\t".join(e.output.decode("utf8").split("\n")))
+            raise e from None
+        except Exception as e:
+            if save_dir is None:
+                shutil.rmtree(target_dir, ignore_errors=True)
+            self._log.error("Unknown error in %s.clone_repository()." % type(self).__name__ +
+                            " Git failed to clone repo.")
+            raise e from None
+
+        return target_dir
+
     def convert_repository(self, url_or_path):
         """
         Queries bblfsh for the UASTs and produces smth useful from them.
@@ -67,27 +107,15 @@ class Repo2Base:
         """
         temp = not os.path.exists(url_or_path)
         if temp:
-            env = os.environ.copy()
-            env["GIT_TERMINAL_PROMPT"] = "0"
-            target_dir = tempfile.mkdtemp(
-                prefix="repo2nbow-", dir=self._tempdir)
-            self._log.info("Cloning from %s...", url_or_path)
-            try:
-                subprocess.check_call(
-                    ["git", "clone", "--depth=1", url_or_path, target_dir],
-                    env=env, stdin=subprocess.DEVNULL)
-            except Exception as e:
-                shutil.rmtree(target_dir, ignore_errors=True)
-                raise e from None
+            target_dir = self.clone_repository(url_or_path)
         else:
             target_dir = url_or_path
         try:
-            self._log.info("Classifying the files...")
             classified = self._classify_files(target_dir)
-            self._log.info("Result: %s", {k: len(v) for k, v in classified.items()})
+
             self._log.info("Fetching and processing UASTs...")
 
-            def uast_generator():
+            def file_uast_generator():
                 queue_in = Queue()
                 queue_out = Queue()
 
@@ -97,23 +125,28 @@ class Repo2Base:
                         if task is None:
                             break
                         try:
-                            filename, language = task
+                            folder, filename, language = task
+                            filepath = os.path.join(folder, filename).encode('utf8')
+                            # I need .encode('utf8') to avoid problems
+                            # with bad symbols in file names on Ubuntu
 
-                            # Check if filename is symlink
-                            if os.path.islink(filename):
-                                filename = os.readlink(filename)
+                            # Check if file path is symlink
+                            if os.path.islink(filepath):
+                                filepath = os.readlink(filepath)
 
-                            size = os.stat(filename).st_size
+                            size = os.stat(filepath).st_size
                             if size > self.MAX_FILE_SIZE:
-                                self._log.warning("%s is too big - %d", filename, size)
+                                self._log.warning("%s is too big - %d", filepath, size)
                                 queue_out.put_nowait(None)
                                 continue
 
-                            uast = self._bblfsh[thread_index].parse(
-                                filename, language=language, timeout=self._timeout)
-                            if uast is None:
-                                self._log.warning("bblfsh timed out on %s", filename)
-                            queue_out.put_nowait(uast)
+                            response = self._bblfsh[thread_index].parse(
+                                filepath, language=language, timeout=self._timeout)
+                            if response is None:
+                                self._log.warning("bblfsh timed out on %s", filepath)
+                            queue_out.put_nowait(GeneratorResponse(filepath=filepath,
+                                                                   filename=filename,
+                                                                   response=response))
                         except:
                             self._log.exception(
                                 "Error while processing %s", task)
@@ -135,7 +168,7 @@ class Repo2Base:
                         tasks += 1
                         empty = False
                         queue_in.put_nowait(
-                            (os.path.join(target_dir, f), lang))
+                            (target_dir, f, lang))
                 report_interval = max(1, tasks // 100)
                 for _ in pool:
                     queue_in.put_nowait(None)
@@ -145,15 +178,14 @@ class Repo2Base:
                         yield result
                     tasks -= 1
                     if tasks % report_interval == 0:
-                        self._log.info("%s pending tasks: %d", url_or_path,
-                                       tasks)
+                        self._log.info("%s pending tasks: %d", url_or_path, tasks)
                 for thread in pool:
                     thread.join()
 
                 if empty:
                     self._log.warning("No files were processed")
 
-            return self.convert_uasts(uast_generator())
+            return self.convert_uasts(file_uast_generator())
         finally:
             if temp:
                 shutil.rmtree(target_dir)
@@ -161,10 +193,11 @@ class Repo2Base:
     def convert_uast(self, uast):
         return self.convert_uasts([uast])
 
-    def convert_uasts(self, uast_generator):
+    def convert_uasts(self, file_uast_generator):
         raise NotImplementedError()
 
     def _classify_files(self, target_dir):
+        self._log.info("Classifying the files...")
         target_dir = os.path.abspath(target_dir)
         cmdline = [self._linguist]
         if self._is_enry:
@@ -176,6 +209,7 @@ class Repo2Base:
         except subprocess.CalledProcessError:
             raise LinguistFailedError() from None
         classified = json.loads(bjson.decode("utf-8"))
+        self._log.info("Result: %s", {k: len(v) for k, v in classified.items()})
         return classified
 
     def _process_token(self, token):
@@ -223,6 +257,22 @@ class Repo2Base:
             last = part[pos:]
             if last:
                 yield from ret(last)
+
+    @staticmethod
+    def prepare_reponame(reponame: str) -> str:
+        """
+        Prepare name of repository for operations with git.
+        Remove '\n', '/' and '\' in the end of string
+        Add '.git' to the end of name if necessary
+        Add 'https://' in the beginning
+        :param reponame: raw name of repository
+        :return: good ready for use name
+        """
+        bad_endings = "\n\r\\/"
+        reponame = reponame.rstrip(bad_endings)
+        if not reponame.startswith("https://") and not reponame.startswith("http://"):
+            reponame = "https://" + reponame
+        return reponame
 
 
 class Transformer:
@@ -282,19 +332,24 @@ class RepoTransformer(Transformer):
     def prepare_filename(cls, repo, output):
         """
         Remove prefixes from the repo name, so later it can be used to create
-        file for each repository + replace slashes ("/") with sharps ("#").
+        file for each repository + replace slashes ("/") with ampersands ("&").
 
         :param repo: name of repository
         :param output: output folder
         :return: converted repository name (removed "http://", etc.)
         """
+        repo_name = repo
         prefixes = ["https://", "http://"]
         for prefix in prefixes:
             if repo.startswith(prefix):
-                repo_name = repo[len(prefix):]
+                repo_name = repo_name[len(prefix):]
                 break
-        else:
-            repo_name = repo
+        postfixes = "\n/\\.git"
+        repo_name.rstrip(postfixes)
+        for postfix in postfixes:
+            if repo.endswith(postfix):
+                repo_name = repo_name[:-len(postfix)]
+
         outfile = os.path.join(output, "%s_%s.asdf" % (
             cls.WORKER_CLASS.MODEL_CLASS.NAME, repo_name.replace("/", "&")))
         return outfile
