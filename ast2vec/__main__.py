@@ -29,8 +29,7 @@ def main():
         "repo2nbow", help="Produce the nBOW from a Git repository.")
     repo2nbow_parser.set_defaults(handler=repo2nbow_entry)
     repo2nbow_parser.add_argument(
-        "-r", "--repository", required=True,
-        help="URL or path to a Git repository.")
+        "repository", help="URL or path to a Git repository.")
     repo2nbow_parser.add_argument(
         "--id2vec", help="URL or path to the identifier embeddings.")
     repo2nbow_parser.add_argument(
@@ -54,7 +53,7 @@ def main():
                            "repositories.")
     repos2nbow_parser.set_defaults(handler=repos2nbow_entry)
     repos2nbow_parser.add_argument(
-        "-i", "--input", required=True, nargs="+",
+        "input", nargs="+",
         help="List of repositories or path to file with list of repositories.")
     repos2nbow_parser.add_argument(
         "--id2vec", help="URL or path to the identifier embeddings.")
@@ -84,8 +83,7 @@ def main():
                            "repository.")
     repo2coocc_parser.set_defaults(handler=repo2coocc_entry)
     repo2coocc_parser.add_argument(
-        "-r", "--repository", required=True,
-        help="URL or path to a Git repository.")
+        "repository", help="URL or path to a Git repository.")
     repo2coocc_parser.add_argument(
         "--linguist", help="Path to src-d/enry executable.")
     repo2coocc_parser.add_argument(
@@ -103,7 +101,7 @@ def main():
                             "Git repositories.")
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     repos2coocc_parser.add_argument(
-        "-i", "--input", required=True, nargs="+",
+        "input", nargs="+",
         help="List of repositories or path to file with list of repositories.")
     repos2coocc_parser.add_argument(
         "--linguist", help="Path to src-d/enry executable.")
