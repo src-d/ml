@@ -23,7 +23,13 @@ class Repo2Source(Repo2Base):
         filenames = []
 
         for file_uast in file_uast_generator:
-            src_codes.append(self._get_sources(file_uast.filepath))
+            try:
+                sources = self._get_sources(file_uast.filepath)
+            except UnicodeDecodeError as e:
+                self._log.warning('Skipping file %s.\n\tUnicodeDecodeError: %s',
+                                  file_uast.filepath, e)
+                continue
+            src_codes.append(sources)
             uast_protos.append(self._uast_to_proto(file_uast.response))
             filenames.append(file_uast.filename)
 

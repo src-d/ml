@@ -1,4 +1,4 @@
-import json
+from collections import namedtuple
 import logging
 import multiprocessing
 import os
@@ -8,12 +8,11 @@ import shutil
 import subprocess
 import tempfile
 import threading
-from collections import namedtuple
 
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
+from google.protobuf.message import DecodeError
 import Stemmer
-
 from modelforge.model import write_model
 
 from ast2vec.cloning import RepoCloner
@@ -75,22 +74,38 @@ class Repo2Base:
                             break
                         try:
                             dirname, filename, language = task
-                            filepath = os.path.join(dirname, filename).encode('utf8')
-                            # I need .encode('utf8') to avoid problems
-                            # with bad symbols in file names on Ubuntu
+                            filepath_naive = os.path.join(dirname, filename)
 
                             # Check if file path is symlink
-                            if os.path.islink(filepath):
-                                filepath = os.readlink(filepath)
+                            islink = os.path.islink(filepath_naive)
+                            if islink:
+                                filepath = os.readlink(filepath_naive)
+                            else:
+                                filepath = filepath_naive
+                            # sometimes you have symlink to nonexistent files. We need to check it
+                            if not os.path.exists(filepath):
+                                msg = ("File %s does not exist.\n\t%s", filepath,
+                                       "Get it from %s symlink." % filepath_naive
+                                       if islink else "And it is not a symlink...")
+                                self._log.warning(*msg)
+                                queue_out.put_nowait(None)
+                                continue
 
                             size = os.stat(filepath).st_size
                             if size > self.MAX_FILE_SIZE:
                                 self._log.warning("%s is too big - %d", filepath, size)
                                 queue_out.put_nowait(None)
                                 continue
+                            try:
+                                response = self._bblfsh[thread_index].parse(
+                                    filepath, language=language, timeout=self._timeout)
+                            except DecodeError as e:
+                                msg = "bblfsh raise an DecodeError exception. Probably your" + \
+                                      "protobuf is <= v3.3.2 and you hit https://github.com" + \
+                                      "/bblfsh/server/issues/59#issuecomment-318125752"
+                                self._log.warning(msg)
+                                raise e from None
 
-                            response = self._bblfsh[thread_index].parse(
-                                filepath, language=language, timeout=self._timeout)
                             if response is None:
                                 self._log.warning("bblfsh timed out on %s", filepath)
                             queue_out.put_nowait(GeneratorResponse(filepath=filepath,
@@ -131,7 +146,7 @@ class Repo2Base:
                     thread.join()
 
                 if empty:
-                    self._log.warning("No files were processed")
+                    self._log.warning("No files were processed for %s", url_or_path)
 
             return self.convert_uasts(file_uast_generator())
         finally:
