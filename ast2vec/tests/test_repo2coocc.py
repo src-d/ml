@@ -45,6 +45,7 @@ class Repo2CooccTests(unittest.TestCase):
             validate_asdf_file(self, file.name)
 
     def test_linguist(self):
+        # If this test fails, check execution permissions for provided paths.
         with self.assertRaises(FileNotFoundError):
             Repo2Coocc(linguist="xxx", timeout=600)
         with self.assertRaises(FileNotFoundError):
