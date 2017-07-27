@@ -40,8 +40,8 @@ def main():
         "--linguist", help="Path to src-d/enry executable. If specified will save only files "
         "classified by enry.")
     clone_parser.add_argument(
-        "--languages", nargs="*", default=["Python", "Java"], help="Specifies languages to be "
-        "used by enry.")
+        "--languages", nargs="*", default=["Python", "Java"], help="Files which are classified "
+        "as not written in these languages are discarded.")
     clone_parser.add_argument(
         "-o", "--output", required=True, help="Output directory.")
     clone_parser.add_argument(

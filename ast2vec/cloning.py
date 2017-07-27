@@ -1,5 +1,3 @@
-import argparse
-import errno
 from functools import partial
 import json
 import logging
@@ -7,7 +5,6 @@ from multiprocessing.dummy import Pool
 import os
 import shutil
 import subprocess
-import zlib
 
 
 class LinguistFailedError(Exception):
@@ -19,7 +16,7 @@ class LinguistFailedError(Exception):
 
 class RepoCloner:
     """
-    Clone repositories from provided urls / files with urls.
+    Clones repositories from provided urls / files with urls.
     Use enry to classify files and delete redundant files if needed.
     """
     def __init__(self, linguist, redownload, languages=None,
@@ -33,11 +30,11 @@ class RepoCloner:
 
     def clone_repo(self, git_url, ignore, target_dir):
         """
-        Clone repository into a separate folder inside of target directory.
+        Clones repository into a separate directory inside of the target one.
 
         :param git_url: Url of Git repository.
         :param ignore: Flag for ignoring Git failures.
-        :param target_dir: Target directory. New folder will be created inside of target_dir.
+        :param target_dir: Target directory. New directory will be created inside of target_dir.
         :return: Path to downloaded Git repository.
         """
         git_url = self._prepare_repo_url(git_url)
