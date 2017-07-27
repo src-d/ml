@@ -87,7 +87,7 @@ def main():
         "--linguist", help="Path to src-d/enry executable.")
     repos2nbow_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .asdf results will be stored.")
+        help="Output directory where .asdf results will be stored.")
     repos2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
         dest="bblfsh_endpoint")
@@ -131,7 +131,7 @@ def main():
         "--linguist", help="Path to src-d/enry executable.")
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .asdf results will be stored.")
+        help="Output directory where .asdf results will be stored.")
     repos2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
         dest="bblfsh_endpoint")
