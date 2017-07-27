@@ -254,9 +254,9 @@ class PostprocessTransformer(Transformer):
         Merges row and column embeddings produced by Swivel and writes the
         Id2Vec model.
 
-        :param swivel_output_directory: folder that contains files after swivel training. The \
-                                        files are read from this folder and the model is written \
-                                        to the 'result'.
+        :param swivel_output_directory: directory that contains files after swivel training. The \
+                                        files are read from this directory and the model is \
+                                        written to the 'result'.
         :param result: file to store results
         :return: None
         """

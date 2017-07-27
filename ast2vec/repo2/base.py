@@ -74,8 +74,8 @@ class Repo2Base:
                         if task is None:
                             break
                         try:
-                            folder, filename, language = task
-                            filepath = os.path.join(folder, filename).encode('utf8')
+                            dirname, filename, language = task
+                            filepath = os.path.join(dirname, filename).encode('utf8')
                             # I need .encode('utf8') to avoid problems
                             # with bad symbols in file names on Ubuntu
 
@@ -251,7 +251,7 @@ class RepoTransformer(Transformer):
         file for each repository + replace slashes ("/") with ampersands ("&").
 
         :param repo: name of repository
-        :param output: output folder
+        :param output: output directory
         :return: converted repository name (removed "http://", etc.)
         """
         repo_name = repo

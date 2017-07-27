@@ -26,13 +26,13 @@ def prepare_file(path):
         subprocess.check_call(["gzip", "-dk", path + ".gz"])
 
 
-def prepare_shard(folder):
-    prepare_file(os.path.join(folder, "shard-000-000.pb"))
+def prepare_shard(dirname):
+    prepare_file(os.path.join(dirname, "shard-000-000.pb"))
 
 
-def prepare_postproc_files(folder):
+def prepare_postproc_files(dirname):
     for name in ("col_embedding.tsv", "row_embedding.tsv"):
-        prepare_file(os.path.join(folder, name))
+        prepare_file(os.path.join(dirname, name))
 
 
 def check_postproc_results(obj, id2vec_loc):
@@ -41,13 +41,13 @@ def check_postproc_results(obj, id2vec_loc):
     obj.assertEqual(id2vec.embeddings.shape, (obj.VOCAB, 50))
 
 
-def check_swivel_results(obj, folder):
-    files = sorted(os.listdir(folder))
+def check_swivel_results(obj, dirname):
+    files = sorted(os.listdir(dirname))
     obj.assertEqual(files, ["col_embedding.tsv", "row_embedding.tsv"])
-    with open(os.path.join(folder, "col_embedding.tsv")) as fin:
+    with open(os.path.join(dirname, "col_embedding.tsv")) as fin:
         col_embedding = fin.read().split("\n")
     obj.assertEqual(len(col_embedding), obj.VOCAB + 1)
-    with open(os.path.join(folder, "row_embedding.tsv")) as fin:
+    with open(os.path.join(dirname, "row_embedding.tsv")) as fin:
         row_embedding = fin.read().split("\n")
     obj.assertEqual(len(row_embedding), obj.VOCAB + 1)
 
