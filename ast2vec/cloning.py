@@ -124,7 +124,9 @@ class RepoCloner:
                     os.remove(full_filename)
             for dirname in dirnames:
                 full_dirname = os.path.join(root, dirname)
-                if not os.listdir(full_dirname):
+                if os.path.islink(full_dirname):
+                    os.unlink(full_dirname)
+                elif not os.listdir(full_dirname):
                     os.rmdir(full_dirname)
 
     def clone_repos(self, inputs, output, ignore):
