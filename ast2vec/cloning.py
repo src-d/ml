@@ -19,14 +19,17 @@ class RepoCloner:
     Clones repositories from provided urls / files with urls.
     Use enry to classify files and delete redundant files if needed.
     """
-    def __init__(self, linguist, redownload, languages=None,
+    def __init__(self, redownload, linguist=None, languages=None,
                  log_level=logging.INFO, num_threads=1):
         self._log = logging.getLogger("repo_cloner")
         self._log.setLevel(log_level)
+        self._is_enry = False
         self._languages = languages
-        self._linguist, self._is_enry = self._find_enry(linguist)
+        self._linguist = None
         self._num_threads = num_threads
         self._redownload = redownload
+        if linguist or languages:
+            self.find_linguist(linguist)
 
     def clone_repo(self, git_url, ignore, target_dir):
         """
@@ -153,22 +156,17 @@ class RepoCloner:
             else:
                 yield item
 
-    def _find_enry(self, linguist):
+    def find_linguist(self, linguist):
         if linguist is None:
-            if self._languages:
-                self._log.info("Looking for enry to work with provided languages.")
-                linguist = shutil.which("enry", path=os.getcwd())
-                if linguist is None:
-                    linguist = "enry"
-            else:
-                return None, False
+            linguist = shutil.which("enry", path=os.getcwd() + ":" + os.getenv("PATH", os.defpath))
         full_path = shutil.which(linguist)
         if not full_path:
             raise FileNotFoundError("%s was not found. Install it: python3 -m ast2vec enry" %
                                     linguist)
+        self._linguist = linguist
         with open(full_path, "rb") as fin:
             # Check if we're using https://github.com/github/linguist
-            return linguist, fin.read(15) != b"#!/usr/bin/ruby"
+            self._is_enry = fin.read(15) != b"#!/usr/bin/ruby"
 
     def _prepare_repo_dir(self, git_url: str, target_dir: str) -> str:
         """
