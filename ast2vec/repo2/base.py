@@ -42,7 +42,8 @@ class Repo2Base:
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = self.STEM_THRESHOLD
         self._tempdir = tempdir
-        self._cloner = RepoCloner(linguist=linguist, redownload=True, log_level=log_level)
+        self._cloner = RepoCloner(redownload=True, log_level=log_level)
+        self._cloner.find_linguist(linguist)
         self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
                         for _ in range(multiprocessing.cpu_count())]
         self._timeout = timeout
