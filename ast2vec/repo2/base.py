@@ -16,6 +16,7 @@ import Stemmer
 from modelforge.model import write_model
 
 from ast2vec.cloning import RepoCloner
+from ast2vec import resolve_symlink
 
 GeneratorResponse = namedtuple("GeneratorResponse",
                                ["filepath", "filename", "response"])
@@ -74,20 +75,13 @@ class Repo2Base:
                             break
                         try:
                             dirname, filename, language = task
-                            filepath_naive = os.path.join(dirname, filename)
+                            filepath = os.path.join(dirname, filename)
 
-                            # Check if file path is symlink
-                            islink = os.path.islink(filepath_naive)
-                            if islink:
-                                filepath = os.readlink(filepath_naive)
-                            else:
-                                filepath = filepath_naive
-                            # sometimes you have symlink to nonexistent files. We need to check it
-                            if not os.path.exists(filepath):
-                                msg = ("File %s does not exist.\n\t%s", filepath,
-                                       "Get it from %s symlink." % filepath_naive
-                                       if islink else "And it is not a symlink...")
-                                self._log.warning(*msg)
+                            try:
+                                # Resolve symlink
+                                filepath = resolve_symlink.resolve_symlink(filepath)
+                            except resolve_symlink.SymlinkToNotExistingFile as e:
+                                self._log.warning(*e.args)
                                 queue_out.put_nowait(None)
                                 continue
 
@@ -96,18 +90,11 @@ class Repo2Base:
                                 self._log.warning("%s is too big - %d", filepath, size)
                                 queue_out.put_nowait(None)
                                 continue
-                            try:
-                                response = self._bblfsh[thread_index].parse(
-                                    filepath, language=language, timeout=self._timeout)
-                            except DecodeError as e:
-                                msg = "bblfsh raise an DecodeError exception. Probably your" + \
-                                      "protobuf is <= v3.3.2 and you hit https://github.com" + \
-                                      "/bblfsh/server/issues/59#issuecomment-318125752"
-                                self._log.warning(msg)
-                                raise e from None
 
+                            response = self._bblfsh_parse(thread_index, filepath, language)
                             if response is None:
                                 self._log.warning("bblfsh timed out on %s", filepath)
+                                queue_out.put_nowait(None)
                             queue_out.put_nowait(GeneratorResponse(filepath=filepath,
                                                                    filename=filename,
                                                                    response=response))
@@ -152,6 +139,16 @@ class Repo2Base:
         finally:
             if temp:
                 shutil.rmtree(target_dir)
+
+    def _bblfsh_parse(self, thread_index, filepath, language):
+        try:
+            return self._bblfsh[thread_index].parse(
+                filepath, language=language, timeout=self._timeout)
+        except DecodeError as e:
+            msg = "bblfsh raise an DecodeError exception. Probably your protobuf is <= v3.3.2 " \
+                  "and you hit https://github.com/bblfsh/server/issues/59#issuecomment-318125752"
+            self._log.warning(msg)
+            raise e from None
 
     def convert_uast(self, uast):
         return self.convert_uasts([uast])
