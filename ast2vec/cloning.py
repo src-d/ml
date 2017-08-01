@@ -114,14 +114,16 @@ class RepoCloner:
         allowed_files = set(str.encode(os.path.join(repo_dir, fname)) for lang in languages
                             if lang in classified for fname in classified[lang])
 
-        for root, dirnames, filenames in os.walk(str.encode(repo_dir), topdown=False):
+        for root, dirnames, filenames in os.walk(str.encode(repo_dir)):
             for filename in filenames:
                 full_filename = os.path.join(root, filename)
                 if full_filename not in allowed_files:
                     os.remove(full_filename)
             for dirname in dirnames:
                 full_dirname = os.path.join(root, dirname)
-                if not os.listdir(full_dirname):
+                if os.path.islink(full_dirname):
+                    os.unlink(full_dirname)
+                elif not os.listdir(full_dirname):
                     os.rmdir(full_dirname)
 
     def clone_repos(self, inputs, output, ignore):

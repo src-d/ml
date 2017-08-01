@@ -80,7 +80,7 @@ class Repo2Base:
                             try:
                                 # Resolve symlink
                                 filepath = resolve_symlink.resolve_symlink(filepath)
-                            except resolve_symlink.SymlinkToNotExistingFile as e:
+                            except resolve_symlink.DanglingSymlinkError as e:
                                 self._log.warning(*e.args)
                                 queue_out.put_nowait(None)
                                 continue
@@ -145,7 +145,7 @@ class Repo2Base:
             return self._bblfsh[thread_index].parse(
                 filepath, language=language, timeout=self._timeout)
         except DecodeError as e:
-            msg = "bblfsh raise an DecodeError exception. Probably your protobuf is <= v3.3.2 " \
+            msg = "bblfsh raised an DecodeError exception. Probably your protobuf is <= v3.3.2 " \
                   "and you hit https://github.com/bblfsh/server/issues/59#issuecomment-318125752"
             self._log.warning(msg)
             raise e from None

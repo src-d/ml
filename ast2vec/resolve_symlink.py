@@ -1,7 +1,7 @@
 import os
 
 
-class SymlinkToNotExistingFile(Exception):
+class DanglingSymlinkError(Exception):
     """
     Exception for resolve_symlink function when symlink converts to nonexistent file
     """
@@ -11,7 +11,7 @@ class SymlinkToNotExistingFile(Exception):
 def resolve_symlink(path: str) -> str:
     """
     Resolve symlink if path is a symbolic link
-    Check file existence. If it does not exist raise SymlinkToNotExistingFile Exception
+    Check file existence. If it does not exist raise DanglingSymlinkError Exception
     :param path: path to check
     :return: filepath to existing file
     """
@@ -22,5 +22,5 @@ def resolve_symlink(path: str) -> str:
     if not os.path.exists(filepath):
         err_msg = "File %s does not exist.\n\t" % filepath + \
                   "Get it from %s path." % path if islink else "And it is not a path..."
-        raise SymlinkToNotExistingFile(err_msg)
+        raise DanglingSymlinkError(err_msg)
     return filepath

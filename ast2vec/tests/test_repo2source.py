@@ -49,11 +49,11 @@ class Repo2SourceTests(unittest.TestCase):
         self.assertEqual(model.uasts, [])
         self.assertEqual(model.sources, [])
 
-    def test_SymlinkToNotExistingFile(self):
+    def test_DanglingSymlinkError(self):
         save_resolve_symlink = ast2vec.resolve_symlink.resolve_symlink
 
         def resolve_symlink_raise(_):
-            raise resolve_symlink.SymlinkToNotExistingFile('error')
+            raise resolve_symlink.DanglingSymlinkError("test_DanglingSymlinkError")
 
         ast2vec.resolve_symlink.resolve_symlink = resolve_symlink_raise
 
@@ -71,7 +71,7 @@ class Repo2SourceTests(unittest.TestCase):
             Repo2Base.MAX_FILE_SIZE = save_MAX_FILE_SIZE
 
     def test_bblfsh_parse_return_none(self):
-        def bblfsh_parse_return_none(_, __, ___):
+        def bblfsh_parse_return_none(t1, t2, t3, t4):
             return None
 
         save_bblfsh_parse = Repo2Base._bblfsh_parse
@@ -82,7 +82,7 @@ class Repo2SourceTests(unittest.TestCase):
             Repo2Base._bblfsh_parse = save_bblfsh_parse
 
     def test_bblfsh_parse_raise_DecodeError(self):
-        def bblfsh_parse_return_none(_, __, ___):
+        def bblfsh_parse_return_none(t1, t2, t3, t4):
             raise DecodeError()
 
         save_bblfsh_parse = Repo2Base._bblfsh_parse

@@ -20,7 +20,7 @@ class ResolveSymlinkTests(unittest.TestCase):
         os.readlink = readlink
 
         self.assertEqual(resolve_symlink.resolve_symlink("zzz"), "yyy")
-        with self.assertRaises(resolve_symlink.SymlinkToNotExistingFile) as _:
+        with self.assertRaises(resolve_symlink.DanglingSymlinkError) as _:
             resolve_symlink.resolve_symlink("xxx")
 
 
