@@ -3,17 +3,19 @@ import os
 
 class DanglingSymlinkError(Exception):
     """
-    Exception for resolve_symlink function when symlink converts to nonexistent file
+    Exception for :func:`resolve_symlink` when a symlink points to a nonexistent file.
     """
     pass
 
 
 def resolve_symlink(path: str) -> str:
     """
-    Resolve symlink if path is a symbolic link
-    Check file existence. If it does not exist raise DanglingSymlinkError Exception
+    Resolve the symlink if path is a symbolic link.
+    Check file existence.
+
     :param path: path to check
     :return: filepath to existing file
+    :raise DanglingSymlinkError: The symlink is broken.
     """
     # Check if file path is path
     # sometimes you have path to nonexistent files. We need to check it

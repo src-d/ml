@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 
-from ast2vec.vw_dataset import nbow2vw_entry
+from ast2vec.vw_dataset import bow2vw_entry
 from modelforge.logs import setup_logging
 
 from ast2vec.cloning import clone_repositories
@@ -12,7 +12,7 @@ from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.repo2.base import Repo2Base
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
-from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
+from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry, joinbow_entry
 
 
 def main():
@@ -144,9 +144,18 @@ def main():
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
 
+    joinbow_parser = subparsers.add_parser(
+        "join_nbow", help="Combine several nBOW files into the single one.")
+    joinbow_parser.set_defaults(handler=joinbow_entry)
+    joinbow_parser.add_argument(
+        "input", help="Directory to scan recursively.")
+    joinbow_parser.add_argument(
+        "output", help="Where to write the merged nBOW.")
+    joinbow_parser.add_argument("-f", "--filter", default="*.asdf",
+                                help="glob filter on file names")
+
     preproc_parser = subparsers.add_parser(
-        "preproc", help="Convert co-occurrence CSR matrices to Swivel "
-                        "dataset.")
+        "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.")
     preproc_parser.set_defaults(handler=preprocess)
     preproc_parser.add_argument(
         "-o", "--output", required=True, help="The output directory.")
@@ -166,7 +175,7 @@ def main():
              "inside are read.")
 
     train_parser = subparsers.add_parser(
-        "train", help="Train identifier embeddings.")
+        "id2vec_train", help="Train identifier embeddings.")
     train_parser.set_defaults(handler=run_swivel)
     del train_parser._action_groups[train_parser._action_groups.index(
         train_parser._optionals)]
@@ -177,20 +186,24 @@ def main():
         swivel.flags._global_parser._option_string_actions
 
     postproc_parser = subparsers.add_parser(
-        "postproc", help="Combine row and column embeddings together and "
-                         "write them to an .asdf.")
+        "id2vec_postproc",
+        help="Combine row and column embeddings together and write them to an .asdf.")
     postproc_parser.set_defaults(handler=postprocess)
     postproc_parser.add_argument("swivel_output_directory")
     postproc_parser.add_argument("result")
 
-    nbow2vw_parser = subparsers.add_parser(
-        "nbow2vw", help="Convert an nBOW model to the dataset in Vowpal Wabbit format.")
-    nbow2vw_parser.set_defaults(handler=nbow2vw_entry)
-    nbow2vw_parser.add_argument(
-        "-i", "--nbow", required=True, help="URL or path to the nBOW model.")
-    nbow2vw_parser.add_argument(
-        "--id2vec", help="URL or path to the identifier embeddings.")
-    nbow2vw_parser.add_argument(
+    bow2vw_parser = subparsers.add_parser(
+        "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
+    bow2vw_parser.set_defaults(handler=bow2vw_entry)
+    group = bow2vw_parser.add_argument_group("model")
+    group_ex = group.add_mutually_exclusive_group(required=True)
+    group_ex.add_argument(
+        "--bow", help="URL or path to a bag-of-words model. Mutually exclusive with --nbow.")
+    group_ex.add_argument(
+        "--nbow", help="URL or path to an nBOW model. Mutually exclusive with --bow.")
+    bow2vw_parser.add_argument(
+        "--id2vec", help="URL or path to the identifier embeddings. Used if --nbow")
+    bow2vw_parser.add_argument(
         "-o", "--output", required=True, help="Path to the output file.")
 
     enry_parser = subparsers.add_parser(

@@ -32,13 +32,13 @@ class Repo2SourceTests(unittest.TestCase):
         path_of_result = Repo2SourceTransformer.prepare_filename(DATA_DIR_SOURCE, tmpdir)
 
         validate_asdf_file(self, path_of_result)
-        model = Source(source=path_of_result)
+        model = Source().load(source=path_of_result)
         return model
 
     def test_obj(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             model = self.default_source_model(tmpdir)
-            true_model = Source(source=paths.SOURCE)
+            true_model = Source().load(source=paths.SOURCE)
             self.assertEqual(len(model.sources), 1)
             self.assertEqual(len(model.uasts), 1)
             self.assertEqual(true_model.sources[0], model.sources[0])
