@@ -6,8 +6,7 @@ import unittest
 import asdf
 
 import ast2vec.tests as tests
-from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies, \
-    Repo2nBOWTransformer
+from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies, Repo2nBOWTransformer
 from ast2vec.repo2.nbow import repo2nbow_entry
 from ast2vec.tests.models import ID2VEC, DOCFREQ
 
@@ -15,7 +14,8 @@ from ast2vec.tests.models import ID2VEC, DOCFREQ
 def validate_asdf_file(obj, filename):
     data = asdf.open(filename)
     obj.assertIn("meta", data.tree)
-    obj.assertIn("nbow", data.tree)
+    obj.assertIn("repos", data.tree)
+    obj.assertIn("matrix", data.tree)
     obj.assertEqual(2, len(data.tree["meta"]["dependencies"]))
 
 
@@ -26,8 +26,8 @@ class Repo2NBOWTests(unittest.TestCase):
 
     def test_obj(self):
         basedir = os.path.dirname(__file__)
-        id2vec = Id2Vec(os.path.join(basedir, ID2VEC))
-        df = DocumentFrequencies(os.path.join(basedir, DOCFREQ))
+        id2vec = Id2Vec().load(os.path.join(basedir, ID2VEC))
+        df = DocumentFrequencies().load(os.path.join(basedir, DOCFREQ))
         df._df["xxyyzz"] = 10
         id2vec._token2index[id2vec.tokens[0]] = 1
         id2vec.tokens[0] = "xxyyzz"
@@ -40,11 +40,11 @@ class Repo2NBOWTests(unittest.TestCase):
 
     def test_asdf(self):
         basedir = os.path.dirname(__file__)
-        id2vec = Id2Vec(os.path.join(basedir, ID2VEC))
+        id2vec = Id2Vec().load(os.path.join(basedir, ID2VEC))
         del id2vec._token2index[id2vec.tokens[0]]
         id2vec.tokens[0] = "test"
         id2vec._token2index["test"] = 0
-        df = DocumentFrequencies(os.path.join(basedir, DOCFREQ))
+        df = DocumentFrequencies().load(os.path.join(basedir, DOCFREQ))
         df._df["test"] = 10
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
@@ -63,11 +63,11 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
 
     def test_transform(self):
         basedir = os.path.dirname(__file__)
-        id2vec = Id2Vec(os.path.join(basedir, ID2VEC))
+        id2vec = Id2Vec().load(os.path.join(basedir, ID2VEC))
         del id2vec._token2index[id2vec.tokens[0]]
         id2vec.tokens[0] = "test"
         id2vec._token2index["test"] = 0
-        df = DocumentFrequencies(os.path.join(basedir, DOCFREQ))
+        df = DocumentFrequencies().load(os.path.join(basedir, DOCFREQ))
         df._df["test"] = 10
         with tempfile.TemporaryDirectory() as tmpdir:
             repo2nbow = Repo2nBOWTransformer(

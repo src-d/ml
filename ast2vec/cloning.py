@@ -185,7 +185,8 @@ class RepoCloner:
         repo_dir = os.path.join(target_dir, repo_name)
 
         if os.path.exists(repo_dir) and self._redownload:
-            self._log.info("%s already downloaded to %s, will redownload it" % (git_url, repo_dir))
+            self._log.info("%s already downloaded to %s, will download it again",
+                           git_url, repo_dir)
             shutil.rmtree(repo_dir)
 
         os.makedirs(repo_dir)

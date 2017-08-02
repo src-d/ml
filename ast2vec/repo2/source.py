@@ -19,16 +19,16 @@ class Repo2Source(Repo2Base):
 
     def convert_uasts(self, file_uast_generator):
         src_codes = []
-        uast_protos = []
+        uasts = []
         filenames = []
 
         for file_uast in file_uast_generator:
             sources = self._get_sources(file_uast.filepath)
             src_codes.append(sources)
-            uast_protos.append(self._uast_to_proto(file_uast.response))
+            uasts.append(file_uast.response)
             filenames.append(file_uast.filename)
 
-        return src_codes, uast_protos, filenames
+        return filenames, src_codes, uasts
 
     def _get_sources(self, filename):
         try:
@@ -37,19 +37,17 @@ class Repo2Source(Repo2Base):
         except UnicodeDecodeError as e:
             self._log.warning('Skipping file %s.\n\tUnicodeDecodeError: %s', filename, e)
 
-    def _uast_to_proto(self, uast):
-        return uast.SerializeToString()
-
 
 class Repo2SourceTransformer(RepoTransformer):
     WORKER_CLASS = Repo2Source
 
-    @classmethod
-    def result_to_tree(cls, result):
-        src_codes, uast_protos, filenames = result
+    def dependencies(self):
+        return []
+
+    def result_to_model_kwargs(self, result, url_or_path):
+        filenames, src_codes, uasts = result
         return {
-            "filenames": merge_strings(filenames),
-            "sources": merge_strings(src_codes),
-            "uasts": uast_protos,
-            "meta": generate_meta(cls.WORKER_CLASS.MODEL_CLASS.NAME, ast2vec.__version__)
+            "filenames": filenames,
+            "sources": src_codes,
+            "uasts": uasts
         }

@@ -36,7 +36,7 @@ def prepare_postproc_files(dirname):
 
 
 def check_postproc_results(obj, id2vec_loc):
-    id2vec = Id2Vec(source=id2vec_loc)
+    id2vec = Id2Vec().load(source=id2vec_loc)
     obj.assertEqual(len(id2vec.tokens), obj.VOCAB)
     obj.assertEqual(id2vec.embeddings.shape, (obj.VOCAB, 50))
 
@@ -93,7 +93,7 @@ class IdEmbeddingTests(unittest.TestCase):
                 sorted(os.listdir(tmpdir)),
                 ["col_sums.txt", "col_vocab.txt", "docfreq.asdf", "row_sums.txt", "row_vocab.txt",
                  "shard-000-000.pb"])
-            df = DocumentFrequencies(source=os.path.join(tmpdir, "docfreq.asdf"))
+            df = DocumentFrequencies().load(source=os.path.join(tmpdir, "docfreq.asdf"))
             self.assertEqual(len(df), self.VOCAB)
             self.assertEqual(df.docs, len(os.listdir(args.input[0])) - 1)
             with open(os.path.join(tmpdir, "col_sums.txt")) as fin:

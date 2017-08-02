@@ -13,7 +13,6 @@ from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 from google.protobuf.message import DecodeError
 import Stemmer
-from modelforge.model import write_model
 
 from ast2vec.cloning import RepoCloner
 from ast2vec import resolve_symlink
@@ -265,10 +264,10 @@ class RepoTransformer(Transformer):
 
         :param repo: name of repository
         :param output: output directory
-        :return: converted repository name (removed "http://", etc.)
+        :return: converted repository name (removed "https://", etc.)
         """
         repo_name = repo
-        prefixes = ["https://", "http://"]
+        prefixes = ["https://", "http://", "git://", "ssh://"]
         for prefix in prefixes:
             if repo.startswith(prefix):
                 repo_name = repo_name[len(prefix):]
@@ -297,13 +296,12 @@ class RepoTransformer(Transformer):
         repo2 = self.WORKER_CLASS(**self._args)
         try:
             result = repo2.convert_repository(url_or_path)
-            try:
-                tree = self.result_to_tree(result)
-            except ValueError:
-                self._log.warning("Not written: %s", output)
-                return
-            self._log.info("Writing %s...", output)
-            write_model(tree["meta"], tree, output)
+            for proto in ("https://", "http://", "git://", "ssh://"):
+                if url_or_path.startswith(proto):
+                    url_or_path = url_or_path.replace(proto, "")
+            model = self.WORKER_CLASS.MODEL_CLASS()
+            model.construct(**self.result_to_model_kwargs(result, url_or_path))
+            model.save(output, deps=self.dependencies())
         except subprocess.CalledProcessError as e:
             self._log.error("Failed to clone %s: %s", url_or_path, e)
         except:
@@ -349,12 +347,20 @@ class RepoTransformer(Transformer):
                          zip(inputs, [self._args] * len(inputs),
                              [output] * len(inputs)))
 
-    def result_to_tree(self, result):
+    def dependencies(self) -> list:
         """
-        Converts the "result" object from parse_uasts() to a tree-like structure for ASDF.
+        Returns the list of parent models which were used to generate the target one.
+        """
+        raise NotImplementedError
+
+    def result_to_model_kwargs(self, result, url_or_path: str) -> dict:
+        """
+        Converts the "result" object from parse_uasts() to WORKER_CLASS.MODEL_CLASS.construct()
+        keyword arguments.
 
         :param result: The object returned from parse_uasts().
-        :return: :class:`dict` with "meta" and some custom nodes.
+        :param url_or_path: The repository's source.
+        :return: :class:`dict` with the required items to construct the model.
         """
         raise NotImplementedError
 

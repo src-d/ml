@@ -9,7 +9,7 @@ import ast2vec.tests.models as paths
 
 class NBOWTests(unittest.TestCase):
     def setUp(self):
-        self.model = NBOW(
+        self.model = NBOW().load(
             source=os.path.join(os.path.dirname(__file__), paths.NBOW))
 
     def test_getitem(self):
