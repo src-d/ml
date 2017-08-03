@@ -4,6 +4,7 @@ import multiprocessing
 import os
 from pathlib import Path
 import threading
+from typing import Union
 
 from modelforge import Model
 from modelforge.progress_bar import progress_bar
@@ -37,37 +38,71 @@ class Model2Base(PickleableLogger):
         :param destdir: The directory where to store the models. The directory structure is \
                         preserved.
         :param pattern: glob pattern for the files.
-        :return:
+        :return: The number of converted files.
         """
         self._log.info("Scanning %s", srcdir)
         files = [str(p) for p in Path(srcdir).glob(pattern)]
         self._log.info("Found %d files", len(files))
-        queue = multiprocessing.Manager().Queue(100500)
-
-        def process_files():
-            with multiprocessing.Pool(processes=self.num_processes) as pool:
-                pool.starmap(self._process_model,
-                             zip(files, repeat(destdir), repeat(srcdir), repeat(queue)))
-
-        mpthread = threading.Thread(target=process_files)
-        mpthread.start()
+        queue_in = multiprocessing.Manager().Queue()
+        queue_out = multiprocessing.Manager().Queue(1)
+        processes = [multiprocessing.Process(target=self._process_entry,
+                                             args=(i, destdir, srcdir, queue_in, queue_out))
+                     for i in range(self.num_processes)]
+        for p in processes:
+            p.start()
+        for f in files:
+            queue_in.put(f)
+        for _ in processes:
+            queue_in.put(None)
         failures = 0
         for _ in progress_bar(files, self._log, expected_size=len(files)):
-            filename, ok = queue.get()
+            filename, ok = queue_out.get()
             if not ok:
                 failures += 1
-        mpthread.join()
+        for p in processes:
+            p.join()
         self._log.info("Finished, %d failed files", failures)
         return len(files) - failures
 
-    def convert_model(self, model: Model) -> Model:
+    def convert_model(self, model: Model) -> Union[Model, None]:
         """
         This must be implemented in the child classes.
 
         :param model: The model instance to convert.
-        :return: The converted model instance.
+        :return: The converted model instance or None if it is not needed.
         """
         raise NotImplementedError
+
+    def finalize(self, index: int, destdir: str):
+        """
+        Called for each worker in the end of the processing.
+
+        :param index: Worker's index.
+        :param destdir: The directory where to store the models.
+        """
+        pass
+
+    def _process_entry(self, index, destdir, srcdir, queue_in, queue_out):
+        while True:
+            filename = queue_in.get()
+            if filename is None:
+                break
+            try:
+                model_from = self.MODEL_FROM_CLASS().load(filename)
+                model_to = self.convert_model(model_from)
+                if model_to is not None:
+                    model_path = self._get_model_path(os.path.relpath(filename, srcdir))
+                    model_path = os.path.join(destdir, model_path)
+                    dirs = os.path.dirname(model_path)
+                    if dirs:
+                        os.makedirs(dirs, exist_ok=True)
+                    model_to.save(model_path)
+            except:
+                self._log.exception("%s failed", filename)
+                queue_out.put((filename, False))
+            else:
+                queue_out.put((filename, True))
+        self.finalize(index, destdir)
 
     def _get_log_name(self):
         return "%s2%s" % (self.MODEL_FROM_CLASS.NAME, self.MODEL_TO_CLASS.NAME)
@@ -80,16 +115,3 @@ class Model2Base(PickleableLogger):
         :return: The target path for the converted model.
         """
         return path
-
-    def _process_model(self, filename, srcdir, destdir, queue):
-        try:
-            model_from = self.MODEL_FROM_CLASS().load(filename)
-            model_to = self.convert_model(model_from)
-            model_path = self._get_model_path(os.path.relpath(filename, srcdir))
-            os.makedirs(os.path.dirname(model_path), exist_ok=True)
-            model_to.save(os.path.join(destdir, model_path))
-        except:
-            self._log.exception("%s failed", filename)
-            queue.put((filename, False))
-        else:
-            queue.put((filename, True))

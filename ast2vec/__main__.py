@@ -12,7 +12,8 @@ from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.repo2.base import Repo2Base
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
-from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry, joinbow_entry
+from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
+from ast2vec.model2.join_bow import joinbow_entry
 
 
 def main():
@@ -145,14 +146,23 @@ def main():
              "it is better to set this to 1 or 2.")
 
     joinbow_parser = subparsers.add_parser(
-        "join_nbow", help="Combine several nBOW files into the single one.")
+        "join_bow", help="Combine several nBOW files into the single one.")
     joinbow_parser.set_defaults(handler=joinbow_entry)
     joinbow_parser.add_argument(
         "input", help="Directory to scan recursively.")
     joinbow_parser.add_argument(
         "output", help="Where to write the merged nBOW.")
-    joinbow_parser.add_argument("-f", "--filter", default="*.asdf",
-                                help="glob filter on file names")
+    group = joinbow_parser.add_argument_group("type")
+    group_ex = group.add_mutually_exclusive_group(required=True)
+    group_ex.add_argument("--bow", action="store_true", help="The models are BOW.")
+    group_ex.add_argument("--nbow", action="store_true", help="The models are NBOW.")
+    joinbow_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
+    joinbow_parser.add_argument(
+        "--tmpdir", default=None, help="Temporary directory for intermediate files.")
+    joinbow_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
 
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.")
