@@ -3,20 +3,18 @@ import os
 import tempfile
 import unittest
 
-import asdf
-
 import ast2vec.tests as tests
-from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies, Repo2nBOWTransformer
+from ast2vec import Repo2nBOW, Id2Vec, DocumentFrequencies, Repo2nBOWTransformer, NBOW
 from ast2vec.repo2.nbow import repo2nbow_entry
 from ast2vec.tests.models import ID2VEC, DOCFREQ
 
 
 def validate_asdf_file(obj, filename):
-    data = asdf.open(filename)
-    obj.assertIn("meta", data.tree)
-    obj.assertIn("repos", data.tree)
-    obj.assertIn("matrix", data.tree)
-    obj.assertEqual(2, len(data.tree["meta"]["dependencies"]))
+    model = NBOW().load(filename)
+    obj.assertIsInstance(model.repos, list)
+    obj.assertGreater(len(model.repos[0]), 1)
+    obj.assertEqual(model._matrix.shape, (1, 1000))
+    obj.assertEqual(2, len(model.meta["dependencies"]))
 
 
 class Repo2NBOWTests(unittest.TestCase):

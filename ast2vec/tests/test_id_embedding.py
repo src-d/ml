@@ -12,7 +12,7 @@ import tensorflow as tf
 
 from ast2vec import DocumentFrequencies, swivel, Id2Vec
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, SwivelTransformer, \
-    PostprocessTransformer
+    PostprocessTransformer, PreprocessTransformer
 from ast2vec.tests.test_dump import captured_output
 
 
@@ -78,6 +78,9 @@ class IdEmbeddingTests(unittest.TestCase):
             args = default_preprocess_params(tmpdir, self.VOCAB)
             args.shard_size = self.VOCAB + 1
             self.assertRaises(ValueError, lambda: preprocess(args))
+
+    def test_preproc_transformer_logs(self):
+        self.assertTrue(PreprocessTransformer()._get_log_name())
 
     def test_preprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -184,6 +187,9 @@ class IdEmbeddingTests(unittest.TestCase):
             sw.transform(**args)
             check_swivel_results(self, tmpdir)
 
+    def test_swivel_transformer_logs(self):
+        self.assertTrue(SwivelTransformer()._get_log_name())
+
     def test_postproc(self):
         with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
             args = argparse.Namespace(
@@ -206,6 +212,9 @@ class IdEmbeddingTests(unittest.TestCase):
             postproc.transform(**args)
 
             check_postproc_results(self, tmp.name)
+
+    def test_postproc_transformer_logs(self):
+        self.assertTrue(PostprocessTransformer()._get_log_name())
 
 
 if __name__ == "__main__":

@@ -2,14 +2,14 @@ import logging
 import math
 from collections import defaultdict
 
-from modelforge.backends import create_backend
 from scipy.sparse import csr_matrix
 
+from ast2vec.bow import NBOW
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
-from ast2vec.bow import NBOW
 from ast2vec.repo2.base import RepoTransformer, repos2_entry, repo2_entry
 from ast2vec.repo2.xbow import Repo2xBOW
+from modelforge.backends import create_backend
 
 
 class Repo2nBOW(Repo2xBOW):
@@ -82,9 +82,9 @@ class Repo2nBOWTransformer(RepoTransformer):
         for key, val in sorted(result.items()):
             csr_data.append(val)
             csr_indices.append(key)
-        return {"repos": url_or_path,
+        return {"repos": [url_or_path],
                 "matrix": csr_matrix((csr_data, csr_indices, csr_indptr),
-                                     shape=(1, len(result)))}
+                                     shape=(1, len(self._id2vec.tokens)))}
 
 
 def repo2nbow_entry(args):
@@ -93,7 +93,3 @@ def repo2nbow_entry(args):
 
 def repos2nbow_entry(args):
     return repos2_entry(args, Repo2nBOWTransformer)
-
-
-def joinbow_entry(args):
-    raise NotImplementedError

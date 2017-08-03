@@ -4,6 +4,7 @@ import unittest
 
 
 import ast2vec.__main__ as main
+import ast2vec.model2.join_bow
 
 
 class MainTests(unittest.TestCase):
@@ -58,7 +59,7 @@ class MainTests(unittest.TestCase):
         error = argparse.ArgumentParser.error
         argparse.ArgumentParser.error = lambda self, message: None
 
-        for action in ("repo2nbow", "repos2nbow", "repo2coocc", "repos2coocc", "join_nbow",
+        for action in ("repo2nbow", "repos2nbow", "repo2coocc", "repos2coocc", "join_bow",
                        "id2vec_preproc", "id2vec_train", "id2vec_postproc", "bow2vw",
                        "enry", "dump"):
             sys.argv = [main.__file__, action]

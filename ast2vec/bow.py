@@ -14,6 +14,7 @@ class BOWBase(Model):
     """
     Base class for weighted bag of words models.
     """
+    NAME = "*bow"
 
     def construct(self, repos, matrix):
         self._repos = repos
@@ -30,6 +31,10 @@ class BOWBase(Model):
         return """Shape: %s
 First 10 repos: %s""" % (
             self._matrix.shape, self._repos[:10])
+
+    @property
+    def repos(self):
+        return self._repos
 
     def __getitem__(self, item):
         """
