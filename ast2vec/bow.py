@@ -90,9 +90,10 @@ class BOW(BOWBase):
         super(BOW, self).construct(repos=repos, matrix=matrix)
         self._tokens = tokens
 
-    def _load_tree(self, tree):
-        self.construct(tokens=split_strings(tree["tokens"]),
-                       **self._load_tree_kwargs(tree))
+    def _load_tree_kwargs(self, tree):
+        tree_kwargs = super(BOW, self)._load_tree_kwargs(tree)
+        tree_kwargs["tokens"] = split_strings(tree["tokens"])
+        return tree_kwargs
 
     @property
     def tokens(self):
