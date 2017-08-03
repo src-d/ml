@@ -23,6 +23,7 @@ class PreprocessTransformer(Transformer):
     shard_size = 4096
 
     def __init__(self, vocabulary_size=None, shard_size=None):
+        super(PreprocessTransformer, self).__init__()
         if vocabulary_size is not None:
             self.vocabulary_size = vocabulary_size
         if shard_size is not None:
@@ -42,6 +43,9 @@ class PreprocessTransformer(Transformer):
                          input=X, df=df, shard_size=self.shard_size,
                          output=output)
         preprocess(args)
+
+    def _get_log_name(self):
+        return "id_preprocess"
 
 
 def preprocess(args):
@@ -230,6 +234,9 @@ class SwivelTransformer(Transformer):
 
         run_swivel(flags)
 
+    def _get_log_name(self):
+        return "id_swivel"
+
 
 def run_swivel(args):
     """
@@ -260,6 +267,9 @@ class PostprocessTransformer(Transformer):
         args = Namespace(swivel_output_directory=swivel_output_directory,
                          result=result)
         postprocess(args)
+
+    def _get_log_name(self):
+        return "id_postprocess"
 
 
 def postprocess(args):

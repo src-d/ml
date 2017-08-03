@@ -76,9 +76,10 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
                 timeout=None
             )
             outfile = repo2nbow.prepare_filename(basedir, tmpdir)
-            repo2nbow.transform(repos=basedir, output=tmpdir)
+            status = repo2nbow.transform(repos=basedir, output=tmpdir)
             self.assertTrue(os.path.isfile(outfile))
             validate_asdf_file(self, outfile)
+            self.assertEqual(status, 1)
 
     def test_empty(self):
         basedir = os.path.dirname(__file__)
@@ -90,8 +91,9 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
                 bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
                 timeout=None
             )
-            repo2nbow.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
+            status = repo2nbow.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
             self.assertFalse(os.listdir(tmpdir))
+            self.assertEqual(status, 0)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,5 @@
 from collections import namedtuple
+from itertools import repeat
 import logging
 import multiprocessing
 import os
@@ -12,16 +13,18 @@ import threading
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 from google.protobuf.message import DecodeError
+from modelforge.progress_bar import progress_bar
 import Stemmer
 
 from ast2vec.cloning import RepoCloner
+from ast2vec.pickleable_logger import PickleableLogger
 from ast2vec import resolve_symlink
 
 GeneratorResponse = namedtuple("GeneratorResponse",
                                ["filepath", "filename", "response"])
 
 
-class Repo2Base:
+class Repo2Base(PickleableLogger):
     """
     Base class for repsitory features extraction. Abstracts from
     `Babelfish <https://doc.bblf.sh/>`_ and source code identifier processing.
@@ -35,8 +38,7 @@ class Repo2Base:
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT):
-        self._log = logging.getLogger("repo2" + self.MODEL_CLASS.NAME)
-        self._log.setLevel(log_level)
+        super(Repo2Base, self).__init__(log_level=log_level)
         self._stemmer = Stemmer.Stemmer("english")
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = self.STEM_THRESHOLD
@@ -140,6 +142,12 @@ class Repo2Base:
             if temp:
                 shutil.rmtree(target_dir)
 
+    def convert_uast(self, uast):
+        return self.convert_uasts([uast])
+
+    def convert_uasts(self, file_uast_generator):
+        raise NotImplementedError()
+
     def _bblfsh_parse(self, thread_index, filepath, language):
         try:
             return self._bblfsh[thread_index].parse(
@@ -149,12 +157,6 @@ class Repo2Base:
                   "and you hit https://github.com/bblfsh/server/issues/59#issuecomment-318125752"
             self._log.warning(msg)
             raise e from None
-
-    def convert_uast(self, uast):
-        return self.convert_uasts([uast])
-
-    def convert_uasts(self, file_uast_generator):
-        raise NotImplementedError()
 
     def _process_token(self, token):
         for word in self._split(token):
@@ -202,8 +204,11 @@ class Repo2Base:
             if last:
                 yield from ret(last)
 
+    def _get_log_name(self):
+        return "repo2" + self.MODEL_CLASS.NAME
 
-class Transformer:
+
+class Transformer(PickleableLogger):
     """
     Base class for transformers
     """
@@ -219,7 +224,6 @@ class RepoTransformer(Transformer):
     def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, **args):
         super(RepoTransformer, self).__init__()
         self._args = args
-        self._log = logging.getLogger(self.WORKER_CLASS.MODEL_CLASS.NAME + "_transformer")
         self._num_processes = num_processes
 
     @property
@@ -233,7 +237,7 @@ class RepoTransformer(Transformer):
         self._num_processes = value
 
     @classmethod
-    def process_entry(cls, url_or_path, args, outdir):
+    def process_entry(cls, url_or_path, args, outdir, queue):
         """
         Invokes process_repo() in a separate process. The reason we do this is that grpc
         starts hanging background threads for every channel which poll(). Those threads
@@ -245,16 +249,18 @@ class RepoTransformer(Transformer):
         :param url_or_path: File system path or a URL to clone.
         :param args: :class:`dict`-like container with the arguments to cls().
         :param outdir: The output directory.
+        :param queue: :class:`multiprocessing.Queue` to report the status.
         :return:
         """
         pid = os.fork()
         if pid == 0:
             outfile = cls.prepare_filename(url_or_path, outdir)
-            cls(**args).process_repo(url_or_path, outfile)
+            status = cls(**args).process_repo(url_or_path, outfile)
             import sys
-            sys.exit()
+            sys.exit(status)
         else:
-            os.waitpid(pid, 0)
+            _, status = os.waitpid(pid, 0)
+            queue.put((url_or_path, status))
 
     @classmethod
     def prepare_filename(cls, repo, output):
@@ -282,16 +288,17 @@ class RepoTransformer(Transformer):
             cls.WORKER_CLASS.MODEL_CLASS.NAME, repo_name.replace("/", "&")))
         return outfile
 
-    def process_repo(self, url_or_path, output):
+    def process_repo(self, url_or_path, output) -> bool:
         """
         Pipeline for a single repository:
 
         1. Initialize the implementation class instance.
-        2. Extract vocabulary and co-occurrence matrix from the repository.
-        3. Save the result as ASDF.
+        2. Use it to convert the repository to a model.
+        3. Save the result on disk.
 
         :param url_or_path: Repository URL or file system path.
         :param output: Path to file where to store the result.
+        :return: True if the operation was successful; otherwise, False.
         """
         repo2 = self.WORKER_CLASS(**self._args)
         try:
@@ -302,17 +309,19 @@ class RepoTransformer(Transformer):
             model = self.WORKER_CLASS.MODEL_CLASS()
             model.construct(**self.result_to_model_kwargs(result, url_or_path))
             model.save(output, deps=self.dependencies())
+            return True
         except subprocess.CalledProcessError as e:
             self._log.error("Failed to clone %s: %s", url_or_path, e)
+            return False
         except:
             self._log.exception(
                 "Unhandled error in %s.process_repo() at %s." % (
                     type(self).__name__, url_or_path))
+            return False
 
     def transform(self, repos, output, num_processes=None):
         """
-        Extracts co-occurrence matrices & list of tokens for each repository ->
-        saves to the output directory.
+        Converts repositories to models and saves them to the output directory.
 
         :param repos: "repos" is the list of repository URLs or paths or \
                   files with repository URLS or paths.
@@ -342,10 +351,26 @@ class RepoTransformer(Transformer):
 
         os.makedirs(output, exist_ok=True)
 
-        with multiprocessing.Pool(processes=num_processes) as pool:
-            pool.starmap(type(self).process_entry,
-                         zip(inputs, [self._args] * len(inputs),
-                             [output] * len(inputs)))
+        queue = multiprocessing.Manager().Queue(1)
+
+        def process_repos():
+            with multiprocessing.Pool(processes=num_processes) as pool:
+                pool.starmap(type(self).process_entry,
+                             zip(inputs, repeat(self._args), repeat(output), repeat(queue)))
+
+        mpthread = threading.Thread(target=process_repos)
+        mpthread.start()
+        failures = 0
+        for _ in progress_bar(inputs, self._log, expected_size=len(inputs)):
+            repo, ok = queue.get()
+            if not ok:
+                failures += 1
+        mpthread.join()
+        self._log.info("Finished, %d failed repos", failures)
+        return len(inputs) - failures
+
+    def _get_log_name(self):
+        return self.WORKER_CLASS.MODEL_CLASS.NAME + "_transformer"
 
     def dependencies(self) -> list:
         """
