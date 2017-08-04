@@ -6,6 +6,10 @@ from ast2vec import resolve_symlink
 
 class ResolveSymlinkTests(unittest.TestCase):
     def test_resolve_symlink(self):
+        exists_ = os.path.exists
+        islink_ = os.path.islink
+        readlink_ = os.readlink
+
         def exists(path):
             return path == "yyy"
 
@@ -22,6 +26,10 @@ class ResolveSymlinkTests(unittest.TestCase):
         self.assertEqual(resolve_symlink.resolve_symlink("zzz"), "yyy")
         with self.assertRaises(resolve_symlink.DanglingSymlinkError) as _:
             resolve_symlink.resolve_symlink("xxx")
+
+        os.path.exists = exists_
+        os.path.islink = islink_
+        os.readlink = readlink_
 
 
 if __name__ == "__main__":

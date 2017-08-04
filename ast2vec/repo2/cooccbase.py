@@ -90,8 +90,7 @@ class Repo2CooccBase(Repo2Base):
             node = queue.pop()
             if SIMPLE_IDENTIFIER in node.roles:
                 yield node.token
-            for child in node.children:
-                queue.append(child)
+            queue.extend(node.children)
 
     def _traverse_uast(self, root, word2ind, dok_mat):
         """

@@ -4,7 +4,6 @@ import logging
 import multiprocessing
 import os
 from queue import Queue
-import re
 import shutil
 import subprocess
 import tempfile
@@ -14,7 +13,6 @@ from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 from google.protobuf.message import DecodeError
 from modelforge.progress_bar import progress_bar
-import Stemmer
 
 from ast2vec.cloning import RepoCloner
 from ast2vec.pickleable_logger import PickleableLogger
