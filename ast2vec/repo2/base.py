@@ -97,6 +97,8 @@ class Repo2Base(PickleableLogger):
                             if response is None:
                                 self._log.warning("bblfsh timed out on %s", filepath)
                                 queue_out.put_nowait(None)
+                                continue
+
                             queue_out.put_nowait(GeneratorResponse(filepath=filepath,
                                                                    filename=filename,
                                                                    response=response))
