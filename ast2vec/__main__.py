@@ -79,6 +79,9 @@ def main():
                                   help="GCS bucket to use.")
     repo2nbow_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
                                   help="Number of threads in the UASTs extraction process.")
+    repo2nbow_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repos2nbow_parser = subparsers.add_parser(
         "repos2nbow", help="Produce the nBOWs from a list of Git "
@@ -110,6 +113,15 @@ def main():
              "it is better to set this to 1 or 2.")
     repos2nbow_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
                                    help="Number of threads in the UASTs extraction process.")
+    repos2nbow_parser.add_argument(
+        "--organize_files", dest="organize_files", required=False,
+        help="Perform alphabetical directory indexing of provided level. Expand output path by "
+             "subfolders using the first n characters of repository, for example for "
+             "\"--organize_files 2\" file ababa is saved to /a/ab/ababa, abcoasa is saved to "
+             "/a/bc/abcoasa, etc.")
+    repos2nbow_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
@@ -130,6 +142,9 @@ def main():
         help="Babelfish timeout - longer requests are dropped.")
     repo2coocc_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
                                    help="Number of threads in the UASTs extraction process.")
+    repo2coocc_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repos2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a list of "
@@ -155,6 +170,13 @@ def main():
              "it is better to set this to 1 or 2.")
     repos2coocc_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
                                     help="Number of threads in the UASTs extraction process.")
+    repos2coocc_parser.add_argument(
+        "--organize_files", action="store_true", dest="organize_files", default=False,
+        help="Expand output path by subfolders using the first char of repository"
+             " name as subfolder")
+    repos2coocc_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repo2uast_parser = subparsers.add_parser(
         "repo2uast", help="Extract UASTs from a Git repository.")
