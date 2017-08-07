@@ -4,6 +4,7 @@ import numpy
 from scipy.sparse import coo_matrix
 
 from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
+from ast2vec.token_parser import TokenParser
 from ast2vec.repo2.base import Repo2Base
 
 
@@ -11,6 +12,10 @@ class Repo2CooccBase(Repo2Base):
     """
     Converts UASTs to co-occurrence matrices.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(Repo2CooccBase, self).__init__(*args, **kwargs)
+        self._token_parser = TokenParser()
 
     def convert_uasts(self, file_uast_generator):
         word2ind = self._get_vocabulary()
@@ -69,11 +74,11 @@ class Repo2CooccBase(Repo2Base):
 
         tokens = []
         for ch in children:
-            self._update_dict(self._process_token(ch.token), word2ind, tokens)
+            self._update_dict(self._token_parser.process_token(ch.token), word2ind, tokens)
 
         if (root.token.strip() is not None and root.token.strip() != "" and
                 SIMPLE_IDENTIFIER in root.roles):
-            self._update_dict(self._process_token(root.token), word2ind, tokens)
+            self._update_dict(self._token_parser.process_token(root.token), word2ind, tokens)
 
         for triplet in self._all2all(tokens, word2ind):
             mat[(triplet[0], triplet[1])] += triplet[2]

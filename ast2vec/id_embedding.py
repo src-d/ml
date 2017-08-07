@@ -14,8 +14,8 @@ import ast2vec.swivel as swivel
 from ast2vec.coocc import Cooccurrences
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
+from ast2vec.token_parser import TokenParser
 from ast2vec.repo2.base import Transformer
-from ast2vec.repo2.nbow import Repo2nBOW
 
 
 class PreprocessTransformer(Transformer):
@@ -296,7 +296,7 @@ def postprocess(args):
                     sys.stdout.flush()
                 prow, pcol = (l.split("\t", 1) for l in (lrow, lcol))
                 assert prow[0] == pcol[0]
-                tokens.append(prow[0][:Repo2nBOW.MAX_TOKEN_LENGTH])
+                tokens.append(prow[0][:TokenParser.MAX_TOKEN_LENGTH])
                 erow, ecol = \
                     (numpy.fromstring(p[1], dtype=numpy.float32, sep="\t")
                      for p in (prow, pcol))
