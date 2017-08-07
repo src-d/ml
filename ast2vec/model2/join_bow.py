@@ -9,6 +9,9 @@ from ast2vec.model2.base import Model2Base
 
 
 class BowJoinerBase(Model2Base):
+    """
+    Base class for bag-of-word model mergers.
+    """
     def __init__(self, *args, **kwargs):
         super(BowJoinerBase, self).__init__(*args, **kwargs)
         self.joined = None

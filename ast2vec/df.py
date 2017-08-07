@@ -39,6 +39,15 @@ Number of documents: %d""" % (
     def __getitem__(self, item):
         return self._df[item]
 
+    def __iter__(self):
+        return iter(self._df.items())
+
+    def __len__(self):
+        """
+        Returns the number of tokens in the model.
+        """
+        return len(self._df)
+
     def get(self, item, default):
         """
         Return the document frequency for a given token.
@@ -54,12 +63,6 @@ Number of documents: %d""" % (
         Returns the sorted list of tokens.
         """
         return sorted(self._df)
-
-    def __len__(self):
-        """
-        Returns the number of tokens in the model.
-        """
-        return len(self._df)
 
     def save(self, output, deps=None):
         if not deps:

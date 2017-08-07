@@ -7,12 +7,12 @@ from scipy.sparse import csr_matrix
 from ast2vec.bow import NBOW
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
-from ast2vec.repo2.base import RepoTransformer, repos2_entry, repo2_entry
-from ast2vec.repo2.xbow import Repo2xBOW
+from ast2vec.repo2.base import RepoTransformer, Repo2Base, repos2_entry, repo2_entry
+from ast2vec.uast_ids_to_bag import UastIds2Bag
 from modelforge.backends import create_backend
 
 
-class Repo2nBOW(Repo2xBOW):
+class Repo2nBOW(Repo2Base):
     """
     Implements the step repository -> :class:`ast2vec.nbow.NBOW`.
     """
@@ -20,13 +20,13 @@ class Repo2nBOW(Repo2xBOW):
 
     def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
                  log_level=logging.INFO, bblfsh_endpoint=None,
-                 timeout=Repo2xBOW.DEFAULT_BBLFSH_TIMEOUT):
+                 timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
         super(Repo2nBOW, self).__init__(
             tempdir=tempdir, linguist=linguist, log_level=log_level,
-            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout,
-            vocabulary=id2vec)
+            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
         self._id2vec = id2vec
         self._docfreq = docfreq
+        self._uast2bag = UastIds2Bag(id2vec)
 
     @property
     def id2vec(self):
@@ -39,7 +39,7 @@ class Repo2nBOW(Repo2xBOW):
     def convert_uasts(self, file_uast_generator):
         freqs = defaultdict(int)
         for file_uast in file_uast_generator:
-            bag = self._uast_to_bag(file_uast.response.uast)
+            bag = self._uast2bag.uast_to_bag(file_uast.response.uast)
             for key, freq in bag.items():
                 freqs[key] += freq
         missing = []

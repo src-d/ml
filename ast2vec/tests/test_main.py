@@ -9,7 +9,7 @@ import ast2vec.model2.join_bow
 
 class MainTests(unittest.TestCase):
     def test_handlers(self):
-        handlers = [False] * 11
+        handlers = [False] * 12
 
         def repo2nbow_entry(args):
             handlers[0] = True
@@ -26,29 +26,33 @@ class MainTests(unittest.TestCase):
         def joinbow_entry(args):
             handlers[4] = True
 
-        def preprocess(args):
+        def source2df_entry(args):
             handlers[5] = True
 
-        def run_swivel(args):
+        def preprocess(args):
             handlers[6] = True
 
-        def postprocess(args):
+        def run_swivel(args):
             handlers[7] = True
 
-        def bow2vw_entry(args):
+        def postprocess(args):
             handlers[8] = True
 
-        def install_enry(args):
+        def bow2vw_entry(args):
             handlers[9] = True
 
-        def dump_model(args):
+        def install_enry(args):
             handlers[10] = True
+
+        def dump_model(args):
+            handlers[11] = True
 
         main.repo2nbow_entry = repo2nbow_entry
         main.repos2nbow_entry = repos2nbow_entry
         main.repo2coocc_entry = repo2coocc_entry
         main.repos2coocc_entry = repos2coocc_entry
         main.joinbow_entry = joinbow_entry
+        main.source2df_entry = source2df_entry
         main.preprocess = preprocess
         main.run_swivel = run_swivel
         main.postprocess = postprocess
@@ -60,7 +64,7 @@ class MainTests(unittest.TestCase):
         argparse.ArgumentParser.error = lambda self, message: None
 
         for action in ("repo2nbow", "repos2nbow", "repo2coocc", "repos2coocc", "join_bow",
-                       "id2vec_preproc", "id2vec_train", "id2vec_postproc", "bow2vw",
+                       "source2df", "id2vec_preproc", "id2vec_train", "id2vec_postproc", "bow2vw",
                        "enry", "dump"):
             sys.argv = [main.__file__, action]
             main.main()

@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 
-from ast2vec.vw_dataset import bow2vw_entry
 from modelforge.logs import setup_logging
 
 from ast2vec.cloning import clone_repositories
@@ -14,6 +13,8 @@ from ast2vec.repo2.base import Repo2Base
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
 from ast2vec.model2.join_bow import joinbow_entry
+from ast2vec.model2.source2df import source2df_entry
+from ast2vec.vw_dataset import bow2vw_entry
 
 
 def main():
@@ -163,6 +164,21 @@ def main():
         "--tmpdir", default=None, help="Temporary directory for intermediate files.")
     joinbow_parser.add_argument(
         "--filter", default="**/*.asdf", help="File name glob selector.")
+
+    source2df_parser = subparsers.add_parser(
+        "source2df", help="Calculate identifier document frequencies from extracted uasts.")
+    source2df_parser.set_defaults(handler=source2df_entry)
+    source2df_parser.add_argument(
+        "input", help="The directory to scan.")
+    source2df_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
+    source2df_parser.add_argument(
+        "--tmpdir", default=None, help="Temporary directory for intermediate files.")
+    source2df_parser.add_argument(
+        "output", help="Where to write the merged nBOW.")
+    source2df_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
 
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.")
