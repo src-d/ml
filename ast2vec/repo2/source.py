@@ -23,7 +23,7 @@ class Repo2Source(Repo2Base):
             if source is None:
                 continue
             sources.append(source)
-            uasts.append(file_uast.response)
+            uasts.append(file_uast.response.uast)
             filenames.append(file_uast.filename)
 
         if not len(sources) == len(uasts) == len(filenames):

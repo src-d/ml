@@ -3,7 +3,9 @@ import tempfile
 import unittest
 
 import asdf
+from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
 from google.protobuf.message import DecodeError
+from modelforge import split_strings
 
 import ast2vec.tests as tests
 import ast2vec.tests.models as paths
@@ -18,6 +20,9 @@ def validate_asdf_file(obj, filename):
     obj.assertIn("meta", data.tree)
     obj.assertIn("sources", data.tree)
     obj.assertIn("uasts", data.tree)
+    Node.FromString(split_strings(data.tree["uasts"])[0])
+    obj.assertEqual(data.tree["sources"]["lengths"].shape[0],
+                    data.tree["uasts"]["lengths"].shape[0])
     obj.assertEqual(0, len(data.tree["meta"]["dependencies"]))
     obj.assertEqual(data.tree["meta"]["model"], "source")
 
@@ -45,11 +50,9 @@ class Repo2SourceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.default_source_model(tmpdir)
             model = self.load_default_source_model(tmpdir)
-            true_model = Source().load(source=paths.SOURCE)
+            self.assertEqual(len(model.uasts[0].children), 2)
             self.assertEqual(len(model.sources), 1)
             self.assertEqual(len(model.uasts), 1)
-            self.assertEqual(true_model.sources[0], model.sources[0])
-            self.assertEqual(true_model.uasts[0], model.uasts[0])
 
     def test_DanglingSymlinkError(self):
         save_resolve_symlink = ast2vec.resolve_symlink.resolve_symlink
