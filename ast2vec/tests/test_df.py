@@ -32,6 +32,14 @@ class DocumentFrequenciesTests(unittest.TestCase):
         # the remaining 20 are not unique - the model was generated badly
         self.assertEqual(len(self.model), 980)
 
+    def test_iter(self):
+        aaa = False
+        for tok, freq in self.model:
+            if "aaaaaaa" in tok:
+                aaa = True
+                int(freq)
+                break
+        self.assertTrue(aaa)
 
 if __name__ == "__main__":
     unittest.main()
