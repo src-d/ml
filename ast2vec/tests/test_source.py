@@ -1,7 +1,10 @@
 import unittest
 
+from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+
+
 import ast2vec.tests.models as paths
-from ast2vec import Source
+from ast2vec.source import Source
 
 
 class SourceTests(unittest.TestCase):
@@ -20,14 +23,14 @@ class SourceTests(unittest.TestCase):
         with open(paths.SOURCE_PY) as f:
             true_val = f.read()
         self.assertEqual(len(prop), 1)
+        self.assertIsInstance(prop[0], str)
         self.assertEqual(prop[0], true_val)
 
     def test_uasts(self):
         prop = self.model.uasts
-        with open(paths.SOURCE_UAST, 'rb') as f:
-            true_val = f.read()
         self.assertEqual(len(prop), 1)
-        self.assertEqual(prop[0].SerializeToString(), true_val)
+        self.assertIsInstance(prop[0], Node)
+        self.assertEqual(len(prop[0].children), 2)
 
     def test_filenames(self):
         prop = self.model.filenames

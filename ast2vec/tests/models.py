@@ -11,6 +11,5 @@ DATA_DIR_SOURCE = path.join(path.dirname(__file__), "source")
 SOURCE_FILENAME = "test_example"
 SOURCE = path.join(DATA_DIR_SOURCE, "%s.asdf" % SOURCE_FILENAME)
 SOURCE_PY = path.join(DATA_DIR_SOURCE, "%s.py" % SOURCE_FILENAME)
-SOURCE_UAST = path.join(DATA_DIR_SOURCE, "%s.uast" % SOURCE_FILENAME)
 
 JOINBOWS = path.join(path.dirname(__file__), "merge_bows")

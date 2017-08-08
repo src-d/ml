@@ -1,6 +1,7 @@
 from modelforge import generate_meta
 from modelforge.model import Model, split_strings, merge_strings, write_model
 from modelforge.models import register_model
+import numpy
 
 import ast2vec
 
@@ -22,14 +23,15 @@ class UASTModel(Model):
 
     def _load_tree_kwargs(self, tree):
         return dict(filenames=split_strings(tree["filenames"]),
-                    uasts=[type(self).parse_bblfsh_response(x) for x in tree["uasts"]])
+                    uasts=[type(self).parse_bblfsh_response(uast)
+                           for uast in split_strings(tree["uasts"])])
 
     @staticmethod
     def parse_bblfsh_response(response):
         # ParseResponse should be imported here because grpc starts threads during import
         # and if you call fork after that, a child process will be hang during exit
-        from bblfsh.github.com.bblfsh.sdk.protocol.generated_pb2 import ParseResponse
-        return ParseResponse.FromString(response)
+        from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+        return Node.FromString(response)
 
     def _load_tree(self, tree):
         self.construct(**self._load_tree_kwargs(tree))
@@ -83,7 +85,7 @@ class UASTModel(Model):
 
     def _to_dict_to_save(self):
         return {"filenames": merge_strings(self.filenames),
-                "uasts": [uast.SerializeToString() for uast in self.uasts]}
+                "uasts": merge_strings([uast.SerializeToString() for uast in self.uasts])}
 
     def save(self, output, deps=None):
         if not deps:
