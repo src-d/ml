@@ -22,6 +22,7 @@ def validate_asdf_file(obj, filename):
     obj.assertIn("meta", data.tree)
     obj.assertIn("sources", data.tree)
     obj.assertIn("uasts", data.tree)
+    obj.assertIn("repository", data.tree)
     Node.FromString(split_strings(data.tree["uasts"])[0])
     obj.assertEqual(data.tree["sources"]["lengths"].shape[0],
                     data.tree["uasts"]["lengths"].shape[0])

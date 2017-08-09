@@ -11,8 +11,8 @@ class Source(UASTModel):
     """
     NAME = "source"
 
-    def construct(self, filenames, sources, uasts):
-        super(Source, self).construct(filenames=filenames, uasts=uasts)
+    def construct(self, repository, filenames, sources, uasts):
+        super(Source, self).construct(repository=repository, filenames=filenames, uasts=uasts)
         if not len(sources) == len(uasts) == len(filenames):
             raise ValueError("Length of src_codes({}), uasts({}) and filenames({}) are not equal".
                              format(len(sources), len(uasts), len(filenames)))

@@ -1,14 +1,12 @@
 import logging
-import math
-from collections import defaultdict
 
 from scipy.sparse import csr_matrix
 
 from ast2vec.bow import NBOW
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
+from ast2vec.model2.source2bow import Uasts2BOW
 from ast2vec.repo2.base import RepoTransformer, Repo2Base, repos2_entry, repo2_entry
-from ast2vec.uast_ids_to_bag import UastIds2Bag
 from modelforge.backends import create_backend
 
 
@@ -18,37 +16,12 @@ class Repo2nBOW(Repo2Base):
     """
     MODEL_CLASS = NBOW
 
-    def __init__(self, id2vec, docfreq, *args, **kwargs):
-        super(Repo2nBOW, self).__init__(*args, **kwargs)
-        self._id2vec = id2vec
-        self._docfreq = docfreq
-        self._uast2bag = UastIds2Bag(id2vec)
-
-    @property
-    def id2vec(self):
-        return self._id2vec
-
-    @property
-    def docfreq(self):
-        return self._docfreq
+    def __init__(self, id2vec, docfreq, **kwargs):
+        super(Repo2nBOW, self).__init__(**kwargs)
+        self._uasts2bow = Uasts2BOW(id2vec, docfreq, lambda x: x.response.uast)
 
     def convert_uasts(self, file_uast_generator):
-        freqs = defaultdict(int)
-        for file_uast in file_uast_generator:
-            bag = self._uast2bag.uast_to_bag(file_uast.response.uast)
-            for key, freq in bag.items():
-                freqs[key] += freq
-        missing = []
-        vocabulary = self._id2vec.tokens
-        for key, val in freqs.items():
-            try:
-                freqs[key] = math.log(1 + val) * math.log(
-                    self._docfreq.docs / self._docfreq[vocabulary[key]])
-            except KeyError:
-                missing.append(key)
-        for key in missing:
-            del freqs[key]
-        return dict(freqs)
+        return self._uasts2bow(file_uast_generator)
 
 
 class Repo2nBOWTransformer(RepoTransformer):

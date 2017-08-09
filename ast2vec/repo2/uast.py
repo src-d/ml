@@ -43,7 +43,7 @@ class Repo2UASTModelTransformer(RepoTransformer):
         filenames, uasts = result
         if len(filenames) == 0:
             raise ValueError("No need to store empty model.")
-        return {"filenames": filenames, "uasts": uasts}
+        return {"repository": url_or_path, "filenames": filenames, "uasts": uasts}
 
 
 def repo2uast_entry(args):

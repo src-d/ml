@@ -49,4 +49,5 @@ class Repo2SourceTransformer(RepoTransformer):
         filenames, src_codes, uasts = result
         if len(filenames) == 0:
             raise ValueError("The model is empty")
-        return {"filenames": filenames, "sources": src_codes, "uasts": uasts}
+        return {"repository": url_or_path, "filenames": filenames, "sources": src_codes,
+                "uasts": uasts}

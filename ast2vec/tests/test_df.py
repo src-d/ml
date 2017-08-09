@@ -29,8 +29,8 @@ class DocumentFrequenciesTests(unittest.TestCase):
             self.assertGreater(self.model[t], 0)
 
     def test_len(self):
-        # the remaining 20 are not unique - the model was generated badly
-        self.assertEqual(len(self.model), 980)
+        # the remaining 18 are not unique - the model was generated badly
+        self.assertEqual(len(self.model), 982)
 
     def test_iter(self):
         aaa = False

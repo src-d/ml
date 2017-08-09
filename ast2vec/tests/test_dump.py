@@ -37,12 +37,12 @@ class DumpTests(unittest.TestCase):
 Shape: (1000, 300)
 First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
 """
-    DOCFREQ_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 59, 14, 766638),
+    DOCFREQ_DUMP = """{'created_at': datetime.datetime(2017, 8, 9, 16, 49, 12, 775367),
  'dependencies': [],
  'model': 'docfreq',
  'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
- 'version': [1, 0, 0]}
-Number of words: 980
+ 'version': [0, 1, 0]}
+Number of words: 982
 """ + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', " \
       "'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\nNumber of documents: 1000\n"
 

@@ -21,6 +21,10 @@ class UastIds2Bag:
         self._vocabulary = vocabulary if vocabulary is not None else FakeVocabulary()
         self._token_parser = TokenParser()
 
+    @property
+    def vocabulary(self):
+        return self._vocabulary
+
     def uast_to_bag(self, uast):
         """
         Converts a UAST to a bag-of-words. The weights are identifier frequencies.
@@ -38,6 +42,6 @@ class UastIds2Bag:
                     try:
                         bag[self._vocabulary[sub]] += 1
                     except KeyError:
-                        pass
+                        continue
             stack.extend(node.children)
         return bag

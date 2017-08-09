@@ -18,6 +18,7 @@ from ast2vec.repo2.uast import repo2uast_entry, repos2uast_entry
 from ast2vec.model2.join_bow import joinbow_entry
 from ast2vec.model2.prox import prox_entry, MATRIX_TYPES
 from ast2vec.model2.proxbase import EDGE_TYPES
+from ast2vec.model2.source2bow import source2bow_entry
 from ast2vec.model2.source2df import source2df_entry
 
 
@@ -266,6 +267,24 @@ def main():
         "RT - connect node A roles(tokens) with node B tokens(roles).")
     uast2prox_parser.add_argument(
         "--filter", default="**/*.asdf", help="File name glob selector.")
+
+    source2bow_parser = subparsers.add_parser(
+        "source2bow", help="Calculate identifier document frequencies from extracted uasts.")
+    source2bow_parser.set_defaults(handler=source2bow_entry)
+    source2bow_parser.add_argument(
+        "input", help="The directory to scan.")
+    source2bow_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
+    source2bow_parser.add_argument(
+        "-v", "--vocabulary-size", required=True, type=int,
+        help="Vocabulary size: the tokens with the highest document frequencies will be picked.")
+    source2bow_parser.add_argument(
+        "output", help="Where to write the merged nBOW.")
+    source2bow_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
+    source2bow_parser.add_argument(
+        "-d", "--df", required=True, help="Path to document frequencies.")
 
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.")
