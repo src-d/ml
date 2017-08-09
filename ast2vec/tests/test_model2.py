@@ -65,8 +65,9 @@ class FakeQueue:
 class Model2BaseTests(unittest.TestCase):
     def test_convert(self):
         converter = Model2Test(num_processes=2)
-        status = converter.convert(os.path.dirname(__file__), "xxx", pattern="**/*.py")
-        self.assertGreater(status, 20)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            status = converter.convert(os.path.dirname(__file__), tmpdir, pattern="**/*.py")
+            self.assertGreater(status, 20)
 
     def test_process_entry(self):
         converter = MockingModel2Test(num_processes=2)
