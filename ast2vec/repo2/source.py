@@ -37,7 +37,7 @@ class Repo2Source(Repo2Base):
             with open(filename, "r", encoding="utf8") as f:
                 return f.read()
         except UnicodeDecodeError as e:
-            self._log.warning('Skipping file %s.\n\tUnicodeDecodeError: %s', filename, e)
+            self._log.warning("Skipping file %s.\n\tUnicodeDecodeError: %s", filename, e)
 
 
 class Repo2SourceTransformer(RepoTransformer):
