@@ -42,11 +42,23 @@ First 10 words: %s""" % (
         """
         return self._tokens
 
+    def items(self):
+        """
+        Returns the tuples belonging to token -> index mapping.
+        """
+        return self._token2index.items()
+
     def __getitem__(self, item):
         """
         Returns the index of the specified processed source code identifier.
         """
         return self._token2index[item]
+
+    def __len__(self):
+        """
+        Returns the number of tokens in the model.
+        """
+        return len(self._tokens)
 
     def save(self, output, deps=None):
         if not deps:

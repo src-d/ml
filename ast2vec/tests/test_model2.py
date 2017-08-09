@@ -7,6 +7,7 @@ from ast2vec.model2.base import Model2Base
 
 class FromModel:
     NAME = "from"
+    meta = {"dependencies": tuple()}
 
     def load(self, source):
         pass
@@ -15,6 +16,7 @@ class FromModel:
 class ToModel:
     NAME = "to"
     output = None
+    meta = {"dependencies": tuple()}
 
     def save(self, output, deps=None):
         ToModel.output = output

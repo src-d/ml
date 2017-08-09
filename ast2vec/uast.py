@@ -13,16 +13,18 @@ class UASTModel(Model):
     """
     NAME = "uast"
 
-    def construct(self, filenames, uasts):
+    def construct(self, repository, filenames, uasts):
         if len(uasts) != len(filenames):
             raise ValueError("Length of uasts({}) and filenames({}) are not equal".
                              format(len(uasts), len(filenames)))
+        self._repository = repository
         self._filenames = filenames
         self._uasts = uasts
         self._filenames_map = {r: i for i, r in enumerate(self._filenames)}
 
     def _load_tree_kwargs(self, tree):
-        return dict(filenames=split_strings(tree["filenames"]),
+        return dict(repository=tree["repository"],
+                    filenames=split_strings(tree["filenames"]),
                     uasts=[type(self).parse_bblfsh_response(uast)
                            for uast in split_strings(tree["uasts"])])
 
@@ -39,8 +41,15 @@ class UASTModel(Model):
     def dump(self):
         symbols_num = 100
         out = self._uasts[0][:symbols_num]
-        return "Number of files: %d. First %d symbols:\n %s" % (
-            len(self), symbols_num, out)
+        return "Repository: %s\nNumber of files: %d. First %d symbols:\n %s" % (
+            self._repo, len(self), symbols_num, out)
+
+    @property
+    def repository(self):
+        """
+        Returns the associated repository URL or path.
+        """
+        return self._repository
 
     @property
     def uasts(self):
@@ -84,7 +93,8 @@ class UASTModel(Model):
         return self._filenames_map[name]
 
     def _to_dict_to_save(self):
-        return {"filenames": merge_strings(self.filenames),
+        return {"repository": self.repository,
+                "filenames": merge_strings(self.filenames),
                 "uasts": merge_strings([uast.SerializeToString() for uast in self.uasts])}
 
     def save(self, output, deps=None):

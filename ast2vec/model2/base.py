@@ -96,7 +96,7 @@ class Model2Base(PickleableLogger):
                     dirs = os.path.dirname(model_path)
                     if dirs:
                         os.makedirs(dirs, exist_ok=True)
-                    model_to.save(model_path)
+                    model_to.save(model_path, deps=model_to.meta["dependencies"])
             except:
                 self._log.exception("%s failed", filename)
                 queue_out.put((filename, False))

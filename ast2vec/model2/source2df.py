@@ -77,8 +77,7 @@ class MergeDocFreq(ToDocFreqBase):
 
 
 def source2df_entry(args):
-    processes = args.processes or multiprocessing.cpu_count()
-    converter = Source2DocFreq(num_processes=processes)
+    converter = Source2DocFreq(num_processes=args.processes)
     with tempfile.TemporaryDirectory(dir=args.tmpdir, prefix="source2uast") as tmpdir:
         converter.convert(args.input, tmpdir, pattern=args.filter)
         joiner = MergeDocFreq(num_processes=1)

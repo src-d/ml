@@ -18,6 +18,9 @@ class SourceTests(unittest.TestCase):
 
         self.assertEqual(dump, true_dump)
 
+    def test_repository(self):
+        self.assertEqual(self.model.repository, "top secret")
+
     def test_sources(self):
         prop = self.model.sources
         with open(paths.SOURCE_PY) as f:
