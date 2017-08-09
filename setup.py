@@ -12,7 +12,7 @@ setup(
     description="Part of source{d}'s stack for machine learning on source "
                 "code. Provides API and tools to train and use models based "
                 "on source code identifiers extracted from Babelfish's UASTs.",
-    version="0.1.2-alpha",
+    version="0.2.0-alpha",
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
@@ -29,7 +29,7 @@ setup(
                       "asdf>=1.2,<2.0",
                       "google-cloud-storage>=1.0,<2.0",
                       "python-dateutil",
-                      "modelforge>=0.1.0-alpha",
+                      "modelforge>=0.2.3-alpha",
                       "bblfsh>=0.0.4"] + typing,
     package_data={"": ["LICENSE", "README.md"]},
     classifiers=[

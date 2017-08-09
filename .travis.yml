@@ -13,7 +13,7 @@ _install: &_install
   - pip install -r requirements.txt codecov
   - pip install -e .
 _coverage: &_coverage
-  - SCRIPT="coverage run -m unittest discover"
+  - SCRIPT="coverage run --concurrency=multiprocessing -m unittest discover && coverage combine"
 matrix:
   include:
     - python: 3.4

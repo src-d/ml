@@ -9,7 +9,7 @@ import ast2vec.tests.models as paths
 
 class Id2VecTests(unittest.TestCase):
     def setUp(self):
-        self.model = Id2Vec(
+        self.model = Id2Vec().load(
             source=os.path.join(os.path.dirname(__file__), paths.ID2VEC))
 
     def test_embeddings(self):
@@ -27,6 +27,13 @@ class Id2VecTests(unittest.TestCase):
         self.assertEqual(self.model["get"], 0)
         with self.assertRaises(KeyError):
             print(self.model["xxx"])
+
+    def test_len(self):
+        self.assertEqual(len(self.model), 1000)
+
+    def test_items(self):
+        key, val = next(iter(self.model.items()))
+        self.assertEqual(self.model[key], val)
 
 
 if __name__ == "__main__":

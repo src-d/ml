@@ -7,7 +7,7 @@ import ast2vec.tests.models as paths
 
 class DocumentFrequenciesTests(unittest.TestCase):
     def setUp(self):
-        self.model = DocumentFrequencies(
+        self.model = DocumentFrequencies().load(
             source=os.path.join(os.path.dirname(__file__), paths.DOCFREQ))
 
     def test_docs(self):
@@ -29,9 +29,17 @@ class DocumentFrequenciesTests(unittest.TestCase):
             self.assertGreater(self.model[t], 0)
 
     def test_len(self):
-        # the remaining 20 are not unique - the model was generated badly
-        self.assertEqual(len(self.model), 980)
+        # the remaining 18 are not unique - the model was generated badly
+        self.assertEqual(len(self.model), 982)
 
+    def test_iter(self):
+        aaa = False
+        for tok, freq in self.model:
+            if "aaaaaaa" in tok:
+                aaa = True
+                int(freq)
+                break
+        self.assertTrue(aaa)
 
 if __name__ == "__main__":
     unittest.main()

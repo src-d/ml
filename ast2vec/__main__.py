@@ -1,17 +1,25 @@
 import argparse
 import logging
+import multiprocessing
 import os
 import sys
 
-from ast2vec.vw_dataset import nbow2vw_entry
 from modelforge.logs import setup_logging
 
+from ast2vec.cloning import clone_repositories
 from ast2vec.dump import dump_model
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
+from ast2vec.vw_dataset import bow2vw_entry
 from ast2vec.repo2.base import Repo2Base
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
+from ast2vec.repo2.uast import repo2uast_entry, repos2uast_entry
+from ast2vec.model2.join_bow import joinbow_entry
+from ast2vec.model2.prox import prox_entry, MATRIX_TYPES
+from ast2vec.model2.proxbase import EDGE_TYPES
+from ast2vec.model2.source2bow import source2bow_entry
+from ast2vec.model2.source2df import source2df_entry
 
 
 def main():
@@ -25,12 +33,34 @@ def main():
                         choices=logging._nameToLevel,
                         help="Logging verbosity.")
     subparsers = parser.add_subparsers(help="Commands", dest="command")
+
+    clone_parser = subparsers.add_parser(
+        "clone", help="Clone multiple repositories. By default saves all files, including "
+        "`.git`. Use --linguist and --languages options to narrow files down.")
+    clone_parser.set_defaults(handler=clone_repositories)
+    clone_parser.add_argument(
+        "input", nargs="+", help="List of repositories and/or files with list of repositories.")
+    clone_parser.add_argument(
+        "--ignore", action="store_true",
+        help="Ignore failed to download repositories. An error message is logged as usual.")
+    clone_parser.add_argument(
+        "--linguist", help="Path to src-d/enry executable. If specified will save only files "
+        "classified by enry.")
+    clone_parser.add_argument(
+        "--languages", nargs="*", default=["Python", "Java"], help="Files which are classified "
+        "as not written in these languages are discarded.")
+    clone_parser.add_argument(
+        "-o", "--output", required=True, help="Output directory.")
+    clone_parser.add_argument(
+        "--redownload", action="store_true", help="Redownload existing repositories.")
+    clone_parser.add_argument(
+        "-t", "--threads", type=int, required=True, help="Number of downloading threads.")
+
     repo2nbow_parser = subparsers.add_parser(
         "repo2nbow", help="Produce the nBOW from a Git repository.")
     repo2nbow_parser.set_defaults(handler=repo2nbow_entry)
     repo2nbow_parser.add_argument(
-        "-r", "--repository", required=True,
-        help="URL or path to a Git repository.")
+        "repository", help="URL or path to a Git repository.")
     repo2nbow_parser.add_argument(
         "--id2vec", help="URL or path to the identifier embeddings.")
     repo2nbow_parser.add_argument(
@@ -48,14 +78,18 @@ def main():
         help="Output path where the .asdf will be stored.")
     repo2nbow_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
                                   help="GCS bucket to use.")
+    repo2nbow_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                  help="Number of threads in the UASTs extraction process.")
+    repo2nbow_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repos2nbow_parser = subparsers.add_parser(
         "repos2nbow", help="Produce the nBOWs from a list of Git "
                            "repositories.")
     repos2nbow_parser.set_defaults(handler=repos2nbow_entry)
     repos2nbow_parser.add_argument(
-        "-i", "--input", required=True, nargs="+",
-        help="List of repositories or path to file with list of repositories.")
+        "input", nargs="+", help="List of repositories and/or files with list of repositories.")
     repos2nbow_parser.add_argument(
         "--id2vec", help="URL or path to the identifier embeddings.")
     repos2nbow_parser.add_argument(
@@ -64,7 +98,7 @@ def main():
         "--linguist", help="Path to src-d/enry executable.")
     repos2nbow_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .asdf results will be stored.")
+        help="Output directory where .asdf results will be stored.")
     repos2nbow_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
         dest="bblfsh_endpoint")
@@ -78,14 +112,24 @@ def main():
         help="Number of parallel processes to run. Since every process "
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
+    repos2nbow_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                   help="Number of threads in the UASTs extraction process.")
+    repos2nbow_parser.add_argument(
+        "--organize_files", dest="organize_files", required=False,
+        help="Perform alphabetical directory indexing of provided level. Expand output path by "
+             "subfolders using the first n characters of repository, for example for "
+             "\"--organize_files 2\" file ababa is saved to /a/ab/ababa, abcoasa is saved to "
+             "/a/bc/abcoasa, etc.")
+    repos2nbow_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
                            "repository.")
     repo2coocc_parser.set_defaults(handler=repo2coocc_entry)
     repo2coocc_parser.add_argument(
-        "-r", "--repository", required=True,
-        help="URL or path to a Git repository.")
+        "repository", help="URL or path to a Git repository.")
     repo2coocc_parser.add_argument(
         "--linguist", help="Path to src-d/enry executable.")
     repo2coocc_parser.add_argument(
@@ -97,19 +141,23 @@ def main():
     repo2coocc_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
+    repo2coocc_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                   help="Number of threads in the UASTs extraction process.")
+    repo2coocc_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
 
     repos2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a list of "
                             "Git repositories.")
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     repos2coocc_parser.add_argument(
-        "-i", "--input", required=True, nargs="+",
-        help="List of repositories or path to file with list of repositories.")
+        "input", nargs="+", help="List of repositories and/or files with list of repositories.")
     repos2coocc_parser.add_argument(
         "--linguist", help="Path to src-d/enry executable.")
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output folder where .asdf results will be stored.")
+        help="Output directory where .asdf results will be stored.")
     repos2coocc_parser.add_argument(
         "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
         dest="bblfsh_endpoint")
@@ -121,10 +169,125 @@ def main():
         help="Number of parallel processes to run. Since every process "
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
+    repos2coocc_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                    help="Number of threads in the UASTs extraction process.")
+    repos2coocc_parser.add_argument(
+        "--organize_files", action="store_true", dest="organize_files", default=False,
+        help="Expand output path by subfolders using the first char of repository"
+             " name as subfolder")
+    repos2coocc_parser.add_argument(
+        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        help="Specify if you want to disable overiting of existing models")
+
+    repo2uast_parser = subparsers.add_parser(
+        "repo2uast", help="Extract UASTs from a Git repository.")
+    repo2uast_parser.set_defaults(handler=repo2uast_entry)
+    repo2uast_parser.add_argument("repository", help="URL or path to a Git repository.")
+    repo2uast_parser.add_argument("--linguist", help="Path to src-d/enry executable.")
+    repo2uast_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output path where the .asdf will be stored.")
+    repo2uast_parser.add_argument(
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
+        dest="bblfsh_endpoint")
+    repo2uast_parser.add_argument(
+        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        help="Babelfish timeout - longer requests are dropped.")
+
+    repos2uast_parser = subparsers.add_parser(
+        "repos2uast", help="Extract UASTs from a list of Git repositories.")
+    repos2uast_parser.set_defaults(handler=repos2uast_entry)
+    repos2uast_parser.add_argument(
+        "input", nargs="+", help="List of repositories and/or files with list of repositories.")
+    repos2uast_parser.add_argument("--linguist", help="Path to src-d/enry executable.")
+    repos2uast_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output directory where .asdf results will be stored.")
+    repos2uast_parser.add_argument(
+        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.",
+        dest="bblfsh_endpoint")
+    repos2uast_parser.add_argument(
+        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        help="Babelfish timeout - longer requests are dropped.")
+
+    joinbow_parser = subparsers.add_parser(
+        "join_bow", help="Combine several nBOW files into the single one.")
+    joinbow_parser.set_defaults(handler=joinbow_entry)
+    joinbow_parser.add_argument(
+        "input", help="Directory to scan recursively.")
+    joinbow_parser.add_argument(
+        "output", help="Where to write the merged nBOW.")
+    group = joinbow_parser.add_argument_group("type")
+    group_ex = group.add_mutually_exclusive_group(required=True)
+    group_ex.add_argument("--bow", action="store_true", help="The models are BOW.")
+    group_ex.add_argument("--nbow", action="store_true", help="The models are NBOW.")
+    joinbow_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
+    joinbow_parser.add_argument(
+        "--tmpdir", default=None, help="Temporary directory for intermediate files.")
+    joinbow_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
+
+    source2df_parser = subparsers.add_parser(
+        "source2df", help="Calculate identifier document frequencies from extracted uasts.")
+    source2df_parser.set_defaults(handler=source2df_entry)
+    source2df_parser.add_argument(
+        "input", help="The directory to scan.")
+    source2df_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
+    source2df_parser.add_argument(
+        "--tmpdir", default=None, help="Temporary directory for intermediate files.")
+    source2df_parser.add_argument(
+        "output", help="Where to write the merged nBOW.")
+    source2df_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
+
+    uast2prox_parser = subparsers.add_parser(
+        "uast2prox", help="Convert UASTs to proximity matrix.")
+    uast2prox_parser.set_defaults(handler=prox_entry)
+    uast2prox_parser.add_argument("input", help="Directory to scan recursively for UASTs.")
+    uast2prox_parser.add_argument("output", help="Where to write the resulting proximity matrix.")
+    uast2prox_parser.add_argument(
+        "-m", "--matrix-type", required=True, choices=MATRIX_TYPES.keys(),
+        help="Type of proximity matrix.")
+    uast2prox_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
+    uast2prox_parser.add_argument(
+        "--edges", nargs="+", default=EDGE_TYPES, choices=EDGE_TYPES,
+        help="If not specified, then node-to-node adjacency is assumed. Suppose we have two "
+        "connected nodes A and B:\n"
+        "r - connect node roles with each other.\n"
+        "t - connect node tokens with each other.\n"
+        "rt - connect node tokens with node roles.\n"
+        "R - connect node A roles with node B roles.\n"
+        "T - connect node A tokens with node B tokens.\n"
+        "RT - connect node A roles(tokens) with node B tokens(roles).")
+    uast2prox_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
+
+    source2bow_parser = subparsers.add_parser(
+        "source2bow", help="Calculate identifier document frequencies from extracted uasts.")
+    source2bow_parser.set_defaults(handler=source2bow_entry)
+    source2bow_parser.add_argument(
+        "input", help="The directory to scan.")
+    source2bow_parser.add_argument(
+        "--filter", default="**/*.asdf", help="File name glob selector.")
+    source2bow_parser.add_argument(
+        "-v", "--vocabulary-size", required=True, type=int,
+        help="Vocabulary size: the tokens with the highest document frequencies will be picked.")
+    source2bow_parser.add_argument(
+        "output", help="Where to write the merged nBOW.")
+    source2bow_parser.add_argument(
+        "-p", "--processes", type=int, default=0,
+        help="Number of processes to use. 0 means CPU count,")
+    source2bow_parser.add_argument(
+        "-d", "--df", required=True, help="Path to document frequencies.")
 
     preproc_parser = subparsers.add_parser(
-        "preproc", help="Convert co-occurrence CSR matrices to Swivel "
-                        "dataset.")
+        "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.")
     preproc_parser.set_defaults(handler=preprocess)
     preproc_parser.add_argument(
         "-o", "--output", required=True, help="The output directory.")
@@ -144,7 +307,7 @@ def main():
              "inside are read.")
 
     train_parser = subparsers.add_parser(
-        "train", help="Train identifier embeddings.")
+        "id2vec_train", help="Train identifier embeddings.")
     train_parser.set_defaults(handler=run_swivel)
     del train_parser._action_groups[train_parser._action_groups.index(
         train_parser._optionals)]
@@ -155,20 +318,24 @@ def main():
         swivel.flags._global_parser._option_string_actions
 
     postproc_parser = subparsers.add_parser(
-        "postproc", help="Combine row and column embeddings together and "
-                         "write them to an .asdf.")
+        "id2vec_postproc",
+        help="Combine row and column embeddings together and write them to an .asdf.")
     postproc_parser.set_defaults(handler=postprocess)
     postproc_parser.add_argument("swivel_output_directory")
     postproc_parser.add_argument("result")
 
-    nbow2vw_parser = subparsers.add_parser(
-        "nbow2vw", help="Convert an nBOW model to the dataset in Vowpal Wabbit format.")
-    nbow2vw_parser.set_defaults(handler=nbow2vw_entry)
-    nbow2vw_parser.add_argument(
-        "-i", "--nbow", required=True, help="URL or path to the nBOW model.")
-    nbow2vw_parser.add_argument(
-        "--id2vec", help="URL or path to the identifier embeddings.")
-    nbow2vw_parser.add_argument(
+    bow2vw_parser = subparsers.add_parser(
+        "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
+    bow2vw_parser.set_defaults(handler=bow2vw_entry)
+    group = bow2vw_parser.add_argument_group("model")
+    group_ex = group.add_mutually_exclusive_group(required=True)
+    group_ex.add_argument(
+        "--bow", help="URL or path to a bag-of-words model. Mutually exclusive with --nbow.")
+    group_ex.add_argument(
+        "--nbow", help="URL or path to an nBOW model. Mutually exclusive with --bow.")
+    bow2vw_parser.add_argument(
+        "--id2vec", help="URL or path to the identifier embeddings. Used if --nbow")
+    bow2vw_parser.add_argument(
         "-o", "--output", required=True, help="Path to the output file.")
 
     enry_parser = subparsers.add_parser(

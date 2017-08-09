@@ -37,12 +37,12 @@ class DumpTests(unittest.TestCase):
 Shape: (1000, 300)
 First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
 """
-    DOCFREQ_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 59, 14, 766638),
+    DOCFREQ_DUMP = """{'created_at': datetime.datetime(2017, 8, 9, 16, 49, 12, 775367),
  'dependencies': [],
  'model': 'docfreq',
  'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
- 'version': [1, 0, 0]}
-Number of words: 980
+ 'version': [0, 1, 0]}
+Number of words: 982
 """ + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', " \
       "'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\nNumber of documents: 1000\n"
 
@@ -119,6 +119,23 @@ Number of words: 394
         gcs_backend.requests = FakeRequests(route)
         with captured_output() as (out, _, _):
             dump_model(self._get_args(input="https://xxx"))
+        self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
+
+    def test_gcs(self):
+        def route(url):
+            if url.endswith(gcs_backend.INDEX_FILE):
+                self.assertIn("custom", url)
+                return '{"models": {"id2vec": {' \
+                       '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
+                       '{"url": "https://xxx"}}}}'.encode()
+            self.assertEqual("https://xxx", url)
+            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+                return fin.read()
+
+        gcs_backend.requests = FakeRequests(route)
+        with captured_output() as (out, _, _):
+            dump_model(self._get_args(input="92609e70-f79c-46b5-8419-55726e873cfc",
+                                      gcs="custom"))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
 
     @staticmethod

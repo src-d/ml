@@ -1,4 +1,5 @@
 import argparse
+from collections import namedtuple
 import os
 import tempfile
 import unittest
@@ -6,8 +7,9 @@ import unittest
 import asdf
 from scipy.sparse import coo_matrix
 
-import ast2vec.tests as tests
 from ast2vec import Repo2Coocc, Repo2CooccTransformer
+from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
+import ast2vec.tests as tests
 from ast2vec.repo2.coocc import repo2coocc_entry
 
 
@@ -44,7 +46,30 @@ class Repo2CooccTests(unittest.TestCase):
             repo2coocc_entry(args)
             validate_asdf_file(self, file.name)
 
+    def test_zero_tokens(self):
+        def skip_uast(root, word2ind, dok_mat):
+            pass
+
+        repo2 = Repo2Coocc(linguist=tests.ENRY, timeout=600)
+        repo2._traverse_uast = skip_uast
+        basedir = os.path.dirname(__file__)
+        coocc = repo2.convert_repository(os.path.join(basedir, "..", ".."))
+        self.assertEqual(coocc[0], [])
+        self.assertEqual(coocc[1].shape, (0, 0))
+        self.assertEqual(coocc[1].nnz, 0)
+
+    def test_extract_ids(self):
+        Node = namedtuple("Node", ["roles", "token", "children"])
+        node1 = Node([SIMPLE_IDENTIFIER], 1, [])
+        node2 = Node([], 2, [])
+        node3 = Node([SIMPLE_IDENTIFIER], 3, [node1, node2])
+        node4 = Node([SIMPLE_IDENTIFIER], 4, [])
+        root = Node([], 5, [node3, node4])
+        repo2 = Repo2Coocc(linguist=tests.ENRY, timeout=600)
+        self.assertEqual(list(repo2._extract_ids(root)), [4, 3, 1])
+
     def test_linguist(self):
+        # If this test fails, check execution permissions for provided paths.
         with self.assertRaises(FileNotFoundError):
             Repo2Coocc(linguist="xxx", timeout=600)
         with self.assertRaises(FileNotFoundError):
