@@ -1,5 +1,6 @@
 import argparse
 import logging
+import multiprocessing
 import os
 import sys
 
@@ -73,6 +74,8 @@ def main():
         help="Output path where the .asdf will be stored.")
     repo2nbow_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
                                   help="GCS bucket to use.")
+    repo2nbow_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                  help="Number of threads in the UASTs extraction process.")
 
     repos2nbow_parser = subparsers.add_parser(
         "repos2nbow", help="Produce the nBOWs from a list of Git "
@@ -103,6 +106,8 @@ def main():
         help="Number of parallel processes to run. Since every process "
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
+    repos2nbow_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                   help="Number of threads in the UASTs extraction process.")
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git "
@@ -121,6 +126,8 @@ def main():
     repo2coocc_parser.add_argument(
         "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
         help="Babelfish timeout - longer requests are dropped.")
+    repo2coocc_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                   help="Number of threads in the UASTs extraction process.")
 
     repos2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a list of "
@@ -145,6 +152,8 @@ def main():
         help="Number of parallel processes to run. Since every process "
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
+    repos2coocc_parser.add_argument("--threads", type=int, default=multiprocessing.cpu_count(),
+                                    help="Number of threads in the UASTs extraction process.")
 
     joinbow_parser = subparsers.add_parser(
         "join_bow", help="Combine several nBOW files into the single one.")

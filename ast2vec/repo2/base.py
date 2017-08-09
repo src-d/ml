@@ -4,17 +4,16 @@ import logging
 import multiprocessing
 import os
 from queue import Queue
-import re
 import shutil
 import subprocess
 import tempfile
 import threading
+from typing import Union
 
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 from google.protobuf.message import DecodeError
 from modelforge.progress_bar import progress_bar
-import Stemmer
 
 from ast2vec.cloning import RepoCloner
 from ast2vec.pickleable_logger import PickleableLogger
@@ -34,14 +33,64 @@ class Repo2Base(PickleableLogger):
     MAX_FILE_SIZE = 200000
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
-                 bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT):
+                 bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT,
+                 threads=multiprocessing.cpu_count()):
         super(Repo2Base, self).__init__(log_level=log_level)
-        self._tempdir = tempdir
+        self.tempdir = tempdir
         self._cloner = RepoCloner(redownload=True, log_level=log_level)
         self._cloner.find_linguist(linguist)
-        self._bblfsh = [BblfshClient(bblfsh_endpoint or "0.0.0.0:9432")
-                        for _ in range(multiprocessing.cpu_count())]
-        self._timeout = timeout
+        self._bblfsh_endpoint = bblfsh_endpoint
+        self.timeout = timeout
+        self.threads = threads
+
+    @property
+    def tempdir(self):
+        """
+        The temporary directory where to clone the repositories.
+        """
+        return self._tempdir
+
+    @tempdir.setter
+    def tempdir(self, value: Union[str, None]):
+        if value is not None and not os.path.isdir(value):
+            raise ValueError("PAth does not exist: %s" % value)
+        self._tempdir = value
+
+    @property
+    def bblfsh_endpoint(self):
+        return self._bblfsh_endpoint or "0.0.0.0:9432"
+
+    @property
+    def timeout(self):
+        """
+        Babelfish server timeout.
+        """
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value: Union[int, float, None]):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError("timeout must be an int/float, got %s" % type(value))
+            if value <= 0:
+                raise ValueError("timeout must be positive, got %s" % value)
+        self._timeout = value
+
+    @property
+    def threads(self):
+        """
+        The number of threads in the repository -> UASTs extraction process.
+        """
+        return self._threads
+
+    @threads.setter
+    def threads(self, value: int):
+        if not isinstance(value, int):
+            raise TypeError("threads must be an integer - got %s" % type(value))
+        if value < 1:
+            raise ValueError("threads must be greater than or equal to 1 - got %d" % value)
+        self._threads = value
+        self._bblfsh = [BblfshClient(self.bblfsh_endpoint) for _ in range(value)]
 
     def convert_repository(self, url_or_path):
         """
@@ -103,7 +152,7 @@ class Repo2Base(PickleableLogger):
 
                 pool = [threading.Thread(target=thread_loop, args=(i,),
                                          name="%s@%d" % (url_or_path, i))
-                        for i in range(multiprocessing.cpu_count())]
+                        for i in range(self.threads)]
                 for thread in pool:
                     thread.start()
                 tasks = 0
@@ -187,7 +236,8 @@ class RepoTransformer(Transformer):
         self._num_processes = value
 
     @classmethod
-    def process_entry(cls, url_or_path, args, outdir, queue):
+    def process_entry(cls, url_or_path: str, args: dict, outdir: str,
+                      queue: multiprocessing.Queue):
         """
         Invokes process_repo() in a separate process. The reason we do this is that grpc
         starts hanging background threads for every channel which poll(). Those threads
@@ -200,7 +250,7 @@ class RepoTransformer(Transformer):
         :param args: :class:`dict`-like container with the arguments to cls().
         :param outdir: The output directory.
         :param queue: :class:`multiprocessing.Queue` to report the status.
-        :return:
+        :return: The child process' exit code.
         """
         pid = os.fork()
         if pid == 0:
@@ -211,9 +261,10 @@ class RepoTransformer(Transformer):
         else:
             _, status = os.waitpid(pid, 0)
             queue.put((url_or_path, status))
+            return status
 
     @classmethod
-    def prepare_filename(cls, repo, output):
+    def prepare_filename(cls, repo: str, output: str):
         """
         Remove prefixes from the repo name, so later it can be used to create
         file for each repository + replace slashes ("/") with ampersands ("&").
@@ -252,6 +303,7 @@ class RepoTransformer(Transformer):
         """
         repo2 = self.WORKER_CLASS(**self._args)
         try:
+
             result = repo2.convert_repository(url_or_path)
             for proto in ("https://", "http://", "git://", "ssh://"):
                 if url_or_path.startswith(proto):
@@ -302,20 +354,17 @@ class RepoTransformer(Transformer):
         os.makedirs(output, exist_ok=True)
 
         queue = multiprocessing.Manager().Queue(1)
-
-        def process_repos():
-            with multiprocessing.Pool(processes=num_processes) as pool:
-                pool.starmap(type(self).process_entry,
-                             zip(inputs, repeat(self._args), repeat(output), repeat(queue)))
-
-        mpthread = threading.Thread(target=process_repos)
-        mpthread.start()
         failures = 0
-        for _ in progress_bar(inputs, self._log, expected_size=len(inputs)):
-            repo, ok = queue.get()
-            if not ok:
-                failures += 1
-        mpthread.join()
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            pool.starmap_async(
+                type(self).process_entry,
+                zip(inputs, repeat(self._args), repeat(output), repeat(queue)))
+
+            for _ in progress_bar(inputs, self._log, expected_size=len(inputs)):
+                repo, ok = queue.get()
+                if not ok:
+                    failures += 1
+
         self._log.info("Finished, %d failed repos", failures)
         return len(inputs) - failures
 

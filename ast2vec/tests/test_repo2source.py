@@ -8,7 +8,6 @@ from google.protobuf.message import DecodeError
 from modelforge import split_strings
 
 import ast2vec.tests as tests
-import ast2vec.tests.models as paths
 import ast2vec.resolve_symlink
 from ast2vec import Source, Repo2SourceTransformer, Repo2Base
 from ast2vec import resolve_symlink
@@ -76,26 +75,30 @@ class Repo2SourceTests(unittest.TestCase):
         Repo2Base.MAX_FILE_SIZE = save_MAX_FILE_SIZE
 
     def test_bblfsh_parse_return_none(self):
-        def bblfsh_parse_return_none(t1, t2, t3, t4):
+        def bblfsh_parse_return_none(*args, **kwargs):
             return None
 
         save_bblfsh_parse = Repo2Base._bblfsh_parse
         Repo2Base._bblfsh_parse = bblfsh_parse_return_none
-        with tempfile.TemporaryDirectory() as tmpdir:
-            self.default_source_model(tmpdir)
-            self.check_no_model(tmpdir)
-        Repo2Base._bblfsh_parse = save_bblfsh_parse
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                self.default_source_model(tmpdir)
+                self.check_no_model(tmpdir)
+        finally:
+            Repo2Base._bblfsh_parse = save_bblfsh_parse
 
     def test_bblfsh_parse_raise_DecodeError(self):
-        def bblfsh_parse_return_none(t1, t2, t3, t4):
+        def bblfsh_parse_return_none(*args, **kwargs):
             raise DecodeError()
 
         save_bblfsh_parse = Repo2Base._bblfsh_parse
         Repo2Base._bblfsh_parse = bblfsh_parse_return_none
-        with tempfile.TemporaryDirectory() as tmpdir:
-            self.default_source_model(tmpdir)
-            self.check_no_model(tmpdir)
-        Repo2Base._bblfsh_parse = save_bblfsh_parse
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                self.default_source_model(tmpdir)
+                self.check_no_model(tmpdir)
+        finally:
+            Repo2Base._bblfsh_parse = save_bblfsh_parse
 
 
 if __name__ == "__main__":
