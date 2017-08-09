@@ -18,12 +18,8 @@ class Repo2nBOW(Repo2Base):
     """
     MODEL_CLASS = NBOW
 
-    def __init__(self, id2vec, docfreq, tempdir=None, linguist=None,
-                 log_level=logging.INFO, bblfsh_endpoint=None,
-                 timeout=Repo2Base.DEFAULT_BBLFSH_TIMEOUT):
-        super(Repo2nBOW, self).__init__(
-            tempdir=tempdir, linguist=linguist, log_level=log_level,
-            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
+    def __init__(self, id2vec, docfreq, *args, **kwargs):
+        super(Repo2nBOW, self).__init__(*args, **kwargs)
         self._id2vec = id2vec
         self._docfreq = docfreq
         self._uast2bag = UastIds2Bag(id2vec)

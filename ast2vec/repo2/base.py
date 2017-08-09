@@ -1,5 +1,5 @@
 from collections import namedtuple
-from itertools import repeat
+from itertools import accumulate, repeat
 import logging
 import multiprocessing
 import os
@@ -9,10 +9,12 @@ import subprocess
 import tempfile
 import threading
 from typing import Union
+from time import time
 
 from bblfsh import BblfshClient
 from bblfsh.launcher import ensure_bblfsh_is_running
 from google.protobuf.message import DecodeError
+from grpc import RpcError
 from modelforge.progress_bar import progress_bar
 
 from ast2vec.cloning import RepoCloner
@@ -30,16 +32,28 @@ class Repo2Base(PickleableLogger):
     """
     MODEL_CLASS = None  #: Must be defined in the children.
     DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
+    DEFAULT_OVERWRITE_EXISTING = True
     MAX_FILE_SIZE = 200000
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT,
-                 threads=multiprocessing.cpu_count()):
+                 threads=multiprocessing.cpu_count(),
+                 overwrite_existing=DEFAULT_OVERWRITE_EXISTING):
+        """
+        Initializer of Repo2Base class
+        :param tempdir: If you will clone repositories they will be stored in tempdir
+        :param linguist: Path to linguist.
+        :param log_level: Log level of Repo2Base
+        :param bblfsh_endpoint: bblfsh server endpoint
+        :param timeout: timeout for bblfsh
+        :param overwrite_existing: Rewrite existing models or skip them
+        """
         super(Repo2Base, self).__init__(log_level=log_level)
         self.tempdir = tempdir
         self._cloner = RepoCloner(redownload=True, log_level=log_level)
         self._cloner.find_linguist(linguist)
         self._bblfsh_endpoint = bblfsh_endpoint
+        self._overwrite_existing = overwrite_existing
         self.timeout = timeout
         self.threads = threads
 
@@ -91,6 +105,16 @@ class Repo2Base(PickleableLogger):
             raise ValueError("threads must be greater than or equal to 1 - got %d" % value)
         self._threads = value
         self._bblfsh = [BblfshClient(self.bblfsh_endpoint) for _ in range(value)]
+
+    @property
+    def overwrite_existing(self):
+        return self._overwrite_existing
+
+    @overwrite_existing.setter
+    def overwrite_existing(self, value: bool):
+        if not isinstance(value, bool):
+            raise TypeError("overwrite_existing must be an integer - got %s" % type(value))
+        self._overwrite_existing = value
 
     def convert_repository(self, url_or_path):
         """
@@ -202,6 +226,11 @@ class Repo2Base(PickleableLogger):
                   "and you hit https://github.com/bblfsh/server/issues/59#issuecomment-318125752"
             self._log.warning(msg)
             raise e from None
+        except RpcError as e:
+            msg = "bblfsh raised an RpcError exception. Probably it is something wrong with your" \
+                  " protobuf."
+            self._log.warning(msg)
+            raise e from None
 
     def _get_log_name(self):
         return "repo2" + self.MODEL_CLASS.NAME
@@ -220,10 +249,20 @@ class RepoTransformer(Transformer):
     WORKER_CLASS = None
     DEFAULT_NUM_PROCESSES = 2
 
-    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, **args):
+    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, organize_files=0, **args):
+        """
+        Base class for transformers from repository to WORKER_CLASS model
+        :param num_processes: Number of parallel processes to transform
+        :param organize_files: Perform alphabetical directory indexing of provided level. \
+            Expand output path by subfolders using the first n characters of repository, \
+            for example for "organize_files=2" file ababa is saved to /a/ab/ababa, abcoasa \
+            is saved to /a/bc/abcoasa, etc.
+        :param args: arguments for WORKER_CLASS model initialization
+        """
         super(RepoTransformer, self).__init__()
         self._args = args
         self._num_processes = num_processes
+        self._organize_files = organize_files
 
     @property
     def num_processes(self):
@@ -232,12 +271,14 @@ class RepoTransformer(Transformer):
     @num_processes.setter
     def num_processes(self, value):
         if not isinstance(value, int):
-            raise TypeError("num_processes must be an integer")
+            raise TypeError("num_processes must be an integer - got %s" % type(value))
+        if value < 1:
+            raise ValueError("num_processes must be greater than or equal to 1 - got %d" % value)
         self._num_processes = value
 
     @classmethod
     def process_entry(cls, url_or_path: str, args: dict, outdir: str,
-                      queue: multiprocessing.Queue):
+                      queue: multiprocessing.Queue, organize_files: int):
         """
         Invokes process_repo() in a separate process. The reason we do this is that grpc
         starts hanging background threads for every channel which poll(). Those threads
@@ -250,11 +291,15 @@ class RepoTransformer(Transformer):
         :param args: :class:`dict`-like container with the arguments to cls().
         :param outdir: The output directory.
         :param queue: :class:`multiprocessing.Queue` to report the status.
+        :param organize_files: Perform alphabetical directory indexing of provided level. \
+            Expand output path by subfolders using the first n characters of repository, \
+            for example for "organize_files=2" file ababa is saved to /a/ab/ababa, abcoasa \
+            is saved to /a/bc/abcoasa, etc.
         :return: The child process' exit code.
         """
         pid = os.fork()
         if pid == 0:
-            outfile = cls.prepare_filename(url_or_path, outdir)
+            outfile = cls.prepare_filename(url_or_path, outdir, organize_files)
             status = cls(**args).process_repo(url_or_path, outfile)
             import sys
             sys.exit(status)
@@ -264,27 +309,35 @@ class RepoTransformer(Transformer):
             return status
 
     @classmethod
-    def prepare_filename(cls, repo: str, output: str):
+    def prepare_filename(cls, repo: str, output: str, organize_files: int=0):
         """
         Remove prefixes from the repo name, so later it can be used to create
         file for each repository + replace slashes ("/") with ampersands ("&").
 
         :param repo: name of repository
         :param output: output directory
+        :param organize_files: Perform alphabetical directory indexing of provided level. \
+            Expand output path by subfolders using the first n characters of repository, \
+            for example for "organize_files=2" file ababa is saved to /a/ab/ababa, abcoasa \
+            is saved to /a/bc/abcoasa, etc.
         :return: converted repository name (removed "https://", etc.)
         """
-        repo_name = repo
-        prefixes = ["https://", "http://", "git://", "ssh://"]
-        for prefix in prefixes:
-            if repo.startswith(prefix):
-                repo_name = repo_name[len(prefix):]
-                break
-        postfixes = "\n/\\.git"
-        repo_name.rstrip(postfixes)
-        for postfix in postfixes:
-            if repo.endswith(postfix):
-                repo_name = repo_name[:-len(postfix)]
 
+        if os.path.exists(repo):
+            repo_name = os.path.split(repo.rstrip("/\\"))[-1]
+        else:
+            repo_name = repo
+            prefixes = ["https://", "http://", "git://", "ssh://"]
+            for prefix in prefixes:
+                if repo.startswith(prefix):
+                    repo_name = repo_name[len(prefix):]
+                    break
+            postfixes = ["\n", "/", "\\", ".git"]
+            for postfix in postfixes:
+                if repo_name.endswith(postfix):
+                    repo_name = repo_name[:-len(postfix)]
+        output = os.path.join(output, *list(accumulate(repo_name[:organize_files])))
+        os.makedirs(output, exist_ok=True)
         outfile = os.path.join(output, "%s_%s.asdf" % (
             cls.WORKER_CLASS.MODEL_CLASS.NAME, repo_name.replace("/", "&")))
         return outfile
@@ -301,19 +354,35 @@ class RepoTransformer(Transformer):
         :param output: Path to file where to store the result.
         :return: True if the operation was successful; otherwise, False.
         """
-        repo2 = self.WORKER_CLASS(**self._args)
+        overwrite_existing = self._args.get('overwrite_existing',
+                                            self.WORKER_CLASS.DEFAULT_OVERWRITE_EXISTING)
+        if os.path.exists(output):
+            if overwrite_existing:
+                self._log.info("Model %s already exists, but will be overwrite. If you want to "
+                               "skip existing models use --disable-overwrite flag", output)
+            else:
+                self._log.info("Model %s already exists, skipping.", output)
+                return True
         try:
-
+            repo2 = self.WORKER_CLASS(**self._args)
             result = repo2.convert_repository(url_or_path)
             for proto in ("https://", "http://", "git://", "ssh://"):
                 if url_or_path.startswith(proto):
                     url_or_path = url_or_path.replace(proto, "")
             model = self.WORKER_CLASS.MODEL_CLASS()
             model.construct(**self.result_to_model_kwargs(result, url_or_path))
+            if self._log.isEnabledFor(logging.DEBUG):
+                self._log.debug("Save %s model...", url_or_path)
+                start = time()
             model.save(output, deps=self.dependencies())
+            if self._log.isEnabledFor(logging.DEBUG):
+                self._log.debug("Save %s model is done. time: %f", url_or_path, time() - start)
             return True
         except subprocess.CalledProcessError as e:
             self._log.error("Failed to clone %s: %s", url_or_path, e)
+            return False
+        except ValueError as e:
+            self._log.warning("Failed to construct model for %s: %s", url_or_path, e)
             return False
         except:
             self._log.exception(
@@ -358,7 +427,8 @@ class RepoTransformer(Transformer):
         with multiprocessing.Pool(processes=num_processes) as pool:
             pool.starmap_async(
                 type(self).process_entry,
-                zip(inputs, repeat(self._args), repeat(output), repeat(queue)))
+                zip(inputs, repeat(self._args), repeat(output), repeat(queue),
+                    repeat(self._organize_files)))
 
             for _ in progress_bar(inputs, self._log, expected_size=len(inputs)):
                 repo, ok = queue.get()

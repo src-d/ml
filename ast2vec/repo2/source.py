@@ -11,7 +11,6 @@ class Repo2Source(Repo2Base):
 
     def __init__(self, *args, **kwargs):
         super(Repo2Source, self).__init__(*args, **kwargs)
-        self._uast_only = False
 
     def convert_uasts(self, file_uast_generator):
         sources = []

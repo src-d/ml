@@ -50,7 +50,7 @@ class Source(UASTModel):
         """
         Iterator over the items.
         """
-        return zip(self._filenames, *super(Source, self).__iter__())
+        return zip(self._filenames, self._uasts, self._sources)
 
     def _to_dict_to_save(self):
         save_dict = super(Source, self)._to_dict_to_save()
