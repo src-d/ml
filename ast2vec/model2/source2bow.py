@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 import math
 
 import numpy
@@ -74,7 +75,7 @@ class UastModel2BOW(Model2Base):
         indices = numpy.array(list(bag.keys()), dtype=numpy.int32)
         matrix = csr_matrix((data, indices, [0, len(data)]),
                             shape=(1, len(self._uasts2bow.vocabulary)))
-        bow = BOW()
+        bow = BOW(log_level=logging.WARNING)
         bow.construct(repos=[model.repository], matrix=matrix, tokens=self._tokens)
         bow.meta["dependencies"] = [self._uasts2bow.docfreq]
         return bow
