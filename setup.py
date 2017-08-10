@@ -24,13 +24,16 @@ setup(
     install_requires=["PyStemmer>=1.3,<2.0",
                       "numpy>=1.12,<2.0",
                       "scipy>=0.17,<1.0",
-                      "tensorflow>=1.0,<2.0",
                       "clint>=0.5.0",
                       "asdf>=1.2,<2.0",
                       "google-cloud-storage>=1.0,<2.0",
                       "python-dateutil",
                       "modelforge>=0.2.3-alpha",
                       "bblfsh>=0.0.4"] + typing,
+    extras_require={
+        "tf": ["tensorflow>=1.0,<2.0"],
+        "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
+    },
     package_data={"": ["LICENSE", "README.md"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
