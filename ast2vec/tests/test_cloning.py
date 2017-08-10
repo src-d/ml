@@ -15,12 +15,20 @@ class RepoClonerTests(unittest.TestCase):
         log_level="INFO", input=["git://github.com/src-d/jgscm.git"],
         ignore=True, redownload=False, threads=1)
     repo_urls = [
-        "https://whatever.cite.com/cool/you.git",
-        "whatever.cite.com/cool/you.git",
-        "whatever.cite.com/cool/you\\\n",
-        "whatever.cite.com/cool/you\n",
-        "whatever.cite.com/cool/you",
-        "whatever.cite.com/cool/you.git\n",
+        "https://whatever.site.com/cool/you.git",
+        "git://github.com/cool/you.git",
+        "www.bitbucket.org/cool/you\\\n",
+        "http://sourceforge.net/cool/you\n",
+        "code.google.com/cool/you",
+        "http://jenkins-ci.org/cool/you.git\n"
+    ]
+    repo_names = [
+        "cool&you_whatever.site.com",
+        "cool&you_github.com",
+        "cool&you_www.bitbucket.org",
+        "cool&you_sourceforge.net",
+        "cool&you_code.google.com",
+        "cool&you_jenkins-ci.org"
     ]
 
     @classmethod
@@ -81,20 +89,20 @@ class RepoClonerTests(unittest.TestCase):
     def test_prepare_repo_dir(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             rc = RepoCloner(linguist=None, redownload=True)
-            for repo_url in self.repo_urls:
+            for repo_url, repo_name in zip(self.repo_urls, self.repo_names):
                 repo_url = rc._prepare_repo_url(repo_url)
                 self.assertEqual(
-                    os.path.join(tmpdir, "cool@you"),
+                    os.path.join(tmpdir, repo_name),
                     rc._prepare_repo_dir(repo_url, tmpdir))
 
     def test_prepare_repo_url(self):
         results = [
-            "https://whatever.cite.com/cool/you.git",
-            "https://whatever.cite.com/cool/you.git",
-            "https://whatever.cite.com/cool/you",
-            "https://whatever.cite.com/cool/you",
-            "https://whatever.cite.com/cool/you",
-            "https://whatever.cite.com/cool/you.git",
+            "https://whatever.site.com/cool/you.git",
+            "git://github.com/cool/you.git",
+            "https://www.bitbucket.org/cool/you",
+            "http://sourceforge.net/cool/you",
+            "https://code.google.com/cool/you",
+            "http://jenkins-ci.org/cool/you.git",
         ]
         for correct_url, repo_url in zip(results, self.repo_urls):
             self.assertEqual(correct_url, RepoCloner._prepare_repo_url(repo_url))

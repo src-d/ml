@@ -179,9 +179,12 @@ class RepoCloner:
         :return: Path to prepared directory.
         """
         git_ending = ".git"
-        repo_name = "@".join(git_url.rsplit("/", maxsplit=2)[-2:])
+        repo_name = "&".join(git_url.rsplit("/", maxsplit=2)[-2:])
         if repo_name.endswith(git_ending):
             repo_name = repo_name[:-len(git_ending)]
+        site_start = git_url.find("//")
+        site_end = git_url.find("/", site_start + 2)
+        repo_name += "_" + git_url[site_start + 2:site_end]
         repo_dir = os.path.join(target_dir, repo_name)
 
         if os.path.exists(repo_dir) and self._redownload:
