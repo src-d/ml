@@ -14,5 +14,5 @@ from ast2vec.repo2.nbow import Repo2nBOW, Repo2nBOWTransformer
 from ast2vec.repo2.source import Repo2Source, Repo2SourceTransformer
 from ast2vec.repo2.uast import Repo2UASTModel, Repo2UASTModelTransformer
 
-__version__ = 0, 2, 0
+__version__ = 0, 2, 2
 modelforge.configuration.refresh()
