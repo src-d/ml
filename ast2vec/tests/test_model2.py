@@ -9,6 +9,9 @@ class FromModel:
     NAME = "from"
     meta = {"dependencies": tuple()}
 
+    def __init__(self, **kwargs):
+        pass
+
     def load(self, source):
         pass
 
@@ -17,6 +20,9 @@ class ToModel:
     NAME = "to"
     output = None
     meta = {"dependencies": tuple()}
+
+    def __init__(self, **kwargs):
+        pass
 
     def save(self, output, deps=None):
         ToModel.output = output
@@ -65,8 +71,9 @@ class FakeQueue:
 class Model2BaseTests(unittest.TestCase):
     def test_convert(self):
         converter = Model2Test(num_processes=2)
-        status = converter.convert(os.path.dirname(__file__), "xxx", pattern="**/*.py")
-        self.assertGreater(status, 20)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            status = converter.convert(os.path.dirname(__file__), tmpdir, pattern="**/*.py")
+            self.assertGreater(status, 20)
 
     def test_process_entry(self):
         converter = MockingModel2Test(num_processes=2)
