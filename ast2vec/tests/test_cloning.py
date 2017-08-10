@@ -78,14 +78,6 @@ class RepoClonerTests(unittest.TestCase):
             self.assertIsNone(clone_repositories(args))
             self._validate_clone(tmpdir, args)
 
-    def test_repo_creation(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            args = copy.copy(self.base_args)
-            args.output = str.encode(tmpdir)
-            args.linguist = None
-            with self.assertRaises(TypeError):
-                clone_repositories(args)
-
     def test_prepare_repo_dir(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             rc = RepoCloner(linguist=None, redownload=True)
@@ -106,6 +98,20 @@ class RepoClonerTests(unittest.TestCase):
         ]
         for correct_url, repo_url in zip(results, self.repo_urls):
             self.assertEqual(correct_url, RepoCloner._prepare_repo_url(repo_url))
+
+    def test_repo_creation(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = copy.copy(self.base_args)
+            args.output = str.encode(tmpdir)
+            args.linguist = None
+            with self.assertRaises(TypeError):
+                clone_repositories(args)
+
+    def test_subprocess_error(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            rc = RepoCloner(linguist=None, redownload=True)
+            with self.assertRaises(subprocess.CalledProcessError):
+                rc.clone_repo("https://not.a/git/repo", False, tmpdir)
 
     def _collect_repo_files(self, repo_dir):
         files = list()
