@@ -1,9 +1,7 @@
-from itertools import repeat
 import logging
 import multiprocessing
 import os
 from pathlib import Path
-import threading
 from typing import Union
 
 from modelforge import Model
@@ -88,7 +86,7 @@ class Model2Base(PickleableLogger):
             if filename is None:
                 break
             try:
-                model_from = self.MODEL_FROM_CLASS().load(filename)
+                model_from = self.MODEL_FROM_CLASS(log_level=logging.WARNING).load(filename)
                 model_to = self.convert_model(model_from)
                 if model_to is not None:
                     model_path = self._get_model_path(os.path.relpath(filename, srcdir))
