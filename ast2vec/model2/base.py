@@ -41,6 +41,8 @@ class Model2Base(PickleableLogger):
         self._log.info("Scanning %s", srcdir)
         files = [str(p) for p in Path(srcdir).glob(pattern)]
         self._log.info("Found %d files", len(files))
+        if not files:
+            return 0
         queue_in = multiprocessing.Manager().Queue()
         queue_out = multiprocessing.Manager().Queue(1)
         processes = [multiprocessing.Process(target=self._process_entry,
