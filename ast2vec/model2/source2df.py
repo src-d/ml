@@ -1,4 +1,5 @@
 from collections import defaultdict
+import logging
 import os
 import tempfile
 from typing import Union
@@ -23,7 +24,7 @@ class ToDocFreqBase(Model2Base):
         self._docs = 0
 
     def finalize(self, index: int, destdir: str):
-        model = DocumentFrequencies()
+        model = DocumentFrequencies(log_level=logging.WARNING)
         model.construct(self._docs, self._df.keys(), self._df.values())
         if destdir.endswith(".asdf"):
             path = destdir
