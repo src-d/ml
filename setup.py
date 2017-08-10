@@ -28,7 +28,7 @@ setup(
                       "asdf>=1.2,<2.0",
                       "google-cloud-storage>=1.0,<2.0",
                       "python-dateutil",
-                      "modelforge>=0.2.3-alpha",
+                      "modelforge>=0.2.6-alpha",
                       "bblfsh>=0.0.4"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],

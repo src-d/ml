@@ -33,6 +33,13 @@ First 10 repos: %s""" % (
             self._matrix.shape, self._repos[:10])
 
     @property
+    def matrix(self):
+        """
+        Returns the bags as a sparse matrix. Rows are repositories and cols are weights.
+        """
+        return self._matrix
+
+    @property
     def repos(self):
         return self._repos
 
@@ -116,7 +123,7 @@ class BOW(BOWBase):
         self._meta = generate_meta(self.NAME, ast2vec.__version__, *deps)
         write_model(self._meta,
                     {"repos": merge_strings(self._repos),
-                     "matrix": disassemble_sparse_matrix(self._matrix),
+                     "matrix": disassemble_sparse_matrix(self.matrix),
                      "tokens": merge_strings(self.tokens)},
                     output)
 

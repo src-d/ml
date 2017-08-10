@@ -81,12 +81,7 @@ class UastModel2BOW(Model2Base):
         return bow
 
 
-class Source2BOW(UastModel2BOW):
-    MODEL_FROM_CLASS = Source
-    MODEL_TO_CLASS = Source
-
-
 def source2bow_entry(args):
     df = DocumentFrequencies().load(args.df)
-    converter = Source2BOW(args.vocabulary_size, df, num_processes=args.processes)
+    converter = UastModel2BOW(args.vocabulary_size, df, num_processes=args.processes)
     converter.convert(args.input, args.output, pattern=args.filter)
