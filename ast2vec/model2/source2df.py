@@ -3,8 +3,6 @@ import os
 import tempfile
 from typing import Union
 
-import multiprocessing
-
 from modelforge import Model
 
 from ast2vec.df import DocumentFrequencies
@@ -30,8 +28,8 @@ class ToDocFreqBase(Model2Base):
         if destdir.endswith(".asdf"):
             path = destdir
         else:
-            path = "docfreq_%d.asdf" % index
-        model.save(os.path.join(destdir, path))
+            path = os.path.join(destdir, "docfreq_%d.asdf" % index)
+        model.save(path)
 
 
 class Uast2DocFreq(ToDocFreqBase):
