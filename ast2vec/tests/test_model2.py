@@ -9,6 +9,9 @@ class FromModel:
     NAME = "from"
     meta = {"dependencies": tuple()}
 
+    def __init__(self, **kwargs):
+        pass
+
     def load(self, source):
         pass
 
@@ -17,6 +20,9 @@ class ToModel:
     NAME = "to"
     output = None
     meta = {"dependencies": tuple()}
+
+    def __init__(self, **kwargs):
+        pass
 
     def save(self, output, deps=None):
         ToModel.output = output
