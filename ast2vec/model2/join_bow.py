@@ -23,7 +23,7 @@ class BowJoinerBase(Model2Base):
             self.joined._matrix.indices = list(self.joined._matrix.indices)
             self.joined._matrix.indptr = list(self.joined._matrix.indptr)
         else:
-            if self.joined._matrix.shape != model._matrix.shape:
+            if self.joined._matrix.shape[1] != model._matrix.shape[1]:
                 self._log.warning("%s: matrix shape does not match, skipped", model._source)
                 return None
             self.joined.repos.extend(model.repos)
