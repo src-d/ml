@@ -249,7 +249,8 @@ class RepoTransformer(Transformer):
     WORKER_CLASS = None
     DEFAULT_NUM_PROCESSES = 2
 
-    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, organize_files=0, **args):
+    def __init__(self, log_level=logging.INFO, num_processes=DEFAULT_NUM_PROCESSES,
+                 organize_files=0, **args):
         """
         Base class for transformers from repository to WORKER_CLASS model
         :param num_processes: Number of parallel processes to transform
@@ -259,7 +260,7 @@ class RepoTransformer(Transformer):
             is saved to /a/bc/abcoasa, etc.
         :param args: arguments for WORKER_CLASS model initialization
         """
-        super(RepoTransformer, self).__init__()
+        super(RepoTransformer, self).__init__(log_level=log_level)
         self._args = args
         self._num_processes = num_processes
         self._organize_files = organize_files
@@ -322,7 +323,6 @@ class RepoTransformer(Transformer):
             is saved to /a/bc/abcoasa, etc.
         :return: converted repository name (removed "https://", etc.)
         """
-
         if os.path.exists(repo):
             repo_name = os.path.split(repo.rstrip("/\\"))[-1]
         else:
