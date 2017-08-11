@@ -19,6 +19,9 @@ setup(
     url="https://github.com/src-d/ast2vec",
     download_url="https://github.com/src-d/ast2vec",
     packages=find_packages(exclude=("ast2vec.tests",)),
+    entry_points={
+        "console_scripts": ["ast2vec=ast2vec.__main__:main"],
+    },
     keywords=["machine learning on source code", "word2vec", "id2vec",
               "github", "swivel", "nbow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",

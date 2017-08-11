@@ -70,14 +70,14 @@ def main():
              "spawns the number of threads equal to the number of CPU cores "
              "it is better to set this to 1 or 2.")
     threads_arg = one_arg_parser(
-        "--threads", type=int, default=multiprocessing.cpu_count(),
+        "-t", "--threads", type=int, default=multiprocessing.cpu_count(),
         help="Number of threads in the UASTs extraction process.")
 
     organize_files_arg = one_arg_parser(
-        "--organize_files", dest="organize_files", required=False,
+        "--organize-files", type=int, default=0,
         help="Perform alphabetical directory indexing of provided level. Expand output path by "
              "subfolders using the first n characters of repository, for example for "
-             "\"--organize_files 2\" file ababa is saved to /a/ab/ababa, abcoasa is saved to "
+             "\"--organize-files 2\" file ababa is saved to /a/ab/ababa, abcoasa is saved to "
              "/a/bc/abcoasa, etc.")
 
     disable_overwrite_arg = one_arg_parser(
@@ -161,7 +161,7 @@ def main():
     repos2uast_parser.set_defaults(handler=repos2uast_entry)
 
     joinbow_parser = subparsers.add_parser(
-        "join_bow", help="Combine several nBOW files into the single one.",
+        "join-bow", help="Combine several nBOW files into the single one.",
         parents=[model2input_arg, process_arg, tmpdir_arg, filter_arg])
     joinbow_parser.set_defaults(handler=joinbow_entry)
     joinbow_parser.add_argument("output", help="Where to write the merged nBOW.")
