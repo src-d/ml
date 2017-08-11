@@ -1,3 +1,4 @@
+import argparse
 import os
 import tempfile
 import unittest
@@ -15,11 +16,13 @@ import ast2vec.resolve_symlink
 from ast2vec import Source, Repo2SourceTransformer, Repo2Base
 from ast2vec import resolve_symlink
 from ast2vec.tests.models import DATA_DIR_SOURCE
+from ast2vec.repo2.source import repo2source_entry
 
 
 def validate_asdf_file(obj, filename):
     data = asdf.open(filename)
     obj.assertIn("meta", data.tree)
+    obj.assertIn("filenames", data.tree)
     obj.assertIn("sources", data.tree)
     obj.assertIn("uasts", data.tree)
     obj.assertIn("repository", data.tree)
@@ -34,6 +37,16 @@ class Repo2SourceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         tests.setup()
+
+    def test_asdf(self):
+        basedir = os.path.dirname(__file__)
+        with tempfile.NamedTemporaryFile() as file:
+            args = argparse.Namespace(
+                linguist=tests.ENRY, output=file.name,
+                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
+                timeout=None, repository=os.path.join(basedir, "..", ".."))
+            repo2source_entry(args)
+            validate_asdf_file(self, file.name)
 
     def default_source_model(self, tmpdir):
         r2cc = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY)

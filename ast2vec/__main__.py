@@ -12,10 +12,11 @@ from ast2vec.dump import dump_model
 from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
 from ast2vec.vw_dataset import bow2vw_entry
-from ast2vec.repo2.base import Repo2Base
+from ast2vec.repo2.base import Repo2Base, RepoTransformer
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
 from ast2vec.repo2.uast import repo2uast_entry, repos2uast_entry
+from ast2vec.repo2.source import repo2source_entry, repos2source_entry
 from ast2vec.model2.join_bow import joinbow_entry
 from ast2vec.model2.prox import prox_entry, MATRIX_TYPES
 from ast2vec.model2.proxbase import EDGE_TYPES
@@ -23,17 +24,23 @@ from ast2vec.model2.source2bow import source2bow_entry
 from ast2vec.model2.source2df import source2df_entry
 
 
-def one_arg_parser(*args, **kwargs):
+def one_arg_parser(*args, **kwargs) -> argparse.ArgumentParser:
+    """
+    Create parser for one argument with passed arguments.
+    It is helper function to avoid argument duplication in subcommands.
+
+    :return: Parser for one argument.
+    """
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument(*args, **kwargs)
     return arg_parser
 
 
-def main():
+def get_parser() -> argparse.ArgumentParser:
     """
-    Creates all the argparse-rs and invokes the function from set_defaults().
+    Create main parser.
 
-    :return: The result of the function from set_defaults().
+    :return: Parser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--log-level", default="INFO",
@@ -74,14 +81,15 @@ def main():
         help="Number of threads in the UASTs extraction process.")
 
     organize_files_arg = one_arg_parser(
-        "--organize-files", type=int, default=0,
+        "--organize_files", type=int, default=RepoTransformer.DEFAULT_ORGANIZE_FILES,
         help="Perform alphabetical directory indexing of provided level. Expand output path by "
              "subfolders using the first n characters of repository, for example for "
              "\"--organize-files 2\" file ababa is saved to /a/ab/ababa, abcoasa is saved to "
              "/a/bc/abcoasa, etc.")
 
     disable_overwrite_arg = one_arg_parser(
-        "--disable-overwrite", action="store_false", required=False, dest="overwrite_existing",
+        "--disable-overwrite", action="store_false", default=Repo2Base.DEFAULT_OVERWRITE_EXISTING,
+        dest="overwrite_existing",
         help="Specify if you want to disable overiting of existing models")
 
     linguist_arg = one_arg_parser(
@@ -152,13 +160,27 @@ def main():
 
     repo2uast_parser = subparsers.add_parser(
         "repo2uast", help="Extract UASTs from a Git repository.",
-        parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args])
+        parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
+                 process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
     repo2uast_parser.set_defaults(handler=repo2uast_entry)
 
     repos2uast_parser = subparsers.add_parser(
         "repos2uast", help="Extract UASTs from a list of Git repositories.",
-        parents=[repos2input_arg, output_dir_arg_asdf, bblfsh_args])
+        parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
+                 process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
     repos2uast_parser.set_defaults(handler=repos2uast_entry)
+
+    repo2source_parser = subparsers.add_parser(
+        "repo2source", help="Extract source model from a Git repository.",
+        parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
+                 process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
+    repo2source_parser.set_defaults(handler=repo2source_entry)
+
+    repos2source_parser = subparsers.add_parser(
+        "repos2source", help="Extract source model from a list of Git repositories.",
+        parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
+                 process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
+    repos2source_parser.set_defaults(handler=repos2source_entry)
 
     joinbow_parser = subparsers.add_parser(
         "join-bow", help="Combine several nBOW files into the single one.",
@@ -272,6 +294,17 @@ def main():
     dump_parser.add_argument(
         "input", help="Path to the model file, URL or UUID.")
 
+    return parser
+
+
+def main():
+    """
+    Creates all the argparse-rs and invokes the function from set_defaults().
+
+    :return: The result of the function from set_defaults().
+    """
+
+    parser = get_parser()
     args = parser.parse_args()
     args.log_level = logging._nameToLevel[args.log_level]
     setup_logging(args.log_level)

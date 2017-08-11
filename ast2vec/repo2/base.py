@@ -248,8 +248,10 @@ class Transformer(PickleableLogger):
 class RepoTransformer(Transformer):
     WORKER_CLASS = None
     DEFAULT_NUM_PROCESSES = 2
+    DEFAULT_ORGANIZE_FILES = 0
 
-    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, organize_files=0, **args):
+    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, organize_files=DEFAULT_ORGANIZE_FILES,
+                 **kwargs):
         """
         Base class for transformers from repository to WORKER_CLASS model
         :param num_processes: Number of parallel processes to transform
@@ -260,7 +262,7 @@ class RepoTransformer(Transformer):
         :param args: arguments for WORKER_CLASS model initialization
         """
         super(RepoTransformer, self).__init__()
-        self._args = args
+        self._args = kwargs
         self._num_processes = num_processes
         self._organize_files = organize_files
 
