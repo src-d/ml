@@ -4,7 +4,7 @@ import unittest
 
 
 import ast2vec.__main__ as main
-import ast2vec.model2.join_bow
+from ast2vec.tests.test_dump import captured_output
 
 
 class MainTests(unittest.TestCase):
@@ -89,6 +89,19 @@ class MainTests(unittest.TestCase):
         sys.argv = args
         argparse.ArgumentParser.error = error
         self.assertEqual(sum(handlers), len(handlers))
+
+    def test_empty(self):
+        args = sys.argv
+        error = argparse.ArgumentParser.error
+        argparse.ArgumentParser.error = lambda self, message: None
+
+        sys.argv = [main.__file__]
+        with captured_output() as (stdout, _, _):
+            main.main()
+
+        sys.argv = args
+        argparse.ArgumentParser.error = error
+        self.assertIn("usage:", stdout.getvalue())
 
 if __name__ == "__main__":
     unittest.main()
