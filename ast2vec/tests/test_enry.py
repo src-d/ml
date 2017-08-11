@@ -13,7 +13,7 @@ class EnryTests(unittest.TestCase):
 
     def test_install_enry(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            args = argparse.Namespace(output=tmpdir, tempdir=None)
+            args = argparse.Namespace(output=tmpdir, tmpdir=None)
             self.assertIsNone(install_enry(args))
             self._valivate_enry(tmpdir)
 

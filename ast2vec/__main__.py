@@ -6,6 +6,7 @@ import sys
 
 from modelforge.logs import setup_logging
 
+from ast2vec.bigartm import install_bigartm
 from ast2vec.cloning import clone_repositories
 from ast2vec.dump import dump_model
 from ast2vec.enry import install_enry
@@ -90,7 +91,7 @@ def main():
                              help="GCS bucket to use.")
 
     tmpdir_arg = one_arg_parser(
-        "--tmpdir", default=None, help="Temporary directory for intermediate files.")
+        "--tmpdir", help="Store intermediate files in this directory instead of /tmp.")
 
     filter_arg = one_arg_parser(
         "--filter", default="**/*.asdf", help="File name glob selector.")
@@ -99,6 +100,7 @@ def main():
         "--id2vec", help="URL or path to the identifier embeddings.")
     df_arg = one_arg_parser(
         "-d", "--df", dest="docfreq", help="URL or path to the document frequencies.")
+    outputdir_arg = one_arg_parser("--output", default=os.getcwd(), help="Output directory.")
 
     # Create and construct subparsers
 
@@ -255,24 +257,20 @@ def main():
         "-o", "--output", required=True, help="Path to the output file.")
 
     enry_parser = subparsers.add_parser(
-        "enry", help="Install src-d/enry to the current working directory.")
+        "enry", help="Install src-d/enry to the current working directory.",
+        parents=[tmpdir_arg, outputdir_arg])
     enry_parser.set_defaults(handler=install_enry)
-    enry_parser.add_argument(
-        "--tempdir",
-        help="Store intermediate files in this directory instead of /tmp.")
-    enry_parser.add_argument("--output", default=os.getcwd(),
-                             help="Output directory.")
 
+    bigartm_parser = subparsers.add_parser(
+        "bigartm", help="Install bigartm/bigartm to the current working directory.",
+        parents=[tmpdir_arg, outputdir_arg])
+    bigartm_parser.set_defaults(handler=install_bigartm)
     dump_parser = subparsers.add_parser(
         "dump", help="Dump a model to stdout.",
         parents=[gcs_arg])
     dump_parser.set_defaults(handler=dump_model)
     dump_parser.add_argument(
         "input", help="Path to the model file, URL or UUID.")
-    dump_parser.add_argument(
-        "-d", "--dependency", nargs="+",
-        help="Paths to the models which were used to generate the dumped model in "
-             "the order they appear in the metadata.")
 
     args = parser.parse_args()
     args.log_level = logging._nameToLevel[args.log_level]
