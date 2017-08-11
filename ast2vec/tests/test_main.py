@@ -83,7 +83,7 @@ class MainTests(unittest.TestCase):
         error = argparse.ArgumentParser.error
         argparse.ArgumentParser.error = lambda self, message: None
 
-        for action in ("repo2nbow", "repos2nbow", "repo2coocc", "repos2coocc", "join_bow",
+        for action in ("repo2nbow", "repos2nbow", "repo2coocc", "repos2coocc", "join-bow",
                        "repo2uast", "repos2uast", "uast2prox", "source2df", "source2bow",
                        "id2vec_preproc", "id2vec_train", "id2vec_postproc", "bow2vw",
                        "enry", "bigartm", "dump"):
