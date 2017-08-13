@@ -1,4 +1,4 @@
-from ast2vec.repo2.base import Repo2Base
+from ast2vec.repo2.base import Repo2Base, repo2_entry, repos2_entry
 from ast2vec.repo2.base import RepoTransformer
 from ast2vec.source import Source
 
@@ -51,3 +51,11 @@ class Repo2SourceTransformer(RepoTransformer):
             raise ValueError("The model is empty")
         return {"repository": url_or_path, "filenames": filenames, "sources": src_codes,
                 "uasts": uasts}
+
+
+def repo2source_entry(args):
+    return repo2_entry(args, Repo2SourceTransformer)
+
+
+def repos2source_entry(args):
+    return repos2_entry(args, Repo2SourceTransformer)

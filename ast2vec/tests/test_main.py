@@ -2,110 +2,85 @@ import argparse
 import sys
 import unittest
 
-
 import ast2vec.__main__ as main
 from ast2vec.tests.test_dump import captured_output
 
 
 class MainTests(unittest.TestCase):
     def test_handlers(self):
-        handlers = [False] * 17
+        action2handler = {
+            "clone": "clone_repositories",
+            "repo2nbow": "repo2nbow_entry",
+            "repos2nbow": "repos2nbow_entry",
+            "repo2coocc": "repo2coocc_entry",
+            "repos2coocc": "repos2coocc_entry",
+            "join-bow": "joinbow_entry",
+            "repo2uast": "repo2uast_entry",
+            "repos2uast": "repos2uast_entry",
+            "repo2source": "repo2source_entry",
+            "repos2source": "repos2source_entry",
+            "uast2prox": "prox_entry",
+            "source2df": "source2df_entry",
+            "source2bow": "source2bow_entry",
+            "id2vec_preproc": "preprocess",
+            "id2vec_train": "run_swivel",
+            "id2vec_postproc": "postprocess",
+            "bow2vw": "bow2vw_entry",
+            "enry": "install_enry",
+            "bigartm": "install_bigartm",
+            "dump": "dump_model",
+        }
+        parser = main.get_parser()
+        subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])
+        set_action2handler = set(action2handler)
+        self.assertFalse(len(subcommands - set_action2handler),
+                         "You forgot to add to this test {} subcommand(s) check".format(
+                             subcommands - set_action2handler))
 
-        def repo2nbow_entry(args):
-            handlers[0] = True
+        self.assertFalse(len(set_action2handler - subcommands),
+                         "You cover unexpected subcommand(s) {}".format(
+                             set_action2handler - subcommands))
 
-        def repos2nbow_entry(args):
-            handlers[1] = True
+        called_actions = []
+        args_save = sys.argv
+        error_save = argparse.ArgumentParser.error
+        try:
+            argparse.ArgumentParser.error = lambda self, message: None
 
-        def repo2coocc_entry(args):
-            handlers[2] = True
+            for action, handler in action2handler.items():
+                def handler_append(*args, **kwargs):
+                    called_actions.append(action)
 
-        def repos2coocc_entry(args):
-            handlers[3] = True
+                handler_save = getattr(main, handler)
+                try:
+                    setattr(main, handler, handler_append)
+                    sys.argv = [main.__file__, action]
+                    main.main()
+                finally:
+                    setattr(main, handler, handler_save)
+        finally:
+            sys.argv = args_save
+            argparse.ArgumentParser.error = error_save
 
-        def repo2uast_entry(args):
-            handlers[4] = True
-
-        def repos2uast_entry(args):
-            handlers[5] = True
-
-        def joinbow_entry(args):
-            handlers[6] = True
-
-        def prox_entry(args):
-            handlers[7] = True
-
-        def source2df_entry(args):
-            handlers[8] = True
-
-        def source2bow_entry(args):
-            handlers[9] = True
-
-        def preprocess(args):
-            handlers[10] = True
-
-        def run_swivel(args):
-            handlers[11] = True
-
-        def postprocess(args):
-            handlers[12] = True
-
-        def bow2vw_entry(args):
-            handlers[13] = True
-
-        def install_enry(args):
-            handlers[14] = True
-
-        def install_bigartm(args):
-            handlers[15] = True
-
-        def dump_model(args):
-            handlers[16] = True
-
-        main.repo2nbow_entry = repo2nbow_entry
-        main.repos2nbow_entry = repos2nbow_entry
-        main.repo2coocc_entry = repo2coocc_entry
-        main.repos2coocc_entry = repos2coocc_entry
-        main.joinbow_entry = joinbow_entry
-        main.source2df_entry = source2df_entry
-        main.source2bow_entry = source2bow_entry
-        main.preprocess = preprocess
-        main.run_swivel = run_swivel
-        main.postprocess = postprocess
-        main.bow2vw_entry = bow2vw_entry
-        main.install_enry = install_enry
-        main.install_bigartm = install_bigartm
-        main.dump_model = dump_model
-        main.prox_entry = prox_entry
-        main.repo2uast_entry = repo2uast_entry
-        main.repos2uast_entry = repos2uast_entry
-        args = sys.argv
-        error = argparse.ArgumentParser.error
-        argparse.ArgumentParser.error = lambda self, message: None
-
-        for action in ("repo2nbow", "repos2nbow", "repo2coocc", "repos2coocc", "join-bow",
-                       "repo2uast", "repos2uast", "uast2prox", "source2df", "source2bow",
-                       "id2vec_preproc", "id2vec_train", "id2vec_postproc", "bow2vw",
-                       "enry", "bigartm", "dump"):
-            sys.argv = [main.__file__, action]
-            main.main()
-
-        sys.argv = args
-        argparse.ArgumentParser.error = error
-        self.assertEqual(sum(handlers), len(handlers))
+        set_called_actions = set(called_actions)
+        set_actions = set(action2handler)
+        self.assertEqual(set_called_actions, set_actions)
+        self.assertEqual(len(set_called_actions), len(called_actions))
 
     def test_empty(self):
         args = sys.argv
         error = argparse.ArgumentParser.error
-        argparse.ArgumentParser.error = lambda self, message: None
+        try:
+            argparse.ArgumentParser.error = lambda self, message: None
 
-        sys.argv = [main.__file__]
-        with captured_output() as (stdout, _, _):
-            main.main()
-
-        sys.argv = args
-        argparse.ArgumentParser.error = error
+            sys.argv = [main.__file__]
+            with captured_output() as (stdout, _, _):
+                main.main()
+        finally:
+            sys.argv = args
+            argparse.ArgumentParser.error = error
         self.assertIn("usage:", stdout.getvalue())
+
 
 if __name__ == "__main__":
     unittest.main()
