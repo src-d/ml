@@ -250,10 +250,11 @@ class RepoTransformer(Transformer):
     DEFAULT_NUM_PROCESSES = 2
     DEFAULT_ORGANIZE_FILES = 0
 
-    def __init__(self, num_processes=DEFAULT_NUM_PROCESSES, organize_files=DEFAULT_ORGANIZE_FILES,
-                 **kwargs):
+    def __init__(self, log_level=logging.INFO, num_processes=DEFAULT_NUM_PROCESSES,
+                 organize_files=DEFAULT_ORGANIZE_FILES, **kwargs):
         """
         Base class for transformers from repository to WORKER_CLASS model
+        :param log_level: Logging level of this instance.
         :param num_processes: Number of parallel processes to transform
         :param organize_files: Perform alphabetical directory indexing of provided level. \
             Expand output path by subfolders using the first n characters of repository, \
@@ -261,7 +262,7 @@ class RepoTransformer(Transformer):
             is saved to /a/bc/abcoasa, etc.
         :param args: arguments for WORKER_CLASS model initialization
         """
-        super(RepoTransformer, self).__init__()
+        super(RepoTransformer, self).__init__(log_level=log_level)
         self._args = kwargs
         self._num_processes = num_processes
         self._organize_files = organize_files
@@ -324,7 +325,6 @@ class RepoTransformer(Transformer):
             is saved to /a/bc/abcoasa, etc.
         :return: converted repository name (removed "https://", etc.)
         """
-
         if os.path.exists(repo):
             repo_name = os.path.split(repo.rstrip("/\\"))[-1]
         else:
