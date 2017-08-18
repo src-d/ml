@@ -21,8 +21,14 @@ from ast2vec.cloning import RepoCloner
 from ast2vec.pickleable_logger import PickleableLogger
 from ast2vec import resolve_symlink
 
-GeneratorResponse = namedtuple("GeneratorResponse",
-                               ["filepath", "filename", "response"])
+GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
+
+
+class BblfshFailedError(Exception):
+    """
+    Raised when we receive errors from bblfsh server.
+    """
+    pass
 
 
 class Repo2Base(PickleableLogger):
@@ -31,6 +37,7 @@ class Repo2Base(PickleableLogger):
     `Babelfish <https://doc.bblf.sh/>`_ and source code identifier processing.
     """
     MODEL_CLASS = None  #: Must be defined in the children.
+    DEFAULT_BBLFSH_RAISE_ERRORS = False  # Set `True` to fail on bblfsh errors.
     DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
     DEFAULT_OVERWRITE_EXISTING = True
     MAX_FILE_SIZE = 200000
@@ -38,7 +45,8 @@ class Repo2Base(PickleableLogger):
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT,
                  threads=multiprocessing.cpu_count(),
-                 overwrite_existing=DEFAULT_OVERWRITE_EXISTING):
+                 overwrite_existing=DEFAULT_OVERWRITE_EXISTING,
+                 bblfsh_raise_errors=DEFAULT_BBLFSH_RAISE_ERRORS):
         """
         Initializer of Repo2Base class
         :param tempdir: If you will clone repositories they will be stored in tempdir
@@ -53,6 +61,7 @@ class Repo2Base(PickleableLogger):
         self._cloner = RepoCloner(redownload=True, log_level=log_level)
         self._cloner.find_linguist(linguist)
         self._bblfsh_endpoint = bblfsh_endpoint
+        self._bblfsh_raise_errors = bblfsh_raise_errors
         self._overwrite_existing = overwrite_existing
         self.timeout = timeout
         self.threads = threads
@@ -67,7 +76,7 @@ class Repo2Base(PickleableLogger):
     @tempdir.setter
     def tempdir(self, value: Union[str, None]):
         if value is not None and not os.path.isdir(value):
-            raise ValueError("PAth does not exist: %s" % value)
+            raise ValueError("Path does not exist: %s" % value)
         self._tempdir = value
 
     @property
@@ -132,81 +141,10 @@ class Repo2Base(PickleableLogger):
         try:
             classified = self._cloner.classify_repo(target_dir)
             self._log.info("Fetching and processing UASTs...")
-
-            def file_uast_generator():
-                queue_in = Queue()
-                queue_out = Queue()
-
-                def thread_loop(thread_index):
-                    while True:
-                        task = queue_in.get()
-                        if task is None:
-                            break
-                        try:
-                            dirname, filename, language = task
-                            filepath = os.path.join(dirname, filename)
-
-                            try:
-                                # Resolve symlink
-                                filepath = resolve_symlink.resolve_symlink(filepath)
-                            except resolve_symlink.DanglingSymlinkError as e:
-                                self._log.warning(*e.args)
-                                queue_out.put_nowait(None)
-                                continue
-
-                            size = os.stat(filepath).st_size
-                            if size > self.MAX_FILE_SIZE:
-                                self._log.warning("%s is too big - %d", filepath, size)
-                                queue_out.put_nowait(None)
-                                continue
-
-                            response = self._bblfsh_parse(thread_index, filepath, language)
-                            if response is None:
-                                self._log.warning("bblfsh timed out on %s", filepath)
-                                queue_out.put_nowait(None)
-                                continue
-
-                            queue_out.put_nowait(GeneratorResponse(filepath=filepath,
-                                                                   filename=filename,
-                                                                   response=response))
-                        except:
-                            self._log.exception(
-                                "Error while processing %s", task)
-                            queue_out.put_nowait(None)
-
-                pool = [threading.Thread(target=thread_loop, args=(i,),
-                                         name="%s@%d" % (url_or_path, i))
-                        for i in range(self.threads)]
-                for thread in pool:
-                    thread.start()
-                tasks = 0
-                empty = True
-                lang_list = ("Python", "Java")
-                for lang, files in classified.items():
-                    # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved # nopep8
-                    if lang not in lang_list:
-                        continue
-                    for f in files:
-                        tasks += 1
-                        empty = False
-                        queue_in.put_nowait((target_dir, f, lang))
-                report_interval = max(1, tasks // 100)
-                for _ in pool:
-                    queue_in.put_nowait(None)
-                while tasks > 0:
-                    result = queue_out.get()
-                    if result is not None:
-                        yield result
-                    tasks -= 1
-                    if tasks % report_interval == 0:
-                        self._log.info("%s pending tasks: %d", url_or_path, tasks)
-                for thread in pool:
-                    thread.join()
-
-                if empty:
-                    self._log.warning("No files were processed for %s", url_or_path)
-
-            return self.convert_uasts(file_uast_generator())
+            file_uast_generator = self._file_uast_generator(classified, target_dir, url_or_path)
+            return self.convert_uasts(file_uast_generator)
+        except BblfshFailedError as e:
+            self._log.error(e)
         finally:
             if temp:
                 shutil.rmtree(target_dir)
@@ -231,6 +169,89 @@ class Repo2Base(PickleableLogger):
                   " protobuf."
             self._log.warning(msg)
             raise e from None
+
+    def _file_uast_generator(self, classified, target_dir, url_or_path):
+        queue_in = Queue()
+        queue_out = Queue()
+        errors = list()
+
+        def thread_loop(thread_index):
+            nonlocal errors
+            while True:
+                task = queue_in.get()
+                if task is None or errors:
+                    break
+                try:
+                    dirname, filename, language = task
+                    filepath = os.path.join(dirname, filename)
+
+                    try:
+                        # Resolve symlink
+                        filepath = resolve_symlink.resolve_symlink(filepath)
+                    except resolve_symlink.DanglingSymlinkError as e:
+                        self._log.warning(*e.args)
+                        queue_out.put_nowait(None)
+                        continue
+
+                    size = os.stat(filepath).st_size
+                    if size > self.MAX_FILE_SIZE:
+                        self._log.warning("%s is too big - %d", filepath, size)
+                        queue_out.put_nowait(None)
+                        continue
+
+                    response = self._bblfsh_parse(thread_index, filepath, language)
+                    if response is None:
+                        self._log.warning("bblfsh timed out on %s", filepath)
+                        queue_out.put_nowait(None)
+                        continue
+                    if response.errors and self._bblfsh_raise_errors:
+                        errors.extend(response.errors)
+                        queue_out.put_nowait(None)
+                        break
+
+                    queue_out.put_nowait(GeneratorResponse(filepath=filepath,
+                                                           filename=filename,
+                                                           response=response))
+                except:
+                    self._log.exception(
+                        "Error while processing %s", task)
+                    queue_out.put_nowait(None)
+
+        pool = [threading.Thread(target=thread_loop, args=(i,),
+                                 name="%s@%d" % (url_or_path, i))
+                for i in range(self.threads)]
+        for thread in pool:
+            thread.start()
+        tasks = 0
+        empty = True
+
+        lang_list = ("Python", "Java")
+        for lang, files in classified.items():
+            # FIXME(vmarkovtsev): remove this hardcode when https://github.com/bblfsh/server/issues/28 is resolved # nopep8
+            if lang not in lang_list:
+                continue
+            for f in files:
+                tasks += 1
+                empty = False
+                queue_in.put_nowait((target_dir, f, lang))
+        report_interval = max(1, tasks // 100)
+        for _ in pool:
+            queue_in.put_nowait(None)
+        while tasks > 0 and not errors:
+            result = queue_out.get()
+            if result is not None:
+                yield result
+            tasks -= 1
+            if tasks % report_interval == 0:
+                self._log.info("%s pending tasks: %d", url_or_path, tasks)
+        for thread in pool:
+            thread.join()
+
+        if errors:
+            raise BblfshFailedError(
+                "Received errors: %s", ", ".join(errors))
+        if empty:
+            self._log.warning("No files were processed for %s", url_or_path)
 
     def _get_log_name(self):
         return "repo2" + self.MODEL_CLASS.NAME
@@ -356,7 +377,7 @@ class RepoTransformer(Transformer):
         :param output: Path to file where to store the result.
         :return: True if the operation was successful; otherwise, False.
         """
-        overwrite_existing = self._args.get('overwrite_existing',
+        overwrite_existing = self._args.get("overwrite_existing",
                                             self.WORKER_CLASS.DEFAULT_OVERWRITE_EXISTING)
         if os.path.exists(output):
             if overwrite_existing:

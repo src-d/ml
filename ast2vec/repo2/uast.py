@@ -16,7 +16,7 @@ class Repo2UASTModel(Repo2Base):
         filenames = []
 
         for file_uast in file_uast_generator:
-            uasts.append(file_uast.response)
+            uasts.append(file_uast.response.uast)
             filenames.append(file_uast.filename)
 
         return filenames, uasts
