@@ -37,44 +37,20 @@ class ProxBase(Model2Base):
     def __init__(self, edges=EDGE_TYPES, *args, **kwargs):
         super(ProxBase, self).__init__(*args, **kwargs)
         self.edges = set(edges)
-        self.roles = list()
-        self.tokens = list()
-        self.role2ind = dict()
-        self.token2ind = dict()
-        self.dok_matrix = defaultdict(int)
         self._token_parser = TokenParser()
+        self._clear()
 
-    def convert_model(self, model) -> None:
+    def convert_model(self, model) -> Cooccurrences:
         """
-        Update attributes by processing UASTs in the model.
+        Update attributes by processing UASTs in the input model.
+        Then convert it into Cooccurrences model.
 
-        :param model: Model instance.
-        :return: None. This will allow us to accumulate data for all models.
+        :param model: UASTModel instance.
+        :return: Cooccurences model for all UASTs in `model`.
         """
         for uast in model.uasts:
             self._traverse_uast(uast)
-        return None
 
-    def _adj_to_feat(self, role2ind: Dict[int, int], token2ind: Dict[int, int], mat) -> Tuple:
-        """
-        This must be implemented in the child classes.
-
-        :param role2ind: Mapping from roles to indices, starting with 0.
-        :param token2ind: Mapping from tokens to indices, starting with 0.
-        :param mat: Adjacency matrix ('scipy.sparse.coo_matrix') with rows corresponding to
-                    node roles followed by node tokens.
-        :return: tuple('tokens', 'matrix'). 'tokens' are generalized tokens (usually roles+tokens).
-                 'matrix' rows correspond to 'tokens'.
-        """
-        raise NotImplementedError
-
-    def finalize(self, index: int, destdir: str) -> None:
-        """
-        Called for each worker in the end of the processing.
-
-        :param index: Worker's index.
-        :param destdir: The directory where to store the models.
-        """
         roles_to_roles = defaultdict(int)
         tokens_to_tokens = defaultdict(int)
         roles_to_tokens = defaultdict(int)
@@ -104,7 +80,7 @@ class ProxBase(Model2Base):
 
             add_product("R", roles_a, roles_b, roles_to_roles)
             add_product("T", tokens_a, tokens_b, tokens_to_tokens)
-            add_product("RT", roles_a, tokens_b, tokens_to_tokens)
+            add_product("RT", roles_a, tokens_b, roles_to_tokens)
 
         if roles_to_roles or roles_to_tokens:
             n_roles = len(self.role2ind)
@@ -135,17 +111,37 @@ class ProxBase(Model2Base):
         fill_mat(roles_to_roles, (0, 0))
         fill_mat(roles_to_tokens, (0, n_roles))
         fill_mat(tokens_to_tokens, (n_roles, n_roles))
+
         mat = coo_matrix(mat + mat.T - diags(mat.diagonal()))
         tokens, mat = self._adj_to_feat(self.role2ind, self.token2ind, mat)
+        self._clear()
 
         prox = Cooccurrences()
         prox.construct(tokens=tokens, matrix=mat)
-        if destdir.endswith(".asdf"):
-            name = destdir
-        else:
-            name = os.path.join(
-                destdir, "%s2%s_%d.asdf" % (UASTModel.NAME, Cooccurrences.NAME, index))
-        prox.save(name)
+        return prox
+
+    def _adj_to_feat(self, role2ind: Dict[int, int], token2ind: Dict[int, int], mat) -> Tuple:
+        """
+        This must be implemented in the child classes.
+
+        :param role2ind: Mapping from roles to indices, starting with 0.
+        :param token2ind: Mapping from tokens to indices, starting with 0.
+        :param mat: Adjacency matrix ('scipy.sparse.coo_matrix') with rows corresponding to
+                    node roles followed by node tokens.
+        :return: tuple('tokens', 'matrix'). 'tokens' are generalized tokens (usually roles+tokens).
+                 'matrix' rows correspond to 'tokens'.
+        """
+        raise NotImplementedError
+
+    def _clear(self):
+        """
+        Release memory.
+        """
+        self.roles = list()
+        self.tokens = list()
+        self.role2ind = dict()
+        self.token2ind = dict()
+        self.dok_matrix = defaultdict(int)
 
     def _traverse_uast(self, root) -> None:
         """
