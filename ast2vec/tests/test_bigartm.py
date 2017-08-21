@@ -10,6 +10,7 @@ from ast2vec.bigartm import install_bigartm
 class BigartmTests(unittest.TestCase):
     gitdir = os.path.join(os.path.dirname(__file__), "..", "..")
 
+    @unittest.skipUnless(os.getenv("FULL_TEST", False), "Need to define FULL_TEST env var.")
     def test_install_bigartm(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = argparse.Namespace(output=tmpdir, tmpdir=None)

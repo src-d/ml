@@ -18,6 +18,7 @@ class Source(UASTModel):
                              format(len(sources), len(uasts), len(filenames)))
         self._sources = sources
         self._filenames_map = {r: i for i, r in enumerate(self._filenames)}
+        return self
 
     def _load_tree_kwargs(self, tree):
         tree_kwargs = super(Source, self)._load_tree_kwargs(tree)

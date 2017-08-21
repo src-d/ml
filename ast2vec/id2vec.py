@@ -17,6 +17,7 @@ class Id2Vec(Model):
         self._tokens = tokens
         self._log.info("Building the token index...")
         self._token2index = {w: i for i, w in enumerate(self._tokens)}
+        return self
 
     def _load_tree(self, tree):
         self.construct(embeddings=tree["embeddings"].copy(),

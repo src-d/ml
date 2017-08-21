@@ -19,6 +19,7 @@ class BOWBase(Model):
     def construct(self, repos, matrix):
         self._repos = repos
         self._matrix = matrix
+        return self
 
     def _load_tree_kwargs(self, tree):
         return dict(repos=split_strings(tree["repos"]),
@@ -101,6 +102,7 @@ class BOW(BOWBase):
     def construct(self, repos, matrix, tokens):
         super(BOW, self).construct(repos=repos, matrix=matrix)
         self._tokens = tokens
+        return self
 
     def _load_tree_kwargs(self, tree):
         tree_kwargs = super(BOW, self)._load_tree_kwargs(tree)

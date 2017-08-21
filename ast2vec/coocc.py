@@ -16,6 +16,7 @@ class Cooccurrences(Model):
     def construct(self, tokens, matrix):
         self._tokens = tokens
         self._matrix = matrix
+        return self
 
     def _load_tree(self, tree):
         self.construct(tokens=split_strings(tree["tokens"]),

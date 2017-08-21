@@ -5,6 +5,7 @@ from ast2vec.df import DocumentFrequencies
 from ast2vec.enry import install_enry
 from ast2vec.id2vec import Id2Vec
 from ast2vec.source import Source
+from ast2vec.topics import Topics
 from ast2vec.uast import UASTModel
 from ast2vec.model2.base import Model2Base
 from ast2vec.model2.prox import ProxSwivel

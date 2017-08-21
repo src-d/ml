@@ -21,6 +21,7 @@ class UASTModel(Model):
         self._filenames = filenames
         self._uasts = uasts
         self._filenames_map = {r: i for i, r in enumerate(self._filenames)}
+        return self
 
     def _load_tree_kwargs(self, tree):
         return dict(repository=tree["repository"],
