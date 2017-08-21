@@ -152,5 +152,5 @@ First we convert the model to the text format:
 Second we convert the text format to the ASDF:
 
 ```
-ast2vec bigartm2tm readable_stage2.txt topic_model.asdf
+ast2vec bigartm2asdf readable_stage2.txt topic_model.asdf
 ```
