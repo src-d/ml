@@ -12,3 +12,4 @@ ignore_errors = True
 omit =
     ast2vec/tests/*
     ast2vec/swivel.py
+    ast2vec/bigartm.py

@@ -4,13 +4,15 @@ import multiprocessing
 import os
 import sys
 
+from ast2vec.topics import bigartm2asdf_entry
 from modelforge.logs import setup_logging
 
 from ast2vec.bigartm import install_bigartm
 from ast2vec.cloning import clone_repositories
 from ast2vec.dump import dump_model
 from ast2vec.enry import install_enry
-from ast2vec.id_embedding import preprocess, run_swivel, postprocess, swivel
+from ast2vec.id_embedding import preprocess as preprocess_id2vec, run_swivel, \
+    postprocess as postprocess_id2vec, swivel
 from ast2vec.vw_dataset import bow2vw_entry
 from ast2vec.repo2.base import Repo2Base, RepoTransformer
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
@@ -230,7 +232,7 @@ def get_parser() -> argparse.ArgumentParser:
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
         parents=[output_dir_arg_default])
-    preproc_parser.set_defaults(handler=preprocess)
+    preproc_parser.set_defaults(handler=preprocess_id2vec)
     preproc_parser.add_argument(
         "-v", "--vocabulary-size", default=1 << 17, type=int,
         help="The final vocabulary size. Only the most frequent words will be"
@@ -257,12 +259,12 @@ def get_parser() -> argparse.ArgumentParser:
     train_parser._option_string_actions = \
         swivel.flags._global_parser._option_string_actions
 
-    postproc_parser = subparsers.add_parser(
+    id2vec_postproc_parser = subparsers.add_parser(
         "id2vec_postproc",
         help="Combine row and column embeddings together and write them to an .asdf.")
-    postproc_parser.set_defaults(handler=postprocess)
-    postproc_parser.add_argument("swivel_output_directory")
-    postproc_parser.add_argument("result")
+    id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
+    id2vec_postproc_parser.add_argument("swivel_output_directory")
+    id2vec_postproc_parser.add_argument("result")
 
     bow2vw_parser = subparsers.add_parser(
         "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
@@ -277,6 +279,12 @@ def get_parser() -> argparse.ArgumentParser:
         "--id2vec", help="URL or path to the identifier embeddings. Used if --nbow")
     bow2vw_parser.add_argument(
         "-o", "--output", required=True, help="Path to the output file.")
+
+    bigartm_postproc_parser = subparsers.add_parser(
+        "bigartm2asdf", help="Convert a readable BigARTM model to Modelforge format.")
+    bigartm_postproc_parser.set_defaults(handler=bigartm2asdf_entry)
+    bigartm_postproc_parser.add_argument("input")
+    bigartm_postproc_parser.add_argument("output")
 
     enry_parser = subparsers.add_parser(
         "enry", help="Install src-d/enry to the current working directory.",

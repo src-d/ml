@@ -140,7 +140,7 @@ Number of words: 394
 
     @staticmethod
     def _get_args(input=None, gcs=None, dependency=tuple()):
-        return argparse.Namespace(input=input, gcs=gcs, dependency=dependency,
+        return argparse.Namespace(input=input, gcs_bucket=gcs, dependency=dependency,
                                   log_level="WARNING")
 
     @staticmethod
