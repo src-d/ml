@@ -43,9 +43,9 @@ class Source(UASTModel):
         Returns file name, source code and uast for the given file index.
 
         :param item: File index.
-        :return: name, source code, uast
+        :return: name, uast, source code
         """
-        return (self._filenames[item],) + super(Source, self).__getitem__(item)
+        return super(Source, self).__getitem__(item) + (self._sources[item],)
 
     def __iter__(self):
         """
