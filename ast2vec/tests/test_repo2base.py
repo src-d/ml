@@ -1,3 +1,4 @@
+from collections import namedtuple
 import logging
 import multiprocessing
 import os
@@ -5,12 +6,15 @@ import tempfile
 import unittest
 
 from ast2vec.cloning import RepoCloner
+import ast2vec.tests as tests
 import ast2vec.repo2.base
-from ast2vec.repo2.base import Repo2Base, RepoTransformer, ensure_bblfsh_is_running_noexc
+from ast2vec.repo2.base import BblfshFailedError, Repo2Base, RepoTransformer, \
+    ensure_bblfsh_is_running_noexc
 
 
 class Repo2BaseTests(unittest.TestCase):
     def setUp(self):
+        tests.setup()
         self.backup = Repo2Base._get_log_name, RepoCloner.find_linguist
         Repo2Base._get_log_name = lambda _: "repo2"
         RepoCloner.find_linguist = lambda _1, _2: None
@@ -28,6 +32,27 @@ class Repo2BaseTests(unittest.TestCase):
 
     def test_bblfsh_endpoint(self):
         self.assertEqual(self.base.bblfsh_endpoint, "0.0.0.0:9432")
+
+    def test_bblfsh_error(self):
+        def fake_bblfsh_parse(*args):
+            return namedtuple("BblfshResponse", ["errors"])(errors=["test"])
+
+        save_bblfsh_parse = self.base._bblfsh_parse
+        try:
+            self.base._bblfsh_parse = fake_bblfsh_parse
+            self.base._bblfsh_raise_errors = True
+            self.base._cloner._linguist = tests.ENRY
+            self.base._cloner._is_enry = True
+            target_dir = os.path.join(os.path.dirname(__file__), "source")
+            classified = self.base._cloner.classify_repo(target_dir)
+            with self.assertRaises(BblfshFailedError):
+                for _ in self.base._file_uast_generator(classified, target_dir, target_dir):
+                    continue
+        finally:
+            self.base._bblfsh_parse = save_bblfsh_parse
+            self.base._bblfsh_raise_errors = self.base.DEFAULT_BBLFSH_RAISE_ERRORS
+            self.base._cloner._linguist = None
+            self.base._cloner._is_enry = False
 
     def test_timeout(self):
         self.assertEqual(self.base.timeout, self.base.DEFAULT_BBLFSH_TIMEOUT)

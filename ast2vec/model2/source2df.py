@@ -54,14 +54,6 @@ class Uast2DocFreq(ToDocFreqBase):
         self._docs += 1
 
 
-class Source2DocFreq(Uast2DocFreq):
-    """
-    Specialization for :class:`Source` models.
-    """
-    MODEL_FROM_CLASS = Source
-    MODEL_TO_CLASS = Source
-
-
 class MergeDocFreq(ToDocFreqBase):
     """
     Merges several :class:`DocumentFrequencies` models together.
@@ -76,7 +68,7 @@ class MergeDocFreq(ToDocFreqBase):
 
 
 def source2df_entry(args):
-    converter = Source2DocFreq(num_processes=args.processes)
+    converter = Uast2DocFreq(num_processes=args.processes)
     with tempfile.TemporaryDirectory(dir=args.tmpdir, prefix="source2uast") as tmpdir:
         converter.convert(args.input, tmpdir, pattern=args.filter)
         joiner = MergeDocFreq(num_processes=1)

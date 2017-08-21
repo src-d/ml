@@ -1,11 +1,11 @@
 from collections import defaultdict
 import logging
 import math
+import os
 
 import numpy
 from scipy.sparse import csr_matrix
 
-from ast2vec.source import Source
 from ast2vec.uast import UASTModel
 from ast2vec.df import DocumentFrequencies
 from ast2vec.bow import BOW
@@ -81,12 +81,8 @@ class UastModel2BOW(Model2Base):
         return bow
 
 
-class Source2BOW(UastModel2BOW):
-    MODEL_FROM_CLASS = Source
-    MODEL_TO_CLASS = Source
-
-
 def source2bow_entry(args):
     df = DocumentFrequencies().load(args.df)
-    converter = Source2BOW(args.vocabulary_size, df, num_processes=args.processes)
+    os.makedirs(args.output, exist_ok=True)
+    converter = UastModel2BOW(args.vocabulary_size, df, num_processes=args.processes)
     converter.convert(args.input, args.output, pattern=args.filter)

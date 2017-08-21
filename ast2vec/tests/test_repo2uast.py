@@ -4,6 +4,8 @@ import tempfile
 import unittest
 
 import asdf
+from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+from modelforge import split_strings
 
 from ast2vec import Repo2UASTModelTransformer, Repo2UASTModel
 from ast2vec.repo2.uast import repo2uast_entry
@@ -15,6 +17,10 @@ def validate_asdf_file(obj, filename):
     obj.assertIn("meta", data.tree)
     obj.assertIn("filenames", data.tree)
     obj.assertIn("uasts", data.tree)
+    obj.assertIn("repository", data.tree)
+    obj.assertEqual(data.tree["meta"]["model"], "uast")
+    Node.FromString(split_strings(data.tree["uasts"])[0])
+    obj.assertEqual(0, len(data.tree["meta"]["dependencies"]))
     obj.assertEqual(data.tree["meta"]["model"], "uast")
 
 

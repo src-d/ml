@@ -24,7 +24,7 @@ pip3 install ast2vec
 The project exposes two interfaces: API and command line. The command line is
 
 ```
-python3 -m ast2vec --help
+ast2vec --help
 ```
 There is an example of using Python API  [here](Doc/how_to_use_ast2vec.ipynb).
 
@@ -87,7 +87,7 @@ We use [PEP8](https://www.python.org/dev/peps/pep-0008/) with line length 99 and
 must pass:
 
 ```
-python3 -m unittest discover /path/to/ast2vec
+unittest discover /path/to/ast2vec
 ```
 
 ## License

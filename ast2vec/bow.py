@@ -19,6 +19,7 @@ class BOWBase(Model):
     def construct(self, repos, matrix):
         self._repos = repos
         self._matrix = matrix
+        return self
 
     def _load_tree_kwargs(self, tree):
         return dict(repos=split_strings(tree["repos"]),
@@ -31,6 +32,13 @@ class BOWBase(Model):
         return """Shape: %s
 First 10 repos: %s""" % (
             self._matrix.shape, self._repos[:10])
+
+    @property
+    def matrix(self):
+        """
+        Returns the bags as a sparse matrix. Rows are repositories and cols are weights.
+        """
+        return self._matrix
 
     @property
     def repos(self):
@@ -94,6 +102,7 @@ class BOW(BOWBase):
     def construct(self, repos, matrix, tokens):
         super(BOW, self).construct(repos=repos, matrix=matrix)
         self._tokens = tokens
+        return self
 
     def _load_tree_kwargs(self, tree):
         tree_kwargs = super(BOW, self)._load_tree_kwargs(tree)
@@ -116,7 +125,7 @@ class BOW(BOWBase):
         self._meta = generate_meta(self.NAME, ast2vec.__version__, *deps)
         write_model(self._meta,
                     {"repos": merge_strings(self._repos),
-                     "matrix": disassemble_sparse_matrix(self._matrix),
+                     "matrix": disassemble_sparse_matrix(self.matrix),
                      "tokens": merge_strings(self.tokens)},
                     output)
 

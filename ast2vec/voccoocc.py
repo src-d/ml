@@ -14,6 +14,7 @@ class VocabularyCooccurrences(Model):
 
     def construct(self, matrix):
         self._matrix = matrix
+        return self
 
     def _load_tree(self, tree):
         self.construct(matrix=assemble_sparse_matrix(tree["matrix"]))

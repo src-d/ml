@@ -19,17 +19,15 @@ def install_enry(args=None, target="./enry", tempdir=None, warn_exists=True):
                    becomes overridden.
     :param tempdir: The temporary directory where to clone and build \
                     src-d/enry. If args is not None, it becomes overridden.
-    :return: None.
+    :return: None if successful; otherwise, the error code (can be 0!).
     """
     log = logging.getLogger("enry")
     if args is not None:
-        tempdir = args.tempdir
+        tempdir = args.tmpdir
         target = os.path.join(args.output, "enry")
-    if shutil.which(os.path.basename(target)) is not None:
-        log.warning("enry is in the PATH, no-op.")
-        return 0
-    if shutil.which(target, path=os.getcwd()):
-        log.warning("%s exists, no-op.", target)
+    if shutil.which(os.path.basename(target)) or shutil.which(target, path=os.getcwd()):
+        if warn_exists:
+            log.warning("enry is in the PATH, no-op.")
         return 0
     parent_dir = os.path.dirname(target)
     os.makedirs(parent_dir, exist_ok=True)

@@ -5,6 +5,7 @@ from ast2vec.df import DocumentFrequencies
 from ast2vec.enry import install_enry
 from ast2vec.id2vec import Id2Vec
 from ast2vec.source import Source
+from ast2vec.topics import Topics
 from ast2vec.uast import UASTModel
 from ast2vec.model2.base import Model2Base
 from ast2vec.model2.prox import ProxSwivel
@@ -14,5 +15,5 @@ from ast2vec.repo2.nbow import Repo2nBOW, Repo2nBOWTransformer
 from ast2vec.repo2.source import Repo2Source, Repo2SourceTransformer
 from ast2vec.repo2.uast import Repo2UASTModel, Repo2UASTModelTransformer
 
-__version__ = 0, 2, 2
+__version__ = 0, 2, 3
 modelforge.configuration.refresh()

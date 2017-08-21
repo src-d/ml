@@ -18,6 +18,7 @@ class Source(UASTModel):
                              format(len(sources), len(uasts), len(filenames)))
         self._sources = sources
         self._filenames_map = {r: i for i, r in enumerate(self._filenames)}
+        return self
 
     def _load_tree_kwargs(self, tree):
         tree_kwargs = super(Source, self)._load_tree_kwargs(tree)
@@ -42,9 +43,9 @@ class Source(UASTModel):
         Returns file name, source code and uast for the given file index.
 
         :param item: File index.
-        :return: name, source code, uast
+        :return: name, uast, source code
         """
-        return (self._filenames[item],) + super(Source, self).__getitem__(item)
+        return super(Source, self).__getitem__(item) + (self._sources[item],)
 
     def __iter__(self):
         """

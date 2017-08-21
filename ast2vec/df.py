@@ -18,6 +18,7 @@ class DocumentFrequencies(Model):
         self._docs = docs
         self._log.info("Building the docfreq dictionary...")
         self._df = dict(zip(tokens, freqs))
+        return self
 
     def _load_tree(self, tree):
         self.construct(docs=tree["docs"], tokens=split_strings(tree["tokens"]),

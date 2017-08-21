@@ -12,13 +12,16 @@ setup(
     description="Part of source{d}'s stack for machine learning on source "
                 "code. Provides API and tools to train and use models based "
                 "on source code identifiers extracted from Babelfish's UASTs.",
-    version="0.2.2-alpha",
+    version="0.2.3-alpha",
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
     url="https://github.com/src-d/ast2vec",
     download_url="https://github.com/src-d/ast2vec",
     packages=find_packages(exclude=("ast2vec.tests",)),
+    entry_points={
+        "console_scripts": ["ast2vec=ast2vec.__main__:main"],
+    },
     keywords=["machine learning on source code", "word2vec", "id2vec",
               "github", "swivel", "nbow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
@@ -28,7 +31,7 @@ setup(
                       "asdf>=1.2,<2.0",
                       "google-cloud-storage>=1.0,<2.0",
                       "python-dateutil",
-                      "modelforge>=0.2.3-alpha",
+                      "modelforge>=0.2.6-alpha",
                       "bblfsh>=0.0.4"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
