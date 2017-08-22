@@ -51,7 +51,7 @@ class Uasts2BOW:
 
 class UastModel2BOW(Model2Base):
     MODEL_FROM_CLASS = UASTModel
-    MODEL_TO_CLASS = UASTModel
+    MODEL_TO_CLASS = BOW
 
     def __init__(self, topn, docfreq, *args, **kwargs):
         super(UastModel2BOW, self).__init__(*args, **kwargs)
@@ -61,7 +61,8 @@ class UastModel2BOW(Model2Base):
         for i, (k, v) in enumerate(docfreq):
             freqs[i] = -v
             vocabulary[i] = k
-        indices = freqs.argpartition(topn)[:topn]
+        topn = min(topn, len(freqs))
+        indices = freqs.argpartition(topn-1)[:topn]
         freqs = freqs[indices]
         vocabulary = [vocabulary[i] for i in indices]
         indices = freqs.argsort()
@@ -82,7 +83,7 @@ class UastModel2BOW(Model2Base):
 
 
 def source2bow_entry(args):
-    df = DocumentFrequencies().load(args.df)
+    df = DocumentFrequencies().load(args.docfreq)
     os.makedirs(args.output, exist_ok=True)
     converter = UastModel2BOW(args.vocabulary_size, df, num_processes=args.processes)
     converter.convert(args.input, args.output, pattern=args.filter)

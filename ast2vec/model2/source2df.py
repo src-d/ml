@@ -38,7 +38,7 @@ class Uast2DocFreq(ToDocFreqBase):
     Calculates document frequencies from models with UASTs.
     """
     MODEL_FROM_CLASS = UASTModel
-    MODEL_TO_CLASS = UASTModel
+    MODEL_TO_CLASS = DocumentFrequencies
 
     def __init__(self, *args, **kwargs):
         super(Uast2DocFreq, self).__init__(*args, **kwargs)
