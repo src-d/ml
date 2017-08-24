@@ -32,7 +32,7 @@ def install_bigartm(args=None, target="./bigartm", tempdir=None, warn_exists=Tru
         target = os.path.join(args.output, "bigartm")
     if shutil.which(os.path.basename(target)) or shutil.which(target, path=os.getcwd()):
         if warn_exists:
-            log.warning("enry is in the PATH, no-op.")
+            log.warning("bigartm is in the PATH, no-op.")
         return 0
     if not shutil.which("cmake"):
         log.error("You need to install cmake.")
