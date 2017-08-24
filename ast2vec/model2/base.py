@@ -17,7 +17,7 @@ class Model2Base(PickleableLogger):
     MODEL_FROM_CLASS = None
     MODEL_TO_CLASS = None
 
-    def __init__(self, num_processes: int=multiprocessing.cpu_count(),
+    def __init__(self, num_processes: int=0,
                  log_level: int=logging.DEBUG):
         """
         Initializes a new instance of Model2Base class.
@@ -26,7 +26,7 @@ class Model2Base(PickleableLogger):
         :param log_level: Logging verbosity level.
         """
         super(Model2Base, self).__init__(log_level=log_level)
-        self.num_processes = num_processes
+        self.num_processes = multiprocessing.cpu_count() if num_processes == 0 else num_processes
 
     def convert(self, srcdir: str, destdir: str, pattern: str="**/*.asdf") -> int:
         """

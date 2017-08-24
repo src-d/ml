@@ -14,7 +14,7 @@ class Source2DocFreqTests(unittest.TestCase):
             args = argparse.Namespace(
                 processes=2, input=paths.DATA_DIR_SOURCE, output=tmpdir,
                 filter="**/source_*.asdf", vocabulary_size=500,
-                df=os.path.join(os.path.dirname(__file__), paths.DOCFREQ))
+                docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ))
             source2bow_entry(args)
             for n, file in enumerate(os.listdir(tmpdir)):
                 bow = BOW().load(os.path.join(tmpdir, file))
