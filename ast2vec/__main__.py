@@ -198,7 +198,7 @@ def get_parser() -> argparse.ArgumentParser:
         "source2df", help="Calculate identifier document frequencies from extracted uasts.",
         parents=[model2input_arg, filter_arg, tmpdir_arg, process_arg])
     source2df_parser.set_defaults(handler=source2df_entry)
-    source2df_parser.add_argument("output", help="Where to write the merged nBOW.")
+    source2df_parser.add_argument("output", help="Where to write document frequencies.")
 
     uast2prox_parser = subparsers.add_parser(
         "uast2prox", help="Convert UASTs to proximity matrix.",
