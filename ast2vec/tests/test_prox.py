@@ -14,7 +14,7 @@ class ProxTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="ast2vec-test-source2bow-") as tmpdir:
             args = argparse.Namespace(processes=1, input=os.path.dirname(__file__),
                                       output=tmpdir, matrix_type="Swivel", filter=paths.UAST,
-                                      edges=EDGE_TYPES)
+                                      edges=EDGE_TYPES, overwrite_existing=True)
             prox_entry(args)
             prox = Cooccurrences().load(os.path.join(tmpdir, os.listdir(tmpdir)[0]))
         self.assertIn("pickle", prox.tokens)

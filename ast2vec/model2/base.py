@@ -18,15 +18,17 @@ class Model2Base(PickleableLogger):
     MODEL_TO_CLASS = None
 
     def __init__(self, num_processes: int=0,
-                 log_level: int=logging.DEBUG):
+                 log_level: int=logging.DEBUG, overwrite_existing: bool=True):
         """
         Initializes a new instance of Model2Base class.
 
         :param num_processes: The number of processes to execute for conversion.
         :param log_level: Logging verbosity level.
+        :param overwrite_existing: Rewrite existing models or skip them.
         """
         super(Model2Base, self).__init__(log_level=log_level)
         self.num_processes = multiprocessing.cpu_count() if num_processes == 0 else num_processes
+        self.overwrite_existing = overwrite_existing
 
     def convert(self, srcdir: str, destdir: str, pattern: str="**/*.asdf") -> int:
         """
@@ -88,11 +90,20 @@ class Model2Base(PickleableLogger):
             if filename is None:
                 break
             try:
+                model_path = self._get_model_path(os.path.relpath(filename, srcdir))
+                model_path = os.path.join(destdir, model_path)
+                if os.path.exists(model_path):
+                    if self.overwrite_existing:
+                        self._log.warning(
+                            "Model %s already exists, but will be overwrite. If you want to "
+                            "skip existing models use --disable-overwrite flag", model_path)
+                    else:
+                        self._log.warning("Model %s already exists, skipping.", model_path)
+                        queue_out.put((filename, True))
+                        continue
                 model_from = self.MODEL_FROM_CLASS(log_level=logging.WARNING).load(filename)
                 model_to = self.convert_model(model_from)
                 if model_to is not None:
-                    model_path = self._get_model_path(os.path.relpath(filename, srcdir))
-                    model_path = os.path.join(destdir, model_path)
                     dirs = os.path.dirname(model_path)
                     if dirs:
                         os.makedirs(dirs, exist_ok=True)

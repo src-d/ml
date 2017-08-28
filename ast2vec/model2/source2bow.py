@@ -85,5 +85,6 @@ class UastModel2BOW(Model2Base):
 def source2bow_entry(args):
     df = DocumentFrequencies().load(args.docfreq)
     os.makedirs(args.output, exist_ok=True)
-    converter = UastModel2BOW(args.vocabulary_size, df, num_processes=args.processes)
+    converter = UastModel2BOW(args.vocabulary_size, df, num_processes=args.processes,
+                              overwrite_existing=args.overwrite_existing)
     converter.convert(args.input, args.output, pattern=args.filter)

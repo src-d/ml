@@ -202,7 +202,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     uast2prox_parser = subparsers.add_parser(
         "uast2prox", help="Convert UASTs to proximity matrix.",
-        parents=[model2input_arg, process_arg, filter_arg])
+        parents=[model2input_arg, process_arg, filter_arg, disable_overwrite_arg])
     uast2prox_parser.set_defaults(handler=prox_entry)
     uast2prox_parser.add_argument("output", help="Where to write the resulting proximity matrix.")
     uast2prox_parser.add_argument(
@@ -221,7 +221,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     source2bow_parser = subparsers.add_parser(
         "source2bow", help="Calculate identifier document frequencies from extracted uasts.",
-        parents=[model2input_arg, filter_arg, process_arg, df_arg])
+        parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg])
     source2bow_parser.set_defaults(handler=source2bow_entry)
     source2bow_parser.add_argument(
         "-v", "--vocabulary-size", required=True, type=int,
