@@ -159,6 +159,24 @@ class Repo2SourceTests(unittest.TestCase):
             self.assertEqual(os.path.join(tmpdir, "a/ab/abc/source_abc.asdf"),
                              Repo2SourceTransformer.prepare_filename("abc", tmpdir, 10))
 
+    def test_overwrite_existing(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            model_path = Repo2SourceTransformer.prepare_filename(DATA_DIR_SOURCE, tmpdir)
+            r2cc = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+                                          overwrite_existing=False)
+            r2cc.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
+            data = asdf.open(model_path)
+            r2cc2 = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+                                           overwrite_existing=False)
+            r2cc2.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
+            data2 = asdf.open(model_path)
+            self.assertEqual(data.tree["meta"]["created_at"], data2.tree["meta"]["created_at"])
+            r2cc2 = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+                                           overwrite_existing=True)
+            r2cc2.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
+            data3 = asdf.open(model_path)
+            self.assertNotEqual(data.tree["meta"]["created_at"], data3.tree["meta"]["created_at"])
+
 
 if __name__ == "__main__":
     unittest.main()
