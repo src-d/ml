@@ -381,10 +381,10 @@ class RepoTransformer(Transformer):
                                             self.WORKER_CLASS.DEFAULT_OVERWRITE_EXISTING)
         if os.path.exists(output):
             if overwrite_existing:
-                self._log.info("Model %s already exists, but will be overwrite. If you want to "
-                               "skip existing models use --disable-overwrite flag", output)
+                self._log.warning("Model %s already exists, but will be overwrite. If you want to "
+                                  "skip existing models use --disable-overwrite flag", output)
             else:
-                self._log.info("Model %s already exists, skipping.", output)
+                self._log.warning("Model %s already exists, skipping.", output)
                 return True
         try:
             repo2 = self.WORKER_CLASS(**self._args)

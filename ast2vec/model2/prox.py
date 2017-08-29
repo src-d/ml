@@ -62,6 +62,6 @@ class ProxSwivel(ProxBase):
 
 
 def prox_entry(args):
-    processes = args.processes or multiprocessing.cpu_count()
-    m2p = MATRIX_TYPES[args.matrix_type](num_processes=processes, edges=args.edges)
+    m2p = MATRIX_TYPES[args.matrix_type](num_processes=args.processes, edges=args.edges,
+                                         overwrite_existing=args.overwrite_existing)
     m2p.convert(args.input, args.output, args.filter)
