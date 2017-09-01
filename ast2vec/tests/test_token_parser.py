@@ -1,7 +1,7 @@
 import pickle
 import unittest
 
-from ast2vec.token_parser import TokenParser
+from ast2vec.token_parser import TokenParser, NoTokenParser
 
 
 class TokenParserTests(unittest.TestCase):
@@ -37,6 +37,16 @@ class TokenParserTests(unittest.TestCase):
     def test_pickle(self):
         tp = pickle.loads(pickle.dumps(self.tp))
         self.assertEqual(tp.stem("embedding"), "embed")
+
+
+class NoTokenParserTests(unittest.TestCase):
+    def setUp(self):
+        self.tp = NoTokenParser()
+
+    def test_process_token(self):
+        self.assertEqual(self.tp.process_token("abcdef"), ["abcdef"])
+        self.assertEqual(self.tp.process_token("abcd_ef"), ["abcd_ef"])
+        self.assertEqual(self.tp.process_token("abcDef"), ["abcDef"])
 
 
 if __name__ == "__main__":
