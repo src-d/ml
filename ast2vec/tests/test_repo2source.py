@@ -43,8 +43,8 @@ class Repo2SourceTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
                 linguist=tests.ENRY, output=file.name,
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                timeout=None, repository=os.path.join(basedir, "..", ".."))
+                repository=os.path.join(basedir, "..", ".."),
+                bblfsh_endpoint=None)
             repo2source_entry(args)
             validate_asdf_file(self, file.name)
 

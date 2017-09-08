@@ -26,7 +26,7 @@ from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 from ast2vec import resolve_symlink  # nopep8
 
 GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
-
+DEFAULT_BBLFSH_ENDPOINT = "0.0.0.0:9432"
 
 class BblfshFailedError(Exception):
     """
@@ -65,7 +65,7 @@ class Repo2Base(PickleableLogger):
         self.tempdir = tempdir
         self._cloner = RepoCloner(redownload=True, log_level=log_level)
         self._cloner.find_linguist(linguist)
-        self._bblfsh_endpoint = bblfsh_endpoint
+        self._bblfsh_endpoint = resolve_bblfsh_endpoint(bblfsh_endpoint)
         self._bblfsh_raise_errors = bblfsh_raise_errors
         self._overwrite_existing = overwrite_existing
         self.timeout = timeout
@@ -86,7 +86,7 @@ class Repo2Base(PickleableLogger):
 
     @property
     def bblfsh_endpoint(self):
-        return self._bblfsh_endpoint or "0.0.0.0:9432"
+        return self._bblfsh_endpoint
 
     @property
     def timeout(self):
@@ -496,21 +496,36 @@ class RepoTransformer(Transformer):
         raise NotImplementedError
 
 
-def ensure_bblfsh_is_running_noexc():
+def resolve_bblfsh_endpoint(bblfsh_endpoint):
+    if bblfsh_endpoint is not None:
+        return bblfsh_endpoint
+    log = logging.getLogger("bblfsh")
+    if "BBLFSH_ENDPOINT" in os.environ:
+        log.info("Get bblfsh endpoint from BBLFSH_ENDPOINT environment variable: %s",
+                 os.environ["BBLFSH_ENDPOINT"])
+        return os.environ["BBLFSH_ENDPOINT"]
+    log.info("You don't provide bblfsh endpoint directly or in BBLFSH_ENDPOINT environment "
+             "variable. Default %s will be used", DEFAULT_BBLFSH_ENDPOINT)
+    return DEFAULT_BBLFSH_ENDPOINT
+
+
+def ensure_bblfsh_is_running_noexc(bblfsh_endpoint=None):
     """
     Launches the Babelfish server, if it is possible and needed.
 
+    :param bblfsh_endpoint: bblfsh endpoint to check.
     :return: None
     """
-    try:
-        ensure_bblfsh_is_running()
-    except:
-        log = logging.getLogger("bblfsh")
-        message = "Failed to ensure that the Babelfish server is running."
-        if log.isEnabledFor(logging.DEBUG):
-            log.exception(message)
-        else:
-            log.warning(message)
+    if resolve_bblfsh_endpoint(bblfsh_endpoint) == DEFAULT_BBLFSH_ENDPOINT:
+        try:
+            ensure_bblfsh_is_running()
+        except:
+            log = logging.getLogger("bblfsh")
+            message = "Failed to ensure that the Babelfish server is running."
+            if log.isEnabledFor(logging.DEBUG):
+                log.exception(message)
+            else:
+                log.warning(message)
 
 
 def _sanitize_kwargs(args, *blacklist):
@@ -532,7 +547,7 @@ def repo2_entry(args, payload_class):
     :param payload_class: :class:`Transformer` inheritor to call.
     :return: None
     """
-    ensure_bblfsh_is_running_noexc()
+    ensure_bblfsh_is_running_noexc(args.bblfsh_endpoint)
     payload_args = _sanitize_kwargs(args, "repository")
     payload_class(**payload_args).process_repo(args.repository, args.output)
 
@@ -548,6 +563,6 @@ def repos2_entry(args, payload_class):
     :param payload_class: :class:`Transformer` inheritor to call.
     :return: None
     """
-    ensure_bblfsh_is_running_noexc()
+    ensure_bblfsh_is_running_noexc(args.bblfsh_endpoint)
     payload_args = _sanitize_kwargs(args, "input")
     payload_class(**payload_args).transform(args.input, args.output)
