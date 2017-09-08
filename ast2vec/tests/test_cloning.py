@@ -127,7 +127,7 @@ class RepoClonerTests(unittest.TestCase):
         if args.linguist:
             enry = args.linguist
             self.assertTrue(os.path.isfile(enry))
-            self.assertEqual(os.stat(enry).st_mode & 0o777, 0o777)
+            self.assertEqual(os.stat(enry).st_mode & 0o555, 0o555)
             output = subprocess.check_output([enry, "-json", args.output])
             lang_files = json.loads(output.decode("utf-8"))
 
