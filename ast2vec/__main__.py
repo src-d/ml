@@ -83,7 +83,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="Number of threads in the UASTs extraction process.")
 
     organize_files_arg = one_arg_parser(
-        "--organize_files", type=int, default=RepoTransformer.DEFAULT_ORGANIZE_FILES,
+        "--organize-files", type=int, default=RepoTransformer.DEFAULT_ORGANIZE_FILES,
         help="Perform alphabetical directory indexing of provided level. Expand output path by "
              "subfolders using the first n characters of repository, for example for "
              "\"--organize-files 2\" file ababa is saved to /a/ab/ababa, abcoasa is saved to "
@@ -93,6 +93,11 @@ def get_parser() -> argparse.ArgumentParser:
         "--disable-overwrite", action="store_false", default=Repo2Base.DEFAULT_OVERWRITE_EXISTING,
         dest="overwrite_existing",
         help="Specify if you want to disable overiting of existing models")
+
+    bblfsh_raise_arg = one_arg_parser(
+        "--bblfsh-raise", action="store_true", default=Repo2Base.DEFAULT_BBLFSH_RAISE_ERRORS,
+        dest="bblfsh_raise_errors",
+        help="Specify if you want to raise errors upon receiving errors from bblfsh server")
 
     linguist_arg = one_arg_parser(
         "--linguist", help="Path to src-d/enry executable.")
@@ -162,14 +167,14 @@ def get_parser() -> argparse.ArgumentParser:
 
     repo2uast_parser = subparsers.add_parser(
         "repo2uast", help="Extract UASTs from a Git repository.",
-        parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
-                 process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
+        parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args, process_1_2_arg,
+                 threads_arg, organize_files_arg, disable_overwrite_arg, bblfsh_raise_arg])
     repo2uast_parser.set_defaults(handler=repo2uast_entry)
 
     repos2uast_parser = subparsers.add_parser(
         "repos2uast", help="Extract UASTs from a list of Git repositories.",
-        parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
-                 process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
+        parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args, process_1_2_arg,
+                 threads_arg, organize_files_arg, disable_overwrite_arg, bblfsh_raise_arg])
     repos2uast_parser.set_defaults(handler=repos2uast_entry)
 
     repo2source_parser = subparsers.add_parser(

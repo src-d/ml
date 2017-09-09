@@ -49,12 +49,13 @@ class Repo2Base(PickleableLogger):
                  bblfsh_raise_errors=DEFAULT_BBLFSH_RAISE_ERRORS):
         """
         Initializer of Repo2Base class
-        :param tempdir: If you will clone repositories they will be stored in tempdir
+        :param tempdir: If you clone repositories they will be stored in tempdir
         :param linguist: Path to linguist.
         :param log_level: Log level of Repo2Base
         :param bblfsh_endpoint: bblfsh server endpoint
         :param timeout: timeout for bblfsh
         :param overwrite_existing: Rewrite existing models or skip them
+        :param bblfsh_raise_errors: If `True` raises errors when you get errors in bblfsh responses
         """
         super(Repo2Base, self).__init__(log_level=log_level)
         self.tempdir = tempdir
