@@ -27,6 +27,8 @@ from ast2vec import resolve_symlink  # nopep8
 
 GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
 DEFAULT_BBLFSH_ENDPOINT = "0.0.0.0:9432"
+DEFAULT_BBLFSH_TIMEOUT = 20  # Longer requests are dropped.
+
 
 class BblfshFailedError(Exception):
     """
@@ -42,12 +44,11 @@ class Repo2Base(PickleableLogger):
     """
     MODEL_CLASS = None  #: Must be defined in the children.
     DEFAULT_BBLFSH_RAISE_ERRORS = False  # Set `True` to fail on bblfsh errors.
-    DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
     DEFAULT_OVERWRITE_EXISTING = True
     MAX_FILE_SIZE = 200000
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
-                 bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT,
+                 bblfsh_endpoint=None, timeout=None,
                  threads=multiprocessing.cpu_count(),
                  overwrite_existing=DEFAULT_OVERWRITE_EXISTING,
                  bblfsh_raise_errors=DEFAULT_BBLFSH_RAISE_ERRORS):
@@ -68,7 +69,7 @@ class Repo2Base(PickleableLogger):
         self._bblfsh_endpoint = resolve_bblfsh_endpoint(bblfsh_endpoint)
         self._bblfsh_raise_errors = bblfsh_raise_errors
         self._overwrite_existing = overwrite_existing
-        self.timeout = timeout
+        self.timeout = resolve_bblfsh_timeout(timeout)
         self.threads = threads
 
     @property
@@ -494,6 +495,24 @@ class RepoTransformer(Transformer):
         :return: :class:`dict` with the required items to construct the model.
         """
         raise NotImplementedError
+
+
+def resolve_bblfsh_timeout(bblfsh_timeout):
+    if bblfsh_timeout is not None:
+        return bblfsh_timeout
+    log = logging.getLogger("bblfsh")
+    if "BBLFSH_TIMEOUT" in os.environ:
+        try:
+            timeout = int(os.environ["BBLFSH_TIMEOUT"])
+            log.info("Get bblfsh timeout from BBLFSH_TIMEOUT environment variable: %s sec",
+                     timeout)
+            return timeout
+        except ValueError as e:
+            log.warning(("You provide wrong value: {} in BBLFSH_TIMEOUT environment variable. "
+                        "Should be integer").format(os.environ["BBLFSH_TIMEOUT"]))
+    log.info("You don't provide bblfsh timeout directly or in BBLFSH_TIMEOUT environment "
+             "variable. Default %s sec will be used", DEFAULT_BBLFSH_TIMEOUT)
+    return DEFAULT_BBLFSH_TIMEOUT
 
 
 def resolve_bblfsh_endpoint(bblfsh_endpoint):

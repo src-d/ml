@@ -44,7 +44,7 @@ class Repo2SourceTests(unittest.TestCase):
             args = argparse.Namespace(
                 linguist=tests.ENRY, output=file.name,
                 repository=os.path.join(basedir, "..", ".."),
-                bblfsh_endpoint=None)
+                bblfsh_endpoint=None, timeout=None)
             repo2source_entry(args)
             validate_asdf_file(self, file.name)
 
