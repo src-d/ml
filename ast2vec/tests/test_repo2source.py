@@ -5,7 +5,7 @@ import unittest
 
 import asdf
 from bblfsh.client import BblfshClient
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+from ast2vec.bblfsh_roles import Node
 from google.protobuf.message import DecodeError
 from grpc import RpcError
 from modelforge import split_strings

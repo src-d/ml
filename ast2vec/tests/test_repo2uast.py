@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 import asdf
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+from ast2vec.bblfsh_roles import Node
 from modelforge import split_strings
 
 from ast2vec import Repo2UASTModelTransformer, Repo2UASTModel

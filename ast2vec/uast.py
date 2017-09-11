@@ -33,7 +33,7 @@ class UASTModel(Model):
     def parse_bblfsh_response(response):
         # ParseResponse should be imported here because grpc starts threads during import
         # and if you call fork after that, a child process will be hang during exit
-        from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+        from ast2vec.bblfsh_roles import Node
         return Node.FromString(response)
 
     def _load_tree(self, tree):

@@ -1,6 +1,6 @@
 import unittest
 
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+from ast2vec.bblfsh_roles import Node
 
 
 import ast2vec.tests.models as paths

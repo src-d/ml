@@ -1,4 +1,9 @@
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import DESCRIPTOR
+import importlib
+from bblfsh.sdkversion import VERSION
+DESCRIPTOR = importlib.import_module(
+    "bblfsh.gopkg.in.bblfsh.sdk.%s.uast.generated_pb2" % VERSION).DESCRIPTOR
+Node = importlib.import_module(
+    "bblfsh.gopkg.in.bblfsh.sdk.%s.uast.generated_pb2" % VERSION).Node
 
 
 def _get_role_id(role_name):

@@ -10,6 +10,7 @@ addons:
   apt:
     packages:
       - libboost-all-dev
+      - libxml2-dev
 _install: &_install
   - gimme 1.8
   - source ~/.gimme/envs/latest.env
