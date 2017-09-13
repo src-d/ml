@@ -13,7 +13,7 @@ def convert_bow_to_vw(bow: BOW, output: str):
     with open(output, "w") as fout:
         for index in progress_bar(bow, log, expected_size=len(bow)):
             record = bow[index]
-            fout.write(record[0] + " ")
+            fout.write(record[0].replace(":", "").replace(" ", "_") + " ")
             pairs = []
             for t, v in zip(*record[1:]):
                 try:
