@@ -220,7 +220,7 @@ def get_parser() -> argparse.ArgumentParser:
         "RT - connect node A roles(tokens) with node B tokens(roles).")
 
     source2bow_parser = subparsers.add_parser(
-        "source2bow", help="Calculate identifier document frequencies from extracted uasts.",
+        "source2bow", help="Calculate bag of words from extracted uasts.",
         parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg])
     source2bow_parser.set_defaults(handler=source2bow_entry)
     source2bow_parser.add_argument(
