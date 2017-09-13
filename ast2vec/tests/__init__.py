@@ -1,3 +1,5 @@
+import multiprocessing
+import multiprocessing.forkserver as forkserver
 import os
 import shutil
 import sys
@@ -17,6 +19,20 @@ if utmain.__package__ == "unittest" and utmain.__spec__ is None:
     utmain.__spec__ = ModuleSpec("unittest.__main__")
     del ModuleSpec
 del utmain
+
+
+if "grpc" in sys.modules:
+    # use lazy_grpc as in bblfsh_roles.py if you really need it above
+    raise RuntimeError("grpc may not be imported before fork()")
+if multiprocessing.get_start_method() != "forkserver":
+    try:
+        multiprocessing.set_start_method("forkserver", force=True)
+        forkserver.ensure_running()
+    except ValueError:
+        multiprocessing.set_start_method("spawn", force=True)
+    except RuntimeError:
+        raise RuntimeError("multiprocessing start method is already set to \"%s\"" %
+                           multiprocessing.get_start_method()) from None
 
 
 def setup():

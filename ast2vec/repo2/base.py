@@ -2,7 +2,6 @@ from collections import namedtuple
 from itertools import accumulate, repeat
 import logging
 import multiprocessing
-import multiprocessing.forkserver as forkserver
 import os
 from queue import Queue
 import shutil
@@ -27,20 +26,6 @@ from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 from ast2vec import resolve_symlink  # nopep8
 
 GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
-
-
-if "grpc" in sys.modules:
-    # use lazy_grpc as in bblfsh_roles.py if you really need it above
-    raise RuntimeError("grpc may not be imported before fork()")
-if multiprocessing.get_start_method() != "forkserver":
-    try:
-        multiprocessing.set_start_method("forkserver", force=True)
-        forkserver.ensure_running()
-    except ValueError:
-        multiprocessing.set_start_method("spawn", force=True)
-    except RuntimeError:
-        raise RuntimeError("multiprocessing start method is already set to \"%s\"" %
-                           multiprocessing.get_start_method()) from None
 
 
 class BblfshFailedError(Exception):
@@ -351,6 +336,8 @@ class RepoTransformer(Transformer):
         if pid == 0:
             outfile = cls.prepare_filename(url_or_path, outdir, organize_files)
             status = cls(**args).process_repo(url_or_path, outfile)
+            if multiprocessing.get_start_method() == "fork":
+                sys.exit(status)
             os._exit(status)
         else:
             _, status = os.waitpid(pid, 0)
