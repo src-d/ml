@@ -26,7 +26,7 @@ class Repo2VocCooccTests(unittest.TestCase):
             "document": 0,
             "repo": 1,
             "test": 2,
-        }, linguist=tests.ENRY, timeout=600)
+        }, linguist=tests.ENRY)
         coocc = repo2.convert_repository(os.path.join(basedir, "..", ".."))
         self.assertIsInstance(coocc, coo_matrix)
         self.assertEqual(coocc.shape, (3, 3))

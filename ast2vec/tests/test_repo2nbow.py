@@ -31,7 +31,7 @@ class Repo2NBOWTests(unittest.TestCase):
         id2vec.tokens[0] = "xxyyzz"
         id2vec._token2index["xxyyzz"] = 0
         xxyyzz = Repo2nBOW(
-            id2vec=id2vec, docfreq=df, linguist=tests.ENRY, timeout=600)
+            id2vec=id2vec, docfreq=df, linguist=tests.ENRY)
         nbow = xxyyzz.convert_repository(os.path.join(basedir, "..", ".."))
         self.assertIsInstance(nbow, dict)
         self.assertAlmostEqual(nbow[0], 5.059296557734522)
@@ -70,8 +70,6 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             repo2nbow = Repo2nBOWTransformer(
                 id2vec=id2vec, docfreq=df, linguist=tests.ENRY, gcs_bucket=None,
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                timeout=None
             )
             outfile = repo2nbow.prepare_filename(basedir, tmpdir)
             status = repo2nbow.transform(repos=basedir, output=tmpdir)
@@ -86,8 +84,6 @@ class Repo2NBOWTransformerTests(unittest.TestCase):
                 id2vec=os.path.join(basedir, ID2VEC),
                 docfreq=os.path.join(basedir, DOCFREQ), linguist=tests.ENRY,
                 gcs_bucket=None,
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                timeout=None
             )
             status = repo2nbow.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
             self.assertFalse(os.listdir(tmpdir))
