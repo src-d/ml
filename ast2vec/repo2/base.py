@@ -2,26 +2,45 @@ from collections import namedtuple
 from itertools import accumulate, repeat
 import logging
 import multiprocessing
+import multiprocessing.forkserver as forkserver
 import os
 from queue import Queue
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 from typing import Union
 from time import time
 
-from bblfsh import BblfshClient
-from bblfsh.launcher import ensure_bblfsh_is_running
 from google.protobuf.message import DecodeError
-from grpc import RpcError
+from modelforge.logs import setup_logging
 from modelforge.progress_bar import progress_bar
 
-from ast2vec.cloning import RepoCloner
-from ast2vec.pickleable_logger import PickleableLogger
-from ast2vec import resolve_symlink
+import ast2vec.lazy_grpc as lazy_grpc
+with lazy_grpc.masquerade():
+    from bblfsh import BblfshClient
+    from bblfsh.launcher import ensure_bblfsh_is_running
+
+from ast2vec.cloning import RepoCloner  # nopep8
+from ast2vec.pickleable_logger import PickleableLogger  # nopep8
+from ast2vec import resolve_symlink  # nopep8
 
 GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
+
+
+if "grpc" in sys.modules:
+    # use lazy_grpc as in bblfsh_roles.py if you really need it above
+    raise RuntimeError("grpc may not be imported before fork()")
+if multiprocessing.get_start_method() != "forkserver":
+    try:
+        multiprocessing.set_start_method("forkserver", force=True)
+        forkserver.ensure_running()
+    except ValueError:
+        multiprocessing.set_start_method("spawn", force=True)
+    except RuntimeError:
+        raise RuntimeError("multiprocessing start method is already set to \"%s\"" %
+                           multiprocessing.get_start_method()) from None
 
 
 class BblfshFailedError(Exception):
@@ -156,6 +175,7 @@ class Repo2Base(PickleableLogger):
         raise NotImplementedError()
 
     def _bblfsh_parse(self, thread_index, filepath, language):
+        from grpc import RpcError
         try:
             return self._bblfsh[thread_index].parse(
                 filepath, language=language, timeout=self._timeout)
@@ -321,12 +341,17 @@ class RepoTransformer(Transformer):
             is saved to /a/bc/abcoasa, etc.
         :return: The child process' exit code.
         """
+        if "log_level" in args:
+            setup_logging(args.pop("log_level"))
+        if "grpc" in sys.modules:
+            logging.getLogger(cls.__name__).error("grpc detected, fork() is unstable -> aborted")
+            queue.put((url_or_path, 0))
+            return 0
         pid = os.fork()
         if pid == 0:
             outfile = cls.prepare_filename(url_or_path, outdir, organize_files)
             status = cls(**args).process_repo(url_or_path, outfile)
-            import sys
-            sys.exit(status)
+            os._exit(status)
         else:
             _, status = os.waitpid(pid, 0)
             queue.put((url_or_path, status))
@@ -425,6 +450,7 @@ class RepoTransformer(Transformer):
                CPUs.
         :return: None
         """
+        self._args["log_level"] = self._log.level
         if num_processes is None:
             num_processes = self.num_processes
         if num_processes < 0:
