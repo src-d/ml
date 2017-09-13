@@ -10,3 +10,4 @@ lz4>=0.10.1
 modelforge>=0.2.6-alpha
 bblfsh==0.2.1
 grpcio==1.4.0
+requests>=2.0
