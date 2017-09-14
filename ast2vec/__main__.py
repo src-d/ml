@@ -65,9 +65,10 @@ def get_parser() -> argparse.ArgumentParser:
 
     bblfsh_args = argparse.ArgumentParser(add_help=False)
     bblfsh_args.add_argument(
-        "--bblfsh", help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.", dest="bblfsh_endpoint")
+        "--bblfsh", default=None, dest="bblfsh_endpoint",
+        help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
     bblfsh_args.add_argument(
-        "--timeout", type=int, default=Repo2Base.DEFAULT_BBLFSH_TIMEOUT,
+        "--timeout", type=int, default=None,
         help="Babelfish timeout - longer requests are dropped.")
 
     process_arg = one_arg_parser(

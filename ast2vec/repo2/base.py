@@ -26,6 +26,8 @@ from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 from ast2vec import resolve_symlink  # nopep8
 
 GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
+DEFAULT_BBLFSH_ENDPOINT = "0.0.0.0:9432"
+DEFAULT_BBLFSH_TIMEOUT = 20  # Longer requests are dropped.
 
 
 class BblfshFailedError(Exception):
@@ -42,12 +44,11 @@ class Repo2Base(PickleableLogger):
     """
     MODEL_CLASS = None  #: Must be defined in the children.
     DEFAULT_BBLFSH_RAISE_ERRORS = False  # Set `True` to fail on bblfsh errors.
-    DEFAULT_BBLFSH_TIMEOUT = 10  #: Longer requests are dropped.
     DEFAULT_OVERWRITE_EXISTING = True
     MAX_FILE_SIZE = 200000
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
-                 bblfsh_endpoint=None, timeout=DEFAULT_BBLFSH_TIMEOUT,
+                 bblfsh_endpoint=None, timeout=None,
                  threads=multiprocessing.cpu_count(),
                  overwrite_existing=DEFAULT_OVERWRITE_EXISTING,
                  bblfsh_raise_errors=DEFAULT_BBLFSH_RAISE_ERRORS):
@@ -65,10 +66,10 @@ class Repo2Base(PickleableLogger):
         self.tempdir = tempdir
         self._cloner = RepoCloner(redownload=True, log_level=log_level)
         self._cloner.find_linguist(linguist)
-        self._bblfsh_endpoint = bblfsh_endpoint
+        self._bblfsh_endpoint = resolve_bblfsh_endpoint(bblfsh_endpoint)
         self._bblfsh_raise_errors = bblfsh_raise_errors
         self._overwrite_existing = overwrite_existing
-        self.timeout = timeout
+        self.timeout = resolve_bblfsh_timeout(timeout)
         self.threads = threads
 
     @property
@@ -86,7 +87,7 @@ class Repo2Base(PickleableLogger):
 
     @property
     def bblfsh_endpoint(self):
-        return self._bblfsh_endpoint or "0.0.0.0:9432"
+        return self._bblfsh_endpoint
 
     @property
     def timeout(self):
@@ -496,12 +497,48 @@ class RepoTransformer(Transformer):
         raise NotImplementedError
 
 
-def ensure_bblfsh_is_running_noexc():
+def resolve_bblfsh_timeout(bblfsh_timeout):
+    if bblfsh_timeout is not None:
+        return bblfsh_timeout
+    log = logging.getLogger("bblfsh")
+    env_timeout = os.getenv("BBLFSH_TIMEOUT")
+    if env_timeout:
+        try:
+            log.debug("Got bblfsh timeout from BBLFSH_TIMEOUT environment variable: %s sec",
+                      env_timeout)
+            return int(env_timeout)
+        except ValueError as e:
+            log.warning(("You provide wrong value: %s in BBLFSH_TIMEOUT environment variable. "
+                        "Should be integer. Default %s sec will be used", env_timeout,
+                         DEFAULT_BBLFSH_TIMEOUT))
+    log.debug("You did not provide bblfsh timeout directly or in BBLFSH_TIMEOUT environment "
+              "variable. Default %s sec will be used", DEFAULT_BBLFSH_TIMEOUT)
+    return DEFAULT_BBLFSH_TIMEOUT
+
+
+def resolve_bblfsh_endpoint(bblfsh_endpoint):
+    if bblfsh_endpoint is not None:
+        return bblfsh_endpoint
+    log = logging.getLogger("bblfsh")
+    env_endpoint = os.getenv("BBLFSH_ENDPOINT")
+    if env_endpoint:
+        log.debug("Got bblfsh endpoint from BBLFSH_ENDPOINT environment variable: %s",
+                  env_endpoint)
+        return env_endpoint
+    log.debug("You did not provide bblfsh endpoint directly or in BBLFSH_ENDPOINT environment "
+              "variable. Default %s will be used", DEFAULT_BBLFSH_ENDPOINT)
+    return DEFAULT_BBLFSH_ENDPOINT
+
+
+def ensure_bblfsh_is_running_noexc(bblfsh_endpoint=None):
     """
     Launches the Babelfish server, if it is possible and needed.
 
+    :param bblfsh_endpoint: bblfsh endpoint to check.
     :return: None
     """
+    if resolve_bblfsh_endpoint(bblfsh_endpoint) != DEFAULT_BBLFSH_ENDPOINT:
+        return
     try:
         ensure_bblfsh_is_running()
     except:
@@ -532,7 +569,7 @@ def repo2_entry(args, payload_class):
     :param payload_class: :class:`Transformer` inheritor to call.
     :return: None
     """
-    ensure_bblfsh_is_running_noexc()
+    ensure_bblfsh_is_running_noexc(args.bblfsh_endpoint)
     payload_args = _sanitize_kwargs(args, "repository")
     payload_class(**payload_args).process_repo(args.repository, args.output)
 
@@ -548,6 +585,6 @@ def repos2_entry(args, payload_class):
     :param payload_class: :class:`Transformer` inheritor to call.
     :return: None
     """
-    ensure_bblfsh_is_running_noexc()
+    ensure_bblfsh_is_running_noexc(args.bblfsh_endpoint)
     payload_args = _sanitize_kwargs(args, "input")
     payload_class(**payload_args).transform(args.input, args.output)

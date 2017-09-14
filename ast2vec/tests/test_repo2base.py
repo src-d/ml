@@ -9,7 +9,8 @@ from ast2vec.cloning import RepoCloner
 import ast2vec.tests as tests
 import ast2vec.repo2.base
 from ast2vec.repo2.base import BblfshFailedError, Repo2Base, RepoTransformer, \
-    ensure_bblfsh_is_running_noexc
+    ensure_bblfsh_is_running_noexc, DEFAULT_BBLFSH_ENDPOINT, resolve_bblfsh_endpoint, \
+    DEFAULT_BBLFSH_TIMEOUT, resolve_bblfsh_timeout
 
 
 class Repo2BaseTests(unittest.TestCase):
@@ -31,7 +32,7 @@ class Repo2BaseTests(unittest.TestCase):
         self.base.tempdir = None
 
     def test_bblfsh_endpoint(self):
-        self.assertEqual(self.base.bblfsh_endpoint, "0.0.0.0:9432")
+        self.assertEqual(self.base.bblfsh_endpoint, resolve_bblfsh_endpoint(None))
 
     def test_bblfsh_error(self):
         def fake_bblfsh_parse(*args):
@@ -55,7 +56,7 @@ class Repo2BaseTests(unittest.TestCase):
             self.base._cloner._is_enry = False
 
     def test_timeout(self):
-        self.assertEqual(self.base.timeout, self.base.DEFAULT_BBLFSH_TIMEOUT)
+        self.assertEqual(self.base.timeout, resolve_bblfsh_timeout(None))
         self.base.timeout = 100500.1
         self.assertEqual(self.base.timeout, 100500.1)
         with self.assertRaises(TypeError):
@@ -158,6 +159,30 @@ class EnsureBblfshIsRunningNoexcTest(unittest.TestCase):
         finally:
             logging.exception = exception_
             logging.warning = warning_
+
+    def test_resolve_bblfsh_endpoint(self):
+        environ_ = dict(os.environ)
+        try:
+            os.environ = {}
+            self.assertEqual(DEFAULT_BBLFSH_ENDPOINT, resolve_bblfsh_endpoint(None))
+            self.assertEqual("172.17.0.1:9432", resolve_bblfsh_endpoint("172.17.0.1:9432"))
+            os.environ["BBLFSH_ENDPOINT"] = "192.168.0.1:9432"
+            self.assertEqual("192.168.0.1:9432", resolve_bblfsh_endpoint(None))
+            self.assertEqual("172.17.0.1:9432", resolve_bblfsh_endpoint("172.17.0.1:9432"))
+        finally:
+            os.environ = environ_
+
+    def test_resolve_bblfsh_timeout(self):
+        environ_ = dict(os.environ)
+        try:
+            self.assertEqual(DEFAULT_BBLFSH_TIMEOUT, resolve_bblfsh_timeout(None))
+            self.assertEqual(100, resolve_bblfsh_timeout(100))
+            os.environ = {}
+            os.environ["BBLFSH_TIMEOUT"] = "20"
+            self.assertEqual(20, resolve_bblfsh_timeout(None))
+            self.assertEqual(40, resolve_bblfsh_timeout(40))
+        finally:
+            os.environ = environ_
 
 
 if __name__ == "__main__":

@@ -43,8 +43,8 @@ class Repo2SourceTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
                 linguist=tests.ENRY, output=file.name,
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                timeout=None, repository=os.path.join(basedir, "..", ".."))
+                repository=os.path.join(basedir, "..", ".."),
+                bblfsh_endpoint=None, timeout=None)
             repo2source_entry(args)
             validate_asdf_file(self, file.name)
 
@@ -156,16 +156,16 @@ class Repo2SourceTests(unittest.TestCase):
     def test_overwrite_existing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             model_path = Repo2SourceTransformer.prepare_filename(DATA_DIR_SOURCE, tmpdir)
-            r2cc = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+            r2cc = Repo2SourceTransformer(linguist=tests.ENRY,
                                           overwrite_existing=False)
             r2cc.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
             data = asdf.open(model_path)
-            r2cc2 = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+            r2cc2 = Repo2SourceTransformer(linguist=tests.ENRY,
                                            overwrite_existing=False)
             r2cc2.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
             data2 = asdf.open(model_path)
             self.assertEqual(data.tree["meta"]["created_at"], data2.tree["meta"]["created_at"])
-            r2cc2 = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+            r2cc2 = Repo2SourceTransformer(linguist=tests.ENRY,
                                            overwrite_existing=True)
             r2cc2.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
             data3 = asdf.open(model_path)
