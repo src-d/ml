@@ -501,17 +501,18 @@ def resolve_bblfsh_timeout(bblfsh_timeout):
     if bblfsh_timeout is not None:
         return bblfsh_timeout
     log = logging.getLogger("bblfsh")
-    if "BBLFSH_TIMEOUT" in os.environ:
+    env_timeout = os.getenv("BBLFSH_TIMEOUT")
+    if env_timeout:
         try:
-            timeout = int(os.environ["BBLFSH_TIMEOUT"])
-            log.info("Get bblfsh timeout from BBLFSH_TIMEOUT environment variable: %s sec",
-                     timeout)
-            return timeout
+            log.debug("Got bblfsh timeout from BBLFSH_TIMEOUT environment variable: %s sec",
+                      env_timeout)
+            return int(env_timeout)
         except ValueError as e:
-            log.warning(("You provide wrong value: {} in BBLFSH_TIMEOUT environment variable. "
-                        "Should be integer").format(os.environ["BBLFSH_TIMEOUT"]))
-    log.info("You don't provide bblfsh timeout directly or in BBLFSH_TIMEOUT environment "
-             "variable. Default %s sec will be used", DEFAULT_BBLFSH_TIMEOUT)
+            log.warning(("You provide wrong value: %s in BBLFSH_TIMEOUT environment variable. "
+                        "Should be integer. Default %s sec will be used", env_timeout,
+                         DEFAULT_BBLFSH_TIMEOUT))
+    log.debug("You did not provide bblfsh timeout directly or in BBLFSH_TIMEOUT environment "
+              "variable. Default %s sec will be used", DEFAULT_BBLFSH_TIMEOUT)
     return DEFAULT_BBLFSH_TIMEOUT
 
 
@@ -519,12 +520,13 @@ def resolve_bblfsh_endpoint(bblfsh_endpoint):
     if bblfsh_endpoint is not None:
         return bblfsh_endpoint
     log = logging.getLogger("bblfsh")
-    if "BBLFSH_ENDPOINT" in os.environ:
-        log.info("Get bblfsh endpoint from BBLFSH_ENDPOINT environment variable: %s",
-                 os.environ["BBLFSH_ENDPOINT"])
-        return os.environ["BBLFSH_ENDPOINT"]
-    log.info("You don't provide bblfsh endpoint directly or in BBLFSH_ENDPOINT environment "
-             "variable. Default %s will be used", DEFAULT_BBLFSH_ENDPOINT)
+    env_endpoint = os.getenv("BBLFSH_ENDPOINT")
+    if env_endpoint:
+        log.debug("Got bblfsh endpoint from BBLFSH_ENDPOINT environment variable: %s",
+                  env_endpoint)
+        return env_endpoint
+    log.debug("You did not provide bblfsh endpoint directly or in BBLFSH_ENDPOINT environment "
+              "variable. Default %s will be used", DEFAULT_BBLFSH_ENDPOINT)
     return DEFAULT_BBLFSH_ENDPOINT
 
 
@@ -535,16 +537,17 @@ def ensure_bblfsh_is_running_noexc(bblfsh_endpoint=None):
     :param bblfsh_endpoint: bblfsh endpoint to check.
     :return: None
     """
-    if resolve_bblfsh_endpoint(bblfsh_endpoint) == DEFAULT_BBLFSH_ENDPOINT:
-        try:
-            ensure_bblfsh_is_running()
-        except:
-            log = logging.getLogger("bblfsh")
-            message = "Failed to ensure that the Babelfish server is running."
-            if log.isEnabledFor(logging.DEBUG):
-                log.exception(message)
-            else:
-                log.warning(message)
+    if resolve_bblfsh_endpoint(bblfsh_endpoint) != DEFAULT_BBLFSH_ENDPOINT:
+        return
+    try:
+        ensure_bblfsh_is_running()
+    except:
+        log = logging.getLogger("bblfsh")
+        message = "Failed to ensure that the Babelfish server is running."
+        if log.isEnabledFor(logging.DEBUG):
+            log.exception(message)
+        else:
+            log.warning(message)
 
 
 def _sanitize_kwargs(args, *blacklist):
