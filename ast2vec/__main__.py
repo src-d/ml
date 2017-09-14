@@ -14,7 +14,8 @@ from ast2vec.enry import install_enry
 from ast2vec.id_embedding import preprocess as preprocess_id2vec, run_swivel, \
     postprocess as postprocess_id2vec, swivel
 from ast2vec.vw_dataset import bow2vw_entry
-from ast2vec.repo2.base import Repo2Base, RepoTransformer
+from ast2vec.repo2.base import Repo2Base, RepoTransformer, \
+    DEFAULT_BBLFSH_TIMEOUT, DEFAULT_BBLFSH_ENDPOINT
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
 from ast2vec.repo2.uast import repo2uast_entry, repos2uast_entry
@@ -24,6 +25,17 @@ from ast2vec.model2.prox import prox_entry, MATRIX_TYPES
 from ast2vec.model2.proxbase import EDGE_TYPES
 from ast2vec.model2.source2bow import source2bow_entry
 from ast2vec.model2.source2df import source2df_entry
+
+
+class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
+    """
+    Pretty formatter of help message for arguments.
+    It adds default value to the end if it is not None.
+    """
+    def _get_help_string(self, action):
+        if action.default is None:
+            return action.help
+        return super()._get_help_string(action)
 
 
 def one_arg_parser(*args, **kwargs) -> argparse.ArgumentParser:
@@ -44,7 +56,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     :return: Parser
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     parser.add_argument("--log-level", default="INFO",
                         choices=logging._nameToLevel,
                         help="Logging verbosity.")
@@ -65,11 +77,15 @@ def get_parser() -> argparse.ArgumentParser:
 
     bblfsh_args = argparse.ArgumentParser(add_help=False)
     bblfsh_args.add_argument(
-        "--bblfsh", default=None, dest="bblfsh_endpoint",
-        help="Babelfish server's endpoint, e.g. 0.0.0.0:9432.")
+        "--bblfsh", dest="bblfsh_endpoint",
+        help="Babelfish server's endpoint, e.g. 0.0.0.0:9432. "
+             "You can specify it directly or with BBLFSH_ENDPOINT environment variable. Otherwise "
+             "default will be used (default: %s)" % DEFAULT_BBLFSH_ENDPOINT)
     bblfsh_args.add_argument(
-        "--timeout", type=int, default=None,
-        help="Babelfish timeout - longer requests are dropped.")
+        "--timeout", type=int,
+        help="Babelfish timeout - longer requests are dropped. "
+             "You can specify it directly or with BBLFSH_TIMEOUT environment variable. Otherwise "
+             "default will be used (default: %d sec)" % DEFAULT_BBLFSH_TIMEOUT)
 
     process_arg = one_arg_parser(
         "-p", "--processes", type=int, default=0,
@@ -125,6 +141,7 @@ def get_parser() -> argparse.ArgumentParser:
     clone_parser = subparsers.add_parser(
         "clone", help="Clone multiple repositories. By default saves all files, including "
         "`.git`. Use --linguist and --languages options to narrow files down.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repos2input_arg, output_dir_arg_default])
     clone_parser.set_defaults(handler=clone_repositories)
     clone_parser.add_argument(
@@ -143,12 +160,14 @@ def get_parser() -> argparse.ArgumentParser:
 
     repo2nbow_parser = subparsers.add_parser(
         "repo2nbow", help="Produce the nBOW from a Git repository.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repository_arg, id2vec_arg, df_arg, linguist_arg, bblfsh_args,
                  output_dir_arg_asdf, gcs_arg, threads_arg, disable_overwrite_arg])
     repo2nbow_parser.set_defaults(handler=repo2nbow_entry)
 
     repos2nbow_parser = subparsers.add_parser(
         "repos2nbow", help="Produce the nBOWs from a list of Git repositories.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repos2input_arg, id2vec_arg, df_arg, linguist_arg, output_dir_arg_asdf,
                  bblfsh_args, gcs_arg, process_1_2_arg, threads_arg, organize_files_arg,
                  disable_overwrite_arg, repos2input_arg])
@@ -156,42 +175,49 @@ def get_parser() -> argparse.ArgumentParser:
 
     repo2coocc_parser = subparsers.add_parser(
         "repo2coocc", help="Produce the co-occurrence matrix from a Git repository.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
                  threads_arg, disable_overwrite_arg])
     repo2coocc_parser.set_defaults(handler=repo2coocc_entry)
 
     repos2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a list of Git repositories.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args, process_1_2_arg,
                  threads_arg, organize_files_arg, disable_overwrite_arg])
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
 
     repo2uast_parser = subparsers.add_parser(
         "repo2uast", help="Extract UASTs from a Git repository.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args, process_1_2_arg,
                  threads_arg, organize_files_arg, disable_overwrite_arg, bblfsh_raise_arg])
     repo2uast_parser.set_defaults(handler=repo2uast_entry)
 
     repos2uast_parser = subparsers.add_parser(
         "repos2uast", help="Extract UASTs from a list of Git repositories.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args, process_1_2_arg,
                  threads_arg, organize_files_arg, disable_overwrite_arg, bblfsh_raise_arg])
     repos2uast_parser.set_defaults(handler=repos2uast_entry)
 
     repo2source_parser = subparsers.add_parser(
         "repo2source", help="Extract source model from a Git repository.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repository_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
                  process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
     repo2source_parser.set_defaults(handler=repo2source_entry)
 
     repos2source_parser = subparsers.add_parser(
         "repos2source", help="Extract source model from a list of Git repositories.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repos2input_arg, linguist_arg, output_dir_arg_asdf, bblfsh_args,
                  process_1_2_arg, threads_arg, organize_files_arg, disable_overwrite_arg])
     repos2source_parser.set_defaults(handler=repos2source_entry)
 
     joinbow_parser = subparsers.add_parser(
         "join-bow", help="Combine several nBOW files into the single one.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, process_arg, tmpdir_arg, filter_arg])
     joinbow_parser.set_defaults(handler=joinbow_entry)
     joinbow_parser.add_argument("output", help="Where to write the merged nBOW.")
@@ -202,12 +228,14 @@ def get_parser() -> argparse.ArgumentParser:
 
     source2df_parser = subparsers.add_parser(
         "source2df", help="Calculate identifier document frequencies from extracted uasts.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, filter_arg, tmpdir_arg, process_arg])
     source2df_parser.set_defaults(handler=source2df_entry)
     source2df_parser.add_argument("output", help="Where to write document frequencies.")
 
     uast2prox_parser = subparsers.add_parser(
         "uast2prox", help="Convert UASTs to proximity matrix.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, process_arg, filter_arg, disable_overwrite_arg])
     uast2prox_parser.set_defaults(handler=prox_entry)
     uast2prox_parser.add_argument("output", help="Where to write the resulting proximity matrix.")
@@ -227,6 +255,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     source2bow_parser = subparsers.add_parser(
         "source2bow", help="Calculate bag of words from extracted uasts.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg])
     source2bow_parser.set_defaults(handler=source2bow_entry)
     source2bow_parser.add_argument(
@@ -237,6 +266,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[output_dir_arg_default])
     preproc_parser.set_defaults(handler=preprocess_id2vec)
     preproc_parser.add_argument(
@@ -255,7 +285,8 @@ def get_parser() -> argparse.ArgumentParser:
              "inside are read.")
 
     train_parser = subparsers.add_parser(
-        "id2vec_train", help="Train identifier embeddings.")
+        "id2vec_train", help="Train identifier embeddings.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     train_parser.set_defaults(handler=run_swivel)
     del train_parser._action_groups[train_parser._action_groups.index(
         train_parser._optionals)]
@@ -267,13 +298,15 @@ def get_parser() -> argparse.ArgumentParser:
 
     id2vec_postproc_parser = subparsers.add_parser(
         "id2vec_postproc",
-        help="Combine row and column embeddings together and write them to an .asdf.")
+        help="Combine row and column embeddings together and write them to an .asdf.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
     id2vec_postproc_parser.add_argument("swivel_output_directory")
     id2vec_postproc_parser.add_argument("result")
 
     bow2vw_parser = subparsers.add_parser(
-        "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
+        "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     bow2vw_parser.set_defaults(handler=bow2vw_entry)
     group = bow2vw_parser.add_argument_group("model")
     group_ex = group.add_mutually_exclusive_group(required=True)
@@ -287,22 +320,26 @@ def get_parser() -> argparse.ArgumentParser:
         "-o", "--output", required=True, help="Path to the output file.")
 
     bigartm_postproc_parser = subparsers.add_parser(
-        "bigartm2asdf", help="Convert a readable BigARTM model to Modelforge format.")
+        "bigartm2asdf", help="Convert a readable BigARTM model to Modelforge format.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     bigartm_postproc_parser.set_defaults(handler=bigartm2asdf_entry)
     bigartm_postproc_parser.add_argument("input")
     bigartm_postproc_parser.add_argument("output")
 
     enry_parser = subparsers.add_parser(
         "enry", help="Install src-d/enry to the current working directory.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[tmpdir_arg, outputdir_arg])
     enry_parser.set_defaults(handler=install_enry)
 
     bigartm_parser = subparsers.add_parser(
         "bigartm", help="Install bigartm/bigartm to the current working directory.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[tmpdir_arg, outputdir_arg])
     bigartm_parser.set_defaults(handler=install_bigartm)
     dump_parser = subparsers.add_parser(
         "dump", help="Dump a model to stdout.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[gcs_arg])
     dump_parser.set_defaults(handler=dump_model)
     dump_parser.add_argument(
