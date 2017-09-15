@@ -4,7 +4,7 @@ import tempfile
 import unittest
 
 import asdf
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
+from ast2vec.bblfsh_roles import Node
 from modelforge import split_strings
 
 from ast2vec import Repo2UASTModelTransformer, Repo2UASTModel
@@ -31,9 +31,7 @@ class Repo2UASTModelTests(unittest.TestCase):
 
     def test_obj(self):
         basedir = os.path.dirname(__file__)
-        repo2 = Repo2UASTModel(
-            bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-            linguist=tests.ENRY, timeout=600)
+        repo2 = Repo2UASTModel(linguist=tests.ENRY)
         prox = repo2.convert_repository(os.path.join(basedir, "..", ".."))
         self.assertIsInstance(prox, tuple)
         self.assertEqual(len(prox), 2)
@@ -44,16 +42,16 @@ class Repo2UASTModelTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
                 linguist=tests.ENRY, output=file.name,
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                timeout=None, repository=os.path.join(basedir, "..", ".."))
+                repository=os.path.join(basedir, "..", ".."),
+                bblfsh_endpoint=None, timeout=None)
             repo2uast_entry(args)
             validate_asdf_file(self, file.name)
 
     def test_linguist(self):
         with self.assertRaises(FileNotFoundError):
-            Repo2UASTModel(linguist="xxx", timeout=600)
+            Repo2UASTModel(linguist="xxx")
         with self.assertRaises(FileNotFoundError):
-            Repo2UASTModel(linguist=__file__, timeout=600)
+            Repo2UASTModel(linguist=__file__)
 
 
 class Repo2UASTModelTransformerTests(unittest.TestCase):
@@ -65,8 +63,7 @@ class Repo2UASTModelTransformerTests(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         with tempfile.TemporaryDirectory() as tmpdir:
             repo2 = Repo2UASTModelTransformer(
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                linguist=tests.ENRY, timeout=600)
+                linguist=tests.ENRY)
             repo2.transform(repos=basedir, output=tmpdir)
 
             # check that output file exists
@@ -79,8 +76,7 @@ class Repo2UASTModelTransformerTests(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         with tempfile.TemporaryDirectory() as tmpdir:
             repo2 = Repo2UASTModelTransformer(
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                linguist=tests.ENRY, timeout=600)
+                linguist=tests.ENRY)
             repo2.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
             self.assertFalse(os.listdir(tmpdir))
 

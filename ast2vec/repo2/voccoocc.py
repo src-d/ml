@@ -10,15 +10,11 @@ class Repo2VocCoocc(Repo2CooccBase):
     """
     MODEL_CLASS = VocabularyCooccurrences
 
-    def __init__(self, vocabulary: dict, tempdir=None, linguist=None,
-                 log_level=logging.INFO, bblfsh_endpoint=None,
-                 timeout=Repo2CooccBase.DEFAULT_BBLFSH_TIMEOUT):
+    def __init__(self, vocabulary: dict, *args, **kwargs):
         """
         :param vocabulary: {token: index} mapping.
         """
-        super(Repo2VocCoocc, self).__init__(
-            tempdir=tempdir, linguist=linguist, log_level=log_level,
-            bblfsh_endpoint=bblfsh_endpoint, timeout=timeout)
+        super(Repo2VocCoocc, self).__init__(*args, **kwargs)
         self._vocabulary = vocabulary
 
     def _get_vocabulary(self):

@@ -28,7 +28,7 @@ class Repo2CooccTests(unittest.TestCase):
 
     def test_obj(self):
         basedir = os.path.dirname(__file__)
-        repo2 = Repo2Coocc(linguist=tests.ENRY, timeout=600)
+        repo2 = Repo2Coocc(linguist=tests.ENRY)
         coocc = repo2.convert_repository(os.path.join(basedir, "..", ".."))
         self.assertIsInstance(coocc, tuple)
         self.assertEqual(len(coocc), 2)
@@ -41,8 +41,9 @@ class Repo2CooccTests(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
-                linguist=tests.ENRY, output=file.name, bblfsh_endpoint=None,
-                timeout=None, repository=os.path.join(basedir, "..", ".."))
+                linguist=tests.ENRY, output=file.name,
+                repository=os.path.join(basedir, "..", ".."),
+                bblfsh_endpoint=None, timeout=None)
             repo2coocc_entry(args)
             validate_asdf_file(self, file.name)
 
@@ -50,7 +51,7 @@ class Repo2CooccTests(unittest.TestCase):
         def skip_uast(root, word2ind, dok_mat):
             pass
 
-        repo2 = Repo2Coocc(linguist=tests.ENRY, timeout=600)
+        repo2 = Repo2Coocc(linguist=tests.ENRY)
         repo2._traverse_uast = skip_uast
         basedir = os.path.dirname(__file__)
         coocc = repo2.convert_repository(os.path.join(basedir, "..", ".."))
@@ -65,15 +66,15 @@ class Repo2CooccTests(unittest.TestCase):
         node3 = Node([SIMPLE_IDENTIFIER], 3, [node1, node2])
         node4 = Node([SIMPLE_IDENTIFIER], 4, [])
         root = Node([], 5, [node3, node4])
-        repo2 = Repo2Coocc(linguist=tests.ENRY, timeout=600)
+        repo2 = Repo2Coocc(linguist=tests.ENRY)
         self.assertEqual(list(repo2._extract_ids(root)), [4, 3, 1])
 
     def test_linguist(self):
         # If this test fails, check execution permissions for provided paths.
         with self.assertRaises(FileNotFoundError):
-            Repo2Coocc(linguist="xxx", timeout=600)
+            Repo2Coocc(linguist="xxx")
         with self.assertRaises(FileNotFoundError):
-            Repo2Coocc(linguist=__file__, timeout=600)
+            Repo2Coocc(linguist=__file__)
 
 
 class Repo2CooccTransformerTests(unittest.TestCase):
@@ -85,8 +86,7 @@ class Repo2CooccTransformerTests(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         with tempfile.TemporaryDirectory() as tmpdir:
             r2cc = Repo2CooccTransformer(
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                linguist=tests.ENRY, timeout=600)
+                linguist=tests.ENRY)
             r2cc.transform(repos=basedir, output=tmpdir)
 
             # check that output file exists
@@ -99,10 +99,10 @@ class Repo2CooccTransformerTests(unittest.TestCase):
         basedir = os.path.dirname(__file__)
         with tempfile.TemporaryDirectory() as tmpdir:
             r2cc = Repo2CooccTransformer(
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                linguist=tests.ENRY, timeout=600)
+                linguist=tests.ENRY)
             r2cc.transform(repos=os.path.join(basedir, "coocc"), output=tmpdir)
             self.assertFalse(os.listdir(tmpdir))
+
 
 if __name__ == "__main__":
     unittest.main()

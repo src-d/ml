@@ -4,19 +4,19 @@ import tempfile
 import unittest
 
 import asdf
-from bblfsh.client import BblfshClient
-from bblfsh.github.com.bblfsh.sdk.uast.generated_pb2 import Node
-from google.protobuf.message import DecodeError
-from grpc import RpcError
-from modelforge import split_strings
+import ast2vec.lazy_grpc as lazy_grpc
+with lazy_grpc.masquerade():
+    from bblfsh.client import BblfshClient
+from ast2vec.bblfsh_roles import Node  # nopep8
+from google.protobuf.message import DecodeError  # nopep8
+from modelforge import split_strings  # nopep8
 
-
-import ast2vec.tests as tests
-import ast2vec.resolve_symlink
-from ast2vec import Source, Repo2SourceTransformer, Repo2Base
-from ast2vec import resolve_symlink
-from ast2vec.tests.models import DATA_DIR_SOURCE
-from ast2vec.repo2.source import repo2source_entry
+import ast2vec.tests as tests  # nopep8
+import ast2vec.resolve_symlink  # nopep8
+from ast2vec import Source, Repo2SourceTransformer, Repo2Base, Repo2Source  # nopep8
+from ast2vec import resolve_symlink  # nopep8
+from ast2vec.tests.models import DATA_DIR_SOURCE  # nopep8
+from ast2vec.repo2.source import repo2source_entry  # nopep8
 
 
 def validate_asdf_file(obj, filename):
@@ -43,15 +43,19 @@ class Repo2SourceTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as file:
             args = argparse.Namespace(
                 linguist=tests.ENRY, output=file.name,
-                bblfsh_endpoint=os.getenv("BBLFSH_ENDPOINT", "0.0.0.0:9432"),
-                timeout=None, repository=os.path.join(basedir, "..", ".."))
+                repository=os.path.join(basedir, "..", ".."),
+                bblfsh_endpoint=None, timeout=None)
             repo2source_entry(args)
             validate_asdf_file(self, file.name)
 
-    def default_source_model(self, tmpdir):
+    def default_source_model_transformer(self, tmpdir):
         r2cc = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY)
         r2cc.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
         self.assertEqual(r2cc.dependencies(), [])
+
+    def default_source_model(self):
+        r2cc = Repo2Source(linguist=tests.ENRY)
+        return r2cc.convert_repository(DATA_DIR_SOURCE)
 
     def load_default_source_model(self, tmpdir):
         path = Repo2SourceTransformer.prepare_filename(DATA_DIR_SOURCE, tmpdir)
@@ -60,11 +64,11 @@ class Repo2SourceTests(unittest.TestCase):
 
     def check_no_model(self, tmpdir):
         path = Repo2SourceTransformer.prepare_filename(DATA_DIR_SOURCE, tmpdir)
-        self.assertTrue(not os.path.exists(path))
+        self.assertFalse(os.path.exists(path))
 
     def test_obj(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            self.default_source_model(tmpdir)
+            self.default_source_model_transformer(tmpdir)
             model = self.load_default_source_model(tmpdir)
             self.assertEqual(len(model.uasts[0].children), 2)
             self.assertEqual(len(model.sources), 1)
@@ -77,10 +81,7 @@ class Repo2SourceTests(unittest.TestCase):
                 raise resolve_symlink.DanglingSymlinkError("test_DanglingSymlinkError")
 
             ast2vec.resolve_symlink.resolve_symlink = resolve_symlink_raise
-
-            with tempfile.TemporaryDirectory() as tmpdir:
-                self.default_source_model(tmpdir)
-                self.check_no_model(tmpdir)
+            self.assertEqual(([], [], []), self.default_source_model())
         finally:
             ast2vec.resolve_symlink.resolve_symlink = save_resolve_symlink
 
@@ -88,9 +89,7 @@ class Repo2SourceTests(unittest.TestCase):
         save_MAX_FILE_SIZE = Repo2Base.MAX_FILE_SIZE
         try:
             Repo2Base.MAX_FILE_SIZE = 1
-            with tempfile.TemporaryDirectory() as tmpdir:
-                self.default_source_model(tmpdir)
-                self.check_no_model(tmpdir)
+            self.assertEqual(([], [], []), self.default_source_model())
         finally:
             Repo2Base.MAX_FILE_SIZE = save_MAX_FILE_SIZE
 
@@ -101,9 +100,7 @@ class Repo2SourceTests(unittest.TestCase):
         save_bblfsh_parse = Repo2Base._bblfsh_parse
         try:
             Repo2Base._bblfsh_parse = bblfsh_parse_return_none
-            with tempfile.TemporaryDirectory() as tmpdir:
-                self.default_source_model(tmpdir)
-                self.check_no_model(tmpdir)
+            self.assertEqual(([], [], []), self.default_source_model())
         finally:
             Repo2Base._bblfsh_parse = save_bblfsh_parse
 
@@ -114,23 +111,20 @@ class Repo2SourceTests(unittest.TestCase):
         save_bblfsh_parse = BblfshClient.parse
         try:
             BblfshClient.parse = bblfsh_parse_raise_decode_error
-            with tempfile.TemporaryDirectory() as tmpdir:
-                self.default_source_model(tmpdir)
-                self.check_no_model(tmpdir)
+            self.assertEqual(([], [], []), self.default_source_model())
         finally:
             BblfshClient.parse = save_bblfsh_parse
 
     def test_bblfsh_parse_raise_RpcError(self):
 
         def bblfsh_parse_raise_rpc_error(*args, **kwargs):
+            from grpc import RpcError
             raise RpcError()
 
         save_bblfsh_parse = BblfshClient.parse
         try:
             BblfshClient.parse = bblfsh_parse_raise_rpc_error
-            with tempfile.TemporaryDirectory() as tmpdir:
-                self.default_source_model(tmpdir)
-                self.check_no_model(tmpdir)
+            self.assertEqual(([], [], []), self.default_source_model())
         finally:
             BblfshClient.parse = save_bblfsh_parse
 
@@ -162,16 +156,16 @@ class Repo2SourceTests(unittest.TestCase):
     def test_overwrite_existing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             model_path = Repo2SourceTransformer.prepare_filename(DATA_DIR_SOURCE, tmpdir)
-            r2cc = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+            r2cc = Repo2SourceTransformer(linguist=tests.ENRY,
                                           overwrite_existing=False)
             r2cc.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
             data = asdf.open(model_path)
-            r2cc2 = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+            r2cc2 = Repo2SourceTransformer(linguist=tests.ENRY,
                                            overwrite_existing=False)
             r2cc2.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
             data2 = asdf.open(model_path)
             self.assertEqual(data.tree["meta"]["created_at"], data2.tree["meta"]["created_at"])
-            r2cc2 = Repo2SourceTransformer(timeout=50, linguist=tests.ENRY,
+            r2cc2 = Repo2SourceTransformer(linguist=tests.ENRY,
                                            overwrite_existing=True)
             r2cc2.transform(DATA_DIR_SOURCE, output=tmpdir, num_processes=1)
             data3 = asdf.open(model_path)

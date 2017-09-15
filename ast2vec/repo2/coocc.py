@@ -1,7 +1,3 @@
-from modelforge.meta import generate_meta
-from modelforge.model import disassemble_sparse_matrix, merge_strings
-
-import ast2vec
 from ast2vec.coocc import Cooccurrences
 from ast2vec.repo2.base import RepoTransformer, repos2_entry, repo2_entry
 from ast2vec.repo2.cooccbase import Repo2CooccBase

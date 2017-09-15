@@ -1,7 +1,10 @@
 from collections import defaultdict
 import logging
+import marshal
 import math
 import os
+import pickle
+import types
 
 import numpy
 from scipy.sparse import csr_matrix
@@ -47,6 +50,19 @@ class Uasts2BOW:
         for key in missing:
             del freqs[key]
         return dict(freqs)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if isinstance(self._getter, types.FunctionType) \
+                and self._getter.__name__ == (lambda: None).__name__:
+            assert self._getter.__closure__ is None
+            state["_getter"] = marshal.dumps(self._getter.__code__)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        if isinstance(self._getter, bytes):
+            self._getter = types.FunctionType(marshal.loads(self._getter), globals())
 
 
 class UastModel2BOW(Model2Base):

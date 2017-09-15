@@ -61,3 +61,21 @@ class TokenParser:
             last = part[pos:]
             if last:
                 yield from ret(last)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["_stemmer"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self._stemmer = Stemmer.Stemmer("english")
+
+
+class NoTokenParser:
+    """
+    One can use this class if he or she does not want to do any parsing.
+    """
+
+    def process_token(self, token):
+        return [token]
