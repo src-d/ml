@@ -13,7 +13,7 @@ class BowJoinerBase(Model2Base):
     Base class for bag-of-word model mergers.
     """
     def __init__(self, *args, **kwargs):
-        super(BowJoinerBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.joined = None
 
     def convert_model(self, model):

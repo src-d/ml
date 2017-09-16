@@ -14,7 +14,7 @@ class Repo2VocCoocc(Repo2CooccBase):
         """
         :param vocabulary: {token: index} mapping.
         """
-        super(Repo2VocCoocc, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._vocabulary = vocabulary
 
     def _get_vocabulary(self):

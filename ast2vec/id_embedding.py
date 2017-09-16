@@ -23,7 +23,7 @@ class PreprocessTransformer(Transformer):
     shard_size = 4096
 
     def __init__(self, vocabulary_size=None, shard_size=None):
-        super(PreprocessTransformer, self).__init__()
+        super().__init__()
         if vocabulary_size is not None:
             self.vocabulary_size = vocabulary_size
         if shard_size is not None:

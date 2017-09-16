@@ -12,7 +12,7 @@ class Source(UASTModel):
     NAME = "source"
 
     def construct(self, repository, filenames, uasts, sources):
-        super(Source, self).construct(repository=repository, filenames=filenames, uasts=uasts)
+        super().construct(repository=repository, filenames=filenames, uasts=uasts)
         if not len(sources) == len(uasts) == len(filenames):
             raise ValueError("Length of src_codes({}), uasts({}) and filenames({}) are not equal".
                              format(len(sources), len(uasts), len(filenames)))
@@ -21,7 +21,7 @@ class Source(UASTModel):
         return self
 
     def _load_tree_kwargs(self, tree):
-        tree_kwargs = super(Source, self)._load_tree_kwargs(tree)
+        tree_kwargs = super()._load_tree_kwargs(tree)
         tree_kwargs["sources"] = split_strings(tree["sources"])
         return tree_kwargs
 
@@ -45,7 +45,7 @@ class Source(UASTModel):
         :param item: File index.
         :return: name, uast, source code
         """
-        return super(Source, self).__getitem__(item) + (self._sources[item],)
+        return super().__getitem__(item) + (self._sources[item],)
 
     def __iter__(self):
         """
@@ -54,6 +54,6 @@ class Source(UASTModel):
         return zip(self._filenames, self._uasts, self._sources)
 
     def _to_dict_to_save(self):
-        save_dict = super(Source, self)._to_dict_to_save()
+        save_dict = super()._to_dict_to_save()
         save_dict["sources"] = merge_strings(self.sources)
         return save_dict

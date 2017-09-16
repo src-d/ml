@@ -26,7 +26,7 @@ class Model2Base(PickleableLogger):
         :param log_level: Logging verbosity level.
         :param overwrite_existing: Rewrite existing models or skip them.
         """
-        super(Model2Base, self).__init__(log_level=log_level)
+        super().__init__(log_level=log_level)
         self.num_processes = multiprocessing.cpu_count() if num_processes == 0 else num_processes
         self.overwrite_existing = overwrite_existing
 

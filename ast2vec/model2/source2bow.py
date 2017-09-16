@@ -70,7 +70,7 @@ class UastModel2BOW(Model2Base):
     MODEL_TO_CLASS = BOW
 
     def __init__(self, topn, docfreq, *args, **kwargs):
-        super(UastModel2BOW, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._log.info("Choosing the vocabulary...")
         freqs = numpy.zeros(len(docfreq), dtype=int)
         vocabulary = [None] * len(docfreq)
