@@ -14,7 +14,7 @@ class Repo2CooccBase(Repo2Base):
     """
 
     def __init__(self, *args, **kwargs):
-        super(Repo2CooccBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._token_parser = TokenParser()
 
     def convert_uasts(self, file_uast_generator):

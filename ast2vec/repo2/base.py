@@ -62,7 +62,7 @@ class Repo2Base(PickleableLogger):
         :param overwrite_existing: Rewrite existing models or skip them
         :param bblfsh_raise_errors: If `True` raises errors when you get errors in bblfsh responses
         """
-        super(Repo2Base, self).__init__(log_level=log_level)
+        super().__init__(log_level=log_level)
         self.tempdir = tempdir
         self._cloner = RepoCloner(redownload=True, log_level=log_level)
         self._cloner.find_linguist(linguist)
@@ -290,7 +290,7 @@ class RepoTransformer(Transformer):
             is saved to /a/bc/abcoasa, etc.
         :param args: arguments for WORKER_CLASS model initialization
         """
-        super(RepoTransformer, self).__init__(log_level=log_level)
+        super().__init__(log_level=log_level)
         self._args = kwargs
         self._num_processes = num_processes
         self._organize_files = organize_files

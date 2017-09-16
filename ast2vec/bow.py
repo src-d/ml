@@ -100,12 +100,12 @@ class BOW(BOWBase):
     NAME = "bow"
 
     def construct(self, repos, matrix, tokens):
-        super(BOW, self).construct(repos=repos, matrix=matrix)
+        super().construct(repos=repos, matrix=matrix)
         self._tokens = tokens
         return self
 
     def _load_tree_kwargs(self, tree):
-        tree_kwargs = super(BOW, self)._load_tree_kwargs(tree)
+        tree_kwargs = super()._load_tree_kwargs(tree)
         tree_kwargs["tokens"] = split_strings(tree["tokens"])
         return tree_kwargs
 
@@ -130,7 +130,7 @@ class BOW(BOWBase):
                     output)
 
     def dump(self):
-        txt = super(BOW, self).dump()
+        txt = super().dump()
         txt += "\nFirst 10 tokens: %s" % self.tokens[:10]
         return txt
 

@@ -10,7 +10,7 @@ class Repo2Source(Repo2Base):
     MODEL_CLASS = Source
 
     def __init__(self, *args, **kwargs):
-        super(Repo2Source, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def convert_uasts(self, file_uast_generator):
         sources = []
