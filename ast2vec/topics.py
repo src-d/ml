@@ -60,7 +60,7 @@ class Topics(Model):
 
     def save(self, output, deps: Union[None, list]=None) -> None:
         if not deps:
-            deps = tuple()
+            deps = self.meta["dependencies"]
         self._meta = generate_meta(self.NAME, ast2vec.__version__, *deps)
         write_model(self._meta,
                     {"tokens": merge_strings(self.tokens),
