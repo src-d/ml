@@ -17,7 +17,7 @@ class Repo2nBOW(Repo2Base):
     MODEL_CLASS = NBOW
 
     def __init__(self, id2vec, docfreq, **kwargs):
-        super(Repo2nBOW, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._uasts2bow = Uasts2BOW(id2vec, docfreq, lambda x: x.response.uast)
 
     def convert_uasts(self, file_uast_generator):
@@ -37,7 +37,7 @@ class Repo2nBOWTransformer(RepoTransformer):
             backend = None
         self._id2vec = kwargs["id2vec"] = Id2Vec().load(id2vec or None, backend=backend)
         self._df = kwargs["docfreq"] = DocumentFrequencies().load(docfreq or None, backend=backend)
-        super(Repo2nBOWTransformer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def dependencies(self):
         return self._df, self._id2vec

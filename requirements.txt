@@ -11,3 +11,4 @@ modelforge>=0.2.6-alpha
 bblfsh==0.2.1
 grpcio==1.4.0
 requests>=2.0
+netifaces>=0.10.6

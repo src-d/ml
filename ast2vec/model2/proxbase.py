@@ -35,7 +35,7 @@ class ProxBase(Model2Base):
     MODEL_TO_CLASS = Cooccurrences
 
     def __init__(self, edges=EDGE_TYPES, *args, **kwargs):
-        super(ProxBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.edges = set(edges)
         self._token_parser = TokenParser()
         self._clear()

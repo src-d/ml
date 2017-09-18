@@ -95,7 +95,7 @@ Number of words: 394
 
     def test_id2vec_id(self):
         def route(url):
-            if url.endswith(gcs_backend.INDEX_FILE):
+            if gcs_backend.INDEX_FILE in url:
                 return '{"models": {"id2vec": {' \
                        '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
                        '{"url": "https://xxx"}}}}'.encode()
@@ -123,7 +123,7 @@ Number of words: 394
 
     def test_gcs(self):
         def route(url):
-            if url.endswith(gcs_backend.INDEX_FILE):
+            if gcs_backend.INDEX_FILE in url:
                 self.assertIn("custom", url)
                 return '{"models": {"id2vec": {' \
                        '"92609e70-f79c-46b5-8419-55726e873cfc": ' \

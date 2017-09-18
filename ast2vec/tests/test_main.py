@@ -3,6 +3,7 @@ import sys
 import unittest
 
 import ast2vec.__main__ as main
+from ast2vec.__main__ import ArgumentDefaultsHelpFormatterNoNone
 from ast2vec.tests.test_dump import captured_output
 
 
@@ -81,6 +82,20 @@ class MainTests(unittest.TestCase):
             sys.argv = args
             argparse.ArgumentParser.error = error
         self.assertIn("usage:", stdout.getvalue())
+
+    def test_custom_formatter(self):
+        class FakeAction:
+            default = None
+            option_strings = ['--param']
+            nargs = None
+            help = "help"
+
+        formatter = ArgumentDefaultsHelpFormatterNoNone(None)
+        help = formatter._expand_help(FakeAction)
+        self.assertEqual("help", help)
+        FakeAction.default = 10
+        help = formatter._expand_help(FakeAction)
+        self.assertEqual("help (default: 10)", help)
 
 
 if __name__ == "__main__":
