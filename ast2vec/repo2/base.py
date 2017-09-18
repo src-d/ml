@@ -5,6 +5,7 @@ import multiprocessing
 import os
 from queue import Queue
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -15,6 +16,7 @@ from time import time
 from google.protobuf.message import DecodeError
 from modelforge.logs import setup_logging
 from modelforge.progress_bar import progress_bar
+import netifaces
 
 import ast2vec.lazy_grpc as lazy_grpc
 with lazy_grpc.masquerade():
@@ -26,7 +28,8 @@ from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 from ast2vec import resolve_symlink  # nopep8
 
 GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "response"])
-DEFAULT_BBLFSH_ENDPOINT = "0.0.0.0:9432"
+DEFAULT_BBLFSH_ENDPOINTS = ["0.0.0.0:9432"] + [
+    "%s:9432" % gw[0] for gw in sorted(netifaces.gateways()["default"].values())]
 DEFAULT_BBLFSH_TIMEOUT = 20  # Longer requests are dropped.
 
 
@@ -525,9 +528,17 @@ def resolve_bblfsh_endpoint(bblfsh_endpoint):
         log.debug("Got bblfsh endpoint from BBLFSH_ENDPOINT environment variable: %s",
                   env_endpoint)
         return env_endpoint
-    log.debug("You did not provide bblfsh endpoint directly or in BBLFSH_ENDPOINT environment "
-              "variable. Default %s will be used", DEFAULT_BBLFSH_ENDPOINT)
-    return DEFAULT_BBLFSH_ENDPOINT
+    log.debug("You did not provide the bblfsh endpoint directly or in BBLFSH_ENDPOINT "
+              "environment variable. Default %s will be used", DEFAULT_BBLFSH_ENDPOINTS)
+    for addr in DEFAULT_BBLFSH_ENDPOINTS:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host, port = addr.split(":")
+        log.debug("Probing %s", addr)
+        result = sock.connect_ex((host, int(port)))
+        if result == 0:
+            log.info("Detected bblfsh server: %s", addr)
+            return addr
+    return DEFAULT_BBLFSH_ENDPOINTS[0]
 
 
 def ensure_bblfsh_is_running_noexc(bblfsh_endpoint=None):
@@ -537,7 +548,7 @@ def ensure_bblfsh_is_running_noexc(bblfsh_endpoint=None):
     :param bblfsh_endpoint: bblfsh endpoint to check.
     :return: None
     """
-    if resolve_bblfsh_endpoint(bblfsh_endpoint) != DEFAULT_BBLFSH_ENDPOINT:
+    if resolve_bblfsh_endpoint(bblfsh_endpoint) != DEFAULT_BBLFSH_ENDPOINTS[0]:
         return
     try:
         ensure_bblfsh_is_running()

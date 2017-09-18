@@ -15,7 +15,7 @@ from ast2vec.id_embedding import preprocess as preprocess_id2vec, run_swivel, \
     postprocess as postprocess_id2vec, swivel
 from ast2vec.vw_dataset import bow2vw_entry
 from ast2vec.repo2.base import Repo2Base, RepoTransformer, \
-    DEFAULT_BBLFSH_TIMEOUT, DEFAULT_BBLFSH_ENDPOINT
+    DEFAULT_BBLFSH_TIMEOUT, DEFAULT_BBLFSH_ENDPOINTS
 from ast2vec.repo2.coocc import repo2coocc_entry, repos2coocc_entry
 from ast2vec.repo2.nbow import repo2nbow_entry, repos2nbow_entry
 from ast2vec.repo2.uast import repo2uast_entry, repos2uast_entry
@@ -80,7 +80,7 @@ def get_parser() -> argparse.ArgumentParser:
         "--bblfsh", dest="bblfsh_endpoint",
         help="Babelfish server's endpoint, e.g. 0.0.0.0:9432. "
              "You can specify it directly or with BBLFSH_ENDPOINT environment variable. Otherwise "
-             "default will be used (default: %s)" % DEFAULT_BBLFSH_ENDPOINT)
+             "default will be used (default: %s)" % DEFAULT_BBLFSH_ENDPOINTS)
     bblfsh_args.add_argument(
         "--timeout", type=int,
         help="Babelfish timeout - longer requests are dropped. "
