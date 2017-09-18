@@ -1,6 +1,7 @@
 from collections import namedtuple
 from itertools import accumulate, repeat
 import logging
+from math import isnan
 import multiprocessing
 import os
 from queue import Queue
@@ -12,6 +13,7 @@ import tempfile
 import threading
 from typing import Union
 from time import time
+import tempfile
 
 from google.protobuf.message import DecodeError
 from modelforge.logs import setup_logging
@@ -31,6 +33,16 @@ GeneratorResponse = namedtuple("GeneratorResponse", ["filepath", "filename", "re
 DEFAULT_BBLFSH_ENDPOINTS = ["0.0.0.0:9432"] + [
     "%s:9432" % gw[0] for gw in sorted(netifaces.gateways()["default"].values())]
 DEFAULT_BBLFSH_TIMEOUT = 20  # Longer requests are dropped.
+DEFAULT_PARSE_LOG_FILENAME = "bblfsh_parse_files.log"  # Filename for additional debug logs
+
+lock = threading.Lock()
+
+
+def resolve_parse_log_filename():
+    parse_log_filename = os.getenv("AST2VEC_PARSE_LOG")
+    if parse_log_filename:
+        return parse_log_filename
+    return DEFAULT_PARSE_LOG_FILENAME
 
 
 class BblfshFailedError(Exception):
@@ -48,11 +60,13 @@ class Repo2Base(PickleableLogger):
     MODEL_CLASS = None  #: Must be defined in the children.
     DEFAULT_BBLFSH_RAISE_ERRORS = False  # Set `True` to fail on bblfsh errors.
     DEFAULT_OVERWRITE_EXISTING = True
+    DEFAULT_THREAD_COUNT = multiprocessing.cpu_count()
     MAX_FILE_SIZE = 200000
+    PARSE_LOG_FILENAME = resolve_parse_log_filename()
 
     def __init__(self, tempdir=None, linguist=None, log_level=logging.INFO,
                  bblfsh_endpoint=None, timeout=None,
-                 threads=multiprocessing.cpu_count(),
+                 threads=DEFAULT_THREAD_COUNT,
                  overwrite_existing=DEFAULT_OVERWRITE_EXISTING,
                  bblfsh_raise_errors=DEFAULT_BBLFSH_RAISE_ERRORS):
         """
@@ -74,6 +88,8 @@ class Repo2Base(PickleableLogger):
         self._overwrite_existing = overwrite_existing
         self.timeout = resolve_bblfsh_timeout(timeout)
         self.threads = threads
+        self._lines = 0
+        self._time = 0
 
     @property
     def tempdir(self):
@@ -166,15 +182,39 @@ class Repo2Base(PickleableLogger):
 
     def _bblfsh_parse(self, thread_index, filepath, language):
         from grpc import RpcError
+        status = "ERR"
+        start_time = time()
+        lines = lines_count(filepath, self._log)
         try:
-            return self._bblfsh[thread_index].parse(
+            res = self._bblfsh[thread_index].parse(
                 filepath, language=language, timeout=self._timeout)
+            status = "OK"
+            return res
         except DecodeError as e:
             msg = "bblfsh: DecodeError on %s: %s\nYour protobuf may be <= v3.3.2 " \
                   "and you hit https://github.com/bblfsh/server/issues/59#issuecomment-318125752"
             self._log.error(msg, e)
         except RpcError as e:
             self._log.error("bblfsh: RpcError on %s: %s", filepath, e)
+            self._log.warning(msg)
+            raise e from None
+        finally:
+            self._write_debug_logs(thread_index, filepath, status, lines, start_time)
+
+    def _write_debug_logs(self, thread_index, filepath, status, lines, start_time):
+        time_spent = time() - start_time
+        if not isnan(lines):
+            self._lines += lines
+            self._time += time_spent
+        if self._log.isEnabledFor(logging.DEBUG):
+            with lock:
+                if not os.path.exists(self.PARSE_LOG_FILENAME):
+                    with open(self.PARSE_LOG_FILENAME, "w") as f:
+                        f.write("Thread, lines, time, speed, status, path")
+                with open(self.PARSE_LOG_FILENAME, "a") as f:
+                    f.write("% 2d, % 5d, % 6.2f, % 8.2f, % 3s, %s\n" %
+                            (thread_index, lines, time_spent, lines / time_spent, status,
+                             os.path.relpath(filepath, os.getcwd())))
 
     def _file_uast_generator(self, classified, target_dir, url_or_path):
         queue_in = Queue()
@@ -259,6 +299,9 @@ class Repo2Base(PickleableLogger):
                 "Received errors: %s", ", ".join(errors))
         if empty:
             self._log.warning("No files were processed for %s", url_or_path)
+        if self._log.isEnabledFor(logging.DEBUG):
+            self._log.debug("Average bblfsh speed % 6.2f line/sec for %s" %
+                            (self._lines / self._time, url_or_path))
 
     def _get_log_name(self):
         return "repo2" + self.MODEL_CLASS.NAME
@@ -292,8 +335,11 @@ class RepoTransformer(Transformer):
         """
         super().__init__(log_level=log_level)
         self._args = kwargs
+        self._args["log_level"] = log_level
         self._num_processes = num_processes
         self._organize_files = organize_files
+        self._lines = 0
+        self._time = 0
 
     @property
     def num_processes(self):
@@ -329,7 +375,7 @@ class RepoTransformer(Transformer):
         :return: The child process' exit code.
         """
         if "log_level" in args:
-            setup_logging(args.pop("log_level"))
+            setup_logging(args.get("log_level"))
         if "grpc" in sys.modules:
             logging.getLogger(cls.__name__).error("grpc detected, fork() is unstable -> aborted")
             queue.put((url_or_path, 0))
@@ -337,7 +383,8 @@ class RepoTransformer(Transformer):
         pid = os.fork()
         if pid == 0:
             outfile = cls.prepare_filename(url_or_path, outdir, organize_files)
-            status = cls(**args).process_repo(url_or_path, outfile)
+            worker = cls(**args)
+            status = worker.process_repo(url_or_path, outfile)
             if multiprocessing.get_start_method() == "fork":
                 sys.exit(status)
             os._exit(status)
@@ -439,6 +486,7 @@ class RepoTransformer(Transformer):
                CPUs.
         :return: None
         """
+        time_start = time()
         self._args["log_level"] = self._log.level
         if num_processes is None:
             num_processes = self.num_processes
@@ -474,6 +522,13 @@ class RepoTransformer(Transformer):
                     failures += 1
 
         self._log.info("Finished, %d failed repos", failures)
+        if self._log.isEnabledFor(logging.DEBUG) and os.path.exists(
+                self.WORKER_CLASS.PARSE_LOG_FILENAME):
+            lines, time_spent = parse_parse_logs(self.WORKER_CLASS.PARSE_LOG_FILENAME)
+            threads = self._args.get("threads", self.WORKER_CLASS.DEFAULT_THREAD_COUNT)
+            self._log.debug("Average bblfsh  speed % 6.2f lines/sec." % (lines / time_spent))
+            self._log.debug("Average ast2vec speed % 6.2f lines/sec. %d process, %d threads" %
+                            (lines / (time() - time_start), self.num_processes, threads))
         return len(inputs) - failures
 
     def _get_log_name(self):
@@ -495,6 +550,35 @@ class RepoTransformer(Transformer):
         :return: :class:`dict` with the required items to construct the model.
         """
         raise NotImplementedError
+
+
+def parse_parse_logs(filepath):
+    lines = 0
+    time_spent = 0
+    with open(filepath) as f:
+        f.readline()
+        for line in f:
+            sl = line.split(",")
+            lines += int(sl[1])
+            time_spent += float(sl[2])
+    return lines, time_spent
+
+
+def lines_count(filepath, log=None):
+    """
+    Returns line count in file or -1 if error.
+
+    :param filepath: path to file.
+    :pasram log: For exception output.
+    :return: lines count
+    """
+    try:
+        with open(filepath, encoding="utf8")as f:
+            return f.read().count("\n")
+    except Exception as e:
+        if log:
+            log.exception("Can not get size for %s" % filepath)
+        return float("nan")
 
 
 def resolve_bblfsh_timeout(bblfsh_timeout):
