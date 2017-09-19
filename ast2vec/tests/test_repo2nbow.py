@@ -48,7 +48,7 @@ class Repo2NBOWTests(unittest.TestCase):
             args = argparse.Namespace(
                 id2vec=id2vec, docfreq=df, linguist=tests.ENRY,
                 gcs_bucket=None, output=file.name, bblfsh_endpoint=None, timeout=None,
-                repository=os.path.join(basedir, "..", ".."))
+                repository=os.path.join(basedir, "..", ".."), prune_df=1)
             repo2nbow_entry(args)
             self.assertTrue(os.path.isfile(file.name))
             validate_asdf_file(self, file.name)

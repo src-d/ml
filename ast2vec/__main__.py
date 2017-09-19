@@ -132,6 +132,9 @@ def get_parser() -> argparse.ArgumentParser:
         "--id2vec", help="URL or path to the identifier embeddings.")
     df_arg = one_arg_parser(
         "-d", "--df", dest="docfreq", help="URL or path to the document frequencies.")
+    prune_arg = one_arg_parser(
+        "--prune-df", default=20,
+        help="Minimum document frequency to leave an identifier.")
     outputdir_arg = one_arg_parser("--output", default=os.getcwd(), help="Output directory.")
 
     # Create and construct subparsers
@@ -162,7 +165,8 @@ def get_parser() -> argparse.ArgumentParser:
         "repo2nbow", help="Produce the nBOW from a Git repository.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repository_arg, id2vec_arg, df_arg, linguist_arg, bblfsh_args,
-                 output_dir_arg_asdf, gcs_arg, threads_arg, disable_overwrite_arg])
+                 output_dir_arg_asdf, gcs_arg, threads_arg, disable_overwrite_arg,
+                 prune_arg])
     repo2nbow_parser.set_defaults(handler=repo2nbow_entry)
 
     repos2nbow_parser = subparsers.add_parser(
@@ -170,7 +174,7 @@ def get_parser() -> argparse.ArgumentParser:
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[repos2input_arg, id2vec_arg, df_arg, linguist_arg, output_dir_arg_asdf,
                  bblfsh_args, gcs_arg, process_1_2_arg, threads_arg, organize_files_arg,
-                 disable_overwrite_arg, repos2input_arg])
+                 disable_overwrite_arg, repos2input_arg, prune_arg])
     repos2nbow_parser.set_defaults(handler=repos2nbow_entry)
 
     repo2coocc_parser = subparsers.add_parser(
@@ -256,7 +260,8 @@ def get_parser() -> argparse.ArgumentParser:
     source2bow_parser = subparsers.add_parser(
         "source2bow", help="Calculate bag of words from extracted uasts.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
-        parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg])
+        parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg,
+                 prune_arg])
     source2bow_parser.set_defaults(handler=source2bow_entry)
     source2bow_parser.add_argument(
         "-v", "--vocabulary-size", required=True, type=int,

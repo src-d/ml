@@ -12,7 +12,7 @@ setup(
     description="Part of source{d}'s stack for machine learning on source "
                 "code. Provides API and tools to train and use models based "
                 "on source code identifiers extracted from Babelfish's UASTs.",
-    version="0.3.1-alpha",
+    version="0.3.2-alpha",
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",

@@ -16,7 +16,7 @@ class Source2DocFreqTests(unittest.TestCase):
                 processes=2, input=paths.DATA_DIR_SOURCE, output=tmpdir,
                 filter="**/source_*.asdf", vocabulary_size=500,
                 docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
-                overwrite_existing=True)
+                overwrite_existing=True, prune_df=1)
             source2bow_entry(args)
             for n, file in enumerate(os.listdir(tmpdir)):
                 bow = BOW().load(os.path.join(tmpdir, file))
@@ -30,7 +30,7 @@ class Source2DocFreqTests(unittest.TestCase):
                 processes=2, input=paths.DATA_DIR_SOURCE, output=tmpdir,
                 filter="**/source_*.asdf", vocabulary_size=500,
                 docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
-                overwrite_existing=False)
+                overwrite_existing=False, prune_df=1)
             source2bow_entry(args)
             data1 = [asdf.open(os.path.join(tmpdir, file))
                      for n, file in enumerate(os.listdir(tmpdir))]
