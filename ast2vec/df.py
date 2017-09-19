@@ -37,6 +37,20 @@ Number of documents: %d""" % (
         """
         return self._docs
 
+    def prune(self, threshold: int):
+        """
+        Removes tokens which occur less than `threshold` times.
+        The operation happens *not* in-place - a new model is returned.
+        :param threshold: Minimum number of occurrences.
+        :return: the pruned model.
+        """
+        self._log.info("Pruning to min %d occurrences", threshold)
+        pruned = DocumentFrequencies()
+        pruned._docs = self.docs
+        pruned._df = {k: v for k, v in self._df.items() if v >= threshold}
+        pruned._meta = self.meta
+        return pruned
+
     def __getitem__(self, item):
         return self._df[item]
 

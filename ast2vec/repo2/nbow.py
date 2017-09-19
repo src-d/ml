@@ -37,6 +37,9 @@ class Repo2nBOWTransformer(RepoTransformer):
             backend = None
         self._id2vec = kwargs["id2vec"] = Id2Vec().load(id2vec or None, backend=backend)
         self._df = kwargs["docfreq"] = DocumentFrequencies().load(docfreq or None, backend=backend)
+        prune_df = kwargs.pop("prune_df", 1)
+        if prune_df > 1:
+            self._df = self._df.prune(prune_df)
         super().__init__(**kwargs)
 
     def dependencies(self):
