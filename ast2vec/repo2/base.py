@@ -170,23 +170,19 @@ class Repo2Base(PickleableLogger):
             return self._bblfsh[thread_index].parse(
                 filepath, language=language, timeout=self._timeout)
         except DecodeError as e:
-            msg = "bblfsh raised an DecodeError exception. Probably your protobuf is <= v3.3.2 " \
+            msg = "bblfsh: DecodeError on %s: %s\nYour protobuf may be <= v3.3.2 " \
                   "and you hit https://github.com/bblfsh/server/issues/59#issuecomment-318125752"
-            self._log.warning(msg)
-            raise e from None
+            self._log.error(msg, e)
         except RpcError as e:
-            msg = "bblfsh raised an RpcError exception. Probably it is something wrong with your" \
-                  " protobuf."
-            self._log.warning(msg)
-            raise e from None
+            self._log.error("bblfsh: RpcError on %s: %s", filepath, e)
 
     def _file_uast_generator(self, classified, target_dir, url_or_path):
         queue_in = Queue()
         queue_out = Queue()
-        errors = list()
+        errors = []
+        errors_lock = threading.Lock()
 
         def thread_loop(thread_index):
-            nonlocal errors
             while True:
                 task = queue_in.get()
                 if task is None or errors:
@@ -195,36 +191,37 @@ class Repo2Base(PickleableLogger):
                     dirname, filename, language = task
                     filepath = os.path.join(dirname, filename)
 
+                    def skip(*args, addmsg=""):
+                        self._log.warning("%s was skipped" + addmsg, filepath, *args)
+                        queue_out.put_nowait(None)
+
                     try:
-                        # Resolve symlink
                         filepath = resolve_symlink.resolve_symlink(filepath)
                     except resolve_symlink.DanglingSymlinkError as e:
-                        self._log.warning(*e.args)
-                        queue_out.put_nowait(None)
+                        self._log.error(*e.args)
+                        skip()
                         continue
 
                     size = os.stat(filepath).st_size
                     if size > self.MAX_FILE_SIZE:
-                        self._log.warning("%s is too big - %d", filepath, size)
-                        queue_out.put_nowait(None)
+                        skip(size, addmsg=": it is too big - %d bytes")
                         continue
 
                     response = self._bblfsh_parse(thread_index, filepath, language)
                     if response is None:
-                        self._log.warning("bblfsh timed out on %s", filepath)
-                        queue_out.put_nowait(None)
+                        skip()
                         continue
                     if response.errors and self._bblfsh_raise_errors:
-                        errors.extend(response.errors)
-                        queue_out.put_nowait(None)
+                        with errors_lock:
+                            errors.extend(response.errors)
+                        skip()
                         break
 
                     queue_out.put_nowait(GeneratorResponse(filepath=filepath,
                                                            filename=filename,
                                                            response=response))
                 except:
-                    self._log.exception(
-                        "Error while processing %s", task)
+                    self._log.exception("While processing %s", task)
                     queue_out.put_nowait(None)
 
         pool = [threading.Thread(target=thread_loop, args=(i,),
