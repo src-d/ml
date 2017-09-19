@@ -41,5 +41,11 @@ class DocumentFrequenciesTests(unittest.TestCase):
                 break
         self.assertTrue(aaa)
 
+    def test_prune(self):
+        pruned = self.model.prune(4)
+        for tok, freq in pruned:
+            self.assertGreaterEqual(freq, 4)
+        self.assertEqual(len(pruned), 346)
+
 if __name__ == "__main__":
     unittest.main()
