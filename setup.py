@@ -12,7 +12,7 @@ setup(
     description="Part of source{d}'s stack for machine learning on source "
                 "code. Provides API and tools to train and use models based "
                 "on source code identifiers extracted from Babelfish's UASTs.",
-    version="0.3.2-alpha",
+    version="0.3.3-alpha",
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
@@ -32,7 +32,7 @@ setup(
                       "google-cloud-storage>=1.0,<2.0",
                       "python-dateutil",
                       "modelforge>=0.2.6-alpha",
-                      "bblfsh>=0.0.4",
+                      "bblfsh>=0.2.1,<1.0",
                       "netifaces>=0.10.6"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
