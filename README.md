@@ -17,6 +17,8 @@ All the models are stored in [ASDF](http://asdf-standard.readthedocs.io/en/lates
 pip3 install ast2vec
 ```
 
+You need to have `libxml2` installed. E.g., on Ubuntu `apt install libxml2-dev`.
+
 ## Usage
 
 This project exposes two interfaces: API and command line. The command line is
