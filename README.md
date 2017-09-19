@@ -17,6 +17,8 @@ All the models are stored in [ASDF](http://asdf-standard.readthedocs.io/en/lates
 pip3 install ast2vec
 ```
 
+You need to have `libxml2` installed. E.g., on Ubuntu `apt install libxml2-dev`.
+
 ## Usage
 
 This project exposes two interfaces: API and command line. The command line is
@@ -42,7 +44,7 @@ Transformers (keras/sklearn style): [Repo2nBOWTransformer](ast2vec/repo2/nbow.py
 
 ```
 docker build -t srcd/ast2vec .
-docker run -d --privileged -p 9432:9432 --name bblfsh --rm bblfsh/server
+BBLFSH_DRIVER_IMAGES="python=docker://bblfsh/python-driver:v0.8.2;java=docker://bblfsh/java-driver:v0.6.0" docker run -e BBLFSH_DRIVER_IMAGES -d --privileged -p 9432:9432 --name bblfsh bblfsh/server:v0.7.0 --log-level DEBUG
 docker run -it --rm srcd/ast2vec --help
 ```
 
