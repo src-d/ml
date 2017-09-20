@@ -67,7 +67,7 @@ class MergeDocFreq(ToDocFreqBase):
         self._docs += model.docs
 
 
-def source2df_entry(args):
+def uast2df_entry(args):
     converter = Uast2DocFreq(num_processes=args.processes)
     with tempfile.TemporaryDirectory(dir=args.tmpdir, prefix="source2uast") as tmpdir:
         converter.convert(args.input, tmpdir, pattern=args.filter)

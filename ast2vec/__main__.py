@@ -23,8 +23,8 @@ from ast2vec.repo2.source import repo2source_entry, repos2source_entry
 from ast2vec.model2.join_bow import joinbow_entry
 from ast2vec.model2.prox import prox_entry, MATRIX_TYPES
 from ast2vec.model2.proxbase import EDGE_TYPES
-from ast2vec.model2.source2bow import source2bow_entry
-from ast2vec.model2.source2df import source2df_entry
+from ast2vec.model2.uast2bow import uast2bow_entry
+from ast2vec.model2.uast2df import uast2df_entry
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
@@ -230,12 +230,12 @@ def get_parser() -> argparse.ArgumentParser:
     group_ex.add_argument("--bow", action="store_true", help="The models are BOW.")
     group_ex.add_argument("--nbow", action="store_true", help="The models are NBOW.")
 
-    source2df_parser = subparsers.add_parser(
-        "source2df", help="Calculate identifier document frequencies from extracted uasts.",
+    uast2df_parser = subparsers.add_parser(
+        "uast2df", help="Calculate identifier document frequencies from extracted uasts.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, filter_arg, tmpdir_arg, process_arg])
-    source2df_parser.set_defaults(handler=source2df_entry)
-    source2df_parser.add_argument("output", help="Where to write document frequencies.")
+    uast2df_parser.set_defaults(handler=uast2df_entry)
+    uast2df_parser.add_argument("output", help="Where to write document frequencies.")
 
     uast2prox_parser = subparsers.add_parser(
         "uast2prox", help="Convert UASTs to proximity matrix.",
@@ -257,16 +257,16 @@ def get_parser() -> argparse.ArgumentParser:
         "T - connect node A tokens with node B tokens.\n"
         "RT - connect node A roles(tokens) with node B tokens(roles).")
 
-    source2bow_parser = subparsers.add_parser(
-        "source2bow", help="Calculate bag of words from extracted uasts.",
+    uast2bow_parser = subparsers.add_parser(
+        "uast2bow", help="Calculate bag of words from extracted uasts.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg,
                  prune_arg])
-    source2bow_parser.set_defaults(handler=source2bow_entry)
-    source2bow_parser.add_argument(
+    uast2bow_parser.set_defaults(handler=uast2bow_entry)
+    uast2bow_parser.add_argument(
         "-v", "--vocabulary-size", required=True, type=int,
         help="Vocabulary size: the tokens with the highest document frequencies will be picked.")
-    source2bow_parser.add_argument(
+    uast2bow_parser.add_argument(
         "output", help="Where to write the merged nBOW.")
 
     preproc_parser = subparsers.add_parser(
