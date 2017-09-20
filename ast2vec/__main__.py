@@ -286,7 +286,7 @@ def get_parser() -> argparse.ArgumentParser:
              "(DF in TF-IDF).")
     preproc_parser.add_argument(
         "input", nargs="+",
-        help="Pickled scipy.sparse matrices. If it is a directory, all files "
+        help="Cooccurrence model produced by repo(s)2coocc. If it is a directory, all files "
              "inside are read.")
 
     train_parser = subparsers.add_parser(
