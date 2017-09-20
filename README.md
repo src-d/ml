@@ -9,9 +9,18 @@ Currently, there are implemented:
 * nBOW, weighted bag of vectors, as in [src-d/wmd-relax](https://github.com/src-d/wmd-relax)
 * topic modeling
 
-All the models are stored in [ASDF](http://asdf-standard.readthedocs.io/en/latest/) format.
+This project can be the foundation for [MLoSC](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and working with models, thus allowing to focus on the higher level tasks.
 
-## Installaton
+It is written in Python3 and has been tested on Linux and macOS. ast2vec is tightly coupled with [Babelfish](http://doc.bblf.sh) and delegates all the AST parsing to it.
+
+Here is the list of projects which are built with ast2vec:
+
+* [vecino](https://github.com/src-d/vecino) - finding similar repositories
+* [tmsc](https://github.com/src-d/tmsc) - topic modeling of repositories
+* [role2vec](https://github.com/src-d/rol2vec) - AST node embedding and correction
+* [snippet-ranger](https://github.com/src-d/snippet-ranger) - topic modeling of source code snippets
+
+## Installation
 
 ```
 pip3 install ast2vec
