@@ -1,3 +1,4 @@
+import glob
 import logging
 import multiprocessing
 import os
@@ -51,6 +52,8 @@ def install_bigartm(args=None, target="./bigartm", tempdir=None, warn_exists=Tru
         execute("cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DPYTHON=python3 ..",
                 cwd, log)
         execute("make -j%d" % multiprocessing.cpu_count(), cwd, log)
+        whl_path = glob.glob(os.path.join(tmpdir, "build/python/*.whl"))[0]
+        execute("pip3 install \"%s\"" % whl_path, cwd, log)
         shutil.copyfile(os.path.join(cwd, "bin", "bigartm"), target)
         os.chmod(target, 0o777)
     log.info("Installed %s", os.path.abspath(target))
