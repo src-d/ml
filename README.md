@@ -57,6 +57,15 @@ BBLFSH_DRIVER_IMAGES="python=docker://bblfsh/python-driver:v0.8.2;java=docker://
 docker run -it --rm srcd/ast2vec --help
 ```
 
+If the first command fails with
+
+```
+Cannot connect to the Docker daemon. Is the docker daemon running on this host?
+```
+
+And you are sure that the daemon is running, then you need to add your user to `docker` group:
+refer to the [documentation](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user).
+
 ## Algorithms
 
 #### Identifier embeddings
