@@ -3,7 +3,7 @@ import tempfile
 import unittest
 
 from ast2vec.df import DocumentFrequencies
-from ast2vec.model2.source2df import source2df_entry
+from ast2vec.model2.uast2df import uast2df_entry
 import ast2vec.tests.models as paths
 
 
@@ -13,7 +13,7 @@ class Source2DocFreqTests(unittest.TestCase):
             args = argparse.Namespace(
                 processes=2, input=paths.DATA_DIR_SOURCE, output=tmpf.name, tmpdir=None,
                 filter="**/source_*.asdf")
-            source2df_entry(args)
+            uast2df_entry(args)
             merged = DocumentFrequencies().load(tmpf.name)
         self.assertEqual(len(merged), 335)
 

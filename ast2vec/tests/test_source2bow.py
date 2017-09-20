@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from ast2vec.bow import BOW
-from ast2vec.model2.source2bow import source2bow_entry
+from ast2vec.model2.uast2bow import uast2bow_entry
 import ast2vec.tests.models as paths
 
 
@@ -17,7 +17,7 @@ class Source2DocFreqTests(unittest.TestCase):
                 filter="**/source_*.asdf", vocabulary_size=500,
                 docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
                 overwrite_existing=True, prune_df=1)
-            source2bow_entry(args)
+            uast2bow_entry(args)
             for n, file in enumerate(os.listdir(tmpdir)):
                 bow = BOW().load(os.path.join(tmpdir, file))
                 self.assertGreater(bow._matrix.getnnz(), 0)
@@ -31,16 +31,16 @@ class Source2DocFreqTests(unittest.TestCase):
                 filter="**/source_*.asdf", vocabulary_size=500,
                 docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
                 overwrite_existing=False, prune_df=1)
-            source2bow_entry(args)
+            uast2bow_entry(args)
             data1 = [asdf.open(os.path.join(tmpdir, file))
                      for n, file in enumerate(os.listdir(tmpdir))]
-            source2bow_entry(args)
+            uast2bow_entry(args)
             data2 = [asdf.open(os.path.join(tmpdir, file))
                      for n, file in enumerate(os.listdir(tmpdir))]
             self.assertEqual([d.tree["meta"]["created_at"] for d in data1],
                              [d.tree["meta"]["created_at"] for d in data2])
             args.overwrite_existing = True
-            source2bow_entry(args)
+            uast2bow_entry(args)
             data3 = [asdf.open(os.path.join(tmpdir, file))
                      for n, file in enumerate(os.listdir(tmpdir))]
             self.assertNotEqual([d.tree["meta"]["created_at"] for d in data1],

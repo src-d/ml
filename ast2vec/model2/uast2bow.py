@@ -98,7 +98,7 @@ class UastModel2BOW(Model2Base):
         return bow
 
 
-def source2bow_entry(args):
+def uast2bow_entry(args):
     df = DocumentFrequencies().load(args.docfreq)
     if args.prune_df > 1:
         df = df.prune(args.prune_df)

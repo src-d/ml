@@ -5,7 +5,7 @@ from scipy.sparse import csr_matrix
 from ast2vec.bow import NBOW
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
-from ast2vec.model2.source2bow import Uasts2BOW
+from ast2vec.model2.uast2bow import Uasts2BOW
 from ast2vec.repo2.base import RepoTransformer, Repo2Base, repos2_entry, repo2_entry
 from modelforge.backends import create_backend
 
