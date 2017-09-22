@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import sys
 
+from ast2vec.id2vec import projector_entry
 from ast2vec.topics import bigartm2asdf_entry
 from modelforge.logs import setup_logging
 
@@ -23,8 +24,8 @@ from ast2vec.repo2.source import repo2source_entry, repos2source_entry
 from ast2vec.model2.join_bow import joinbow_entry
 from ast2vec.model2.prox import prox_entry, MATRIX_TYPES
 from ast2vec.model2.proxbase import EDGE_TYPES
-from ast2vec.model2.source2bow import source2bow_entry
-from ast2vec.model2.source2df import source2df_entry
+from ast2vec.model2.uast2bow import uast2bow_entry
+from ast2vec.model2.uast2df import uast2df_entry
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
@@ -230,12 +231,12 @@ def get_parser() -> argparse.ArgumentParser:
     group_ex.add_argument("--bow", action="store_true", help="The models are BOW.")
     group_ex.add_argument("--nbow", action="store_true", help="The models are NBOW.")
 
-    source2df_parser = subparsers.add_parser(
-        "source2df", help="Calculate identifier document frequencies from extracted uasts.",
+    uast2df_parser = subparsers.add_parser(
+        "uast2df", help="Calculate identifier document frequencies from extracted uasts.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, filter_arg, tmpdir_arg, process_arg])
-    source2df_parser.set_defaults(handler=source2df_entry)
-    source2df_parser.add_argument("output", help="Where to write document frequencies.")
+    uast2df_parser.set_defaults(handler=uast2df_entry)
+    uast2df_parser.add_argument("output", help="Where to write document frequencies.")
 
     uast2prox_parser = subparsers.add_parser(
         "uast2prox", help="Convert UASTs to proximity matrix.",
@@ -257,16 +258,16 @@ def get_parser() -> argparse.ArgumentParser:
         "T - connect node A tokens with node B tokens.\n"
         "RT - connect node A roles(tokens) with node B tokens(roles).")
 
-    source2bow_parser = subparsers.add_parser(
-        "source2bow", help="Calculate bag of words from extracted uasts.",
+    uast2bow_parser = subparsers.add_parser(
+        "uast2bow", help="Calculate bag of words from extracted uasts.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
         parents=[model2input_arg, filter_arg, process_arg, df_arg, disable_overwrite_arg,
                  prune_arg])
-    source2bow_parser.set_defaults(handler=source2bow_entry)
-    source2bow_parser.add_argument(
+    uast2bow_parser.set_defaults(handler=uast2bow_entry)
+    uast2bow_parser.add_argument(
         "-v", "--vocabulary-size", required=True, type=int,
         help="Vocabulary size: the tokens with the highest document frequencies will be picked.")
-    source2bow_parser.add_argument(
+    uast2bow_parser.add_argument(
         "output", help="Where to write the merged nBOW.")
 
     preproc_parser = subparsers.add_parser(
@@ -308,6 +309,19 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
     id2vec_postproc_parser.add_argument("swivel_output_directory")
     id2vec_postproc_parser.add_argument("result")
+
+    id2vec_projector_parser = subparsers.add_parser(
+        "id2vec_projector", help="Present id2vec model in Tensorflow Projector.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    id2vec_projector_parser.set_defaults(handler=projector_entry)
+    id2vec_projector_parser.add_argument("-i", "--input", required=True,
+                                         help="id2vec model to present.")
+    id2vec_projector_parser.add_argument("-o", "--output", required=True,
+                                         help="Projector output directory.")
+    id2vec_projector_parser.add_argument("--df", help="docfreq model to pick the most significant "
+                                                      "identifiers.")
+    id2vec_projector_parser.add_argument("--no-browser", action="store_true",
+                                         help="Do not open the browser.")
 
     bow2vw_parser = subparsers.add_parser(
         "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.",

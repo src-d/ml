@@ -6,9 +6,9 @@ Science: [paper](https://arxiv.org/abs/1704.00135)
 Pipeline:
 
 1. Collect the list of GitHub repositories to process.
-2. Fetch repositories and save them as [`Source`](ast2vec/source.py) models.
+2. Fetch repositories and save them as [`UASTModel`](ast2vec/uast.py) (a.k.a. `UAST` model).
 3. Calculate document frequencies.
-4. Produce BOW (bag-of-words) models from `Source` models.
+4. Produce BOW (bag-of-words) models from `UAST` models.
 5. Join BOW models into the single BOW model.
 6. Convert the BOW model to Vowpal Wabbit format.
 7. Convert Vowpal Wabbit dataset to [BigARTM](https://github.com/bigartm/bigartm) batches.
@@ -30,7 +30,7 @@ https://github.com/pytorch/pytorch
 ...
 ```
 
-#### Fetch repositories and save them as `Source` models
+#### Fetch repositories and save them as `UAST` models
 
 The first thing you need is to install [enry](https://github.com/src-d/enry),
 source{d}'s source code classifer. The following command should produce `enry` executable
@@ -43,12 +43,12 @@ ast2vec enry
 Let's run the cloning pipeline:
 
 ```
-ast2vec repos2source -p 16 -t 4 --organize-files 2 -o sources repos.txt
+ast2vec repos2uast -p 16 -t 4 --organize-files 2 -o uasts repos.txt
 ```
 
 This will run 16 processes, each clones a repository, converts files to
 Abstract Syntax Trees using [Babelfish](https://doc.bblf.sh/) in 4 threads and finally
-writes the result to `sources` directory.
+writes the result to `uasts` directory.
 
 The art of choosing `-p` and `-t` is hard to conceive. The general rule is to inspect the system
 load and decide what is the current bottleneck:
@@ -64,22 +64,22 @@ load and decide what is the current bottleneck:
 In some cases Babelfish server responses take too much time and you get timeout errors.
 Try to increase `--timeout` or if it does not help, decrease `-t` and even `-p`.
 
-In the end, you will have `.asdf` files inside 2 levels of directories in `sources`.
+In the end, you will have `.asdf` files inside 2 levels of directories in `uasts`.
 
 If resuming the pipeline, make sure to pass `--disable-overwrite` to not do the same work twice.
 
 #### Calculate document frequencies
 
 ```
-ast2vec source2df -p 4 sources docfreq.asdf
+ast2vec uasts2df -p 4 uasts docfreq.asdf
 ```
 
 We run 4 workers and save the result to `docfreq.asdf`.
 
-#### Produce BOW (bag-of-words) models from `Source` models
+#### Produce BOW (bag-of-words) models from `UAST` models
 
 ```
-ast2vec source2bow --df docfreq.asdf -v 100000 -p 4 sources bows
+ast2vec uast2bow --df docfreq.asdf -v 100000 -p 4 uasts bows
 ```
 
 Again, 4 workers. We set the number of distinct tokens to 100k here. The bigger the vocabulary size,
