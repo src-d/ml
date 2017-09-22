@@ -1,7 +1,6 @@
 from modelforge import generate_meta
 from modelforge.model import Model, split_strings, merge_strings, write_model
 from modelforge.models import register_model
-import numpy
 
 import ast2vec
 

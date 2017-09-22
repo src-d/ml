@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import sys
 
+from ast2vec.id2vec import projector_entry
 from ast2vec.topics import bigartm2asdf_entry
 from modelforge.logs import setup_logging
 
@@ -308,6 +309,19 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
     id2vec_postproc_parser.add_argument("swivel_output_directory")
     id2vec_postproc_parser.add_argument("result")
+
+    id2vec_projector_parser = subparsers.add_parser(
+        "id2vec_projector", help="Present id2vec model in Tensorflow Projector.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    id2vec_projector_parser.set_defaults(handler=projector_entry)
+    id2vec_projector_parser.add_argument("-i", "--input", required=True,
+                                         help="id2vec model to present.")
+    id2vec_projector_parser.add_argument("-o", "--output", required=True,
+                                         help="Projector output directory.")
+    id2vec_projector_parser.add_argument("--df", help="docfreq model to pick the most significant "
+                                                      "identifiers.")
+    id2vec_projector_parser.add_argument("--no-browser", action="store_true",
+                                         help="Do not open the browser.")
 
     bow2vw_parser = subparsers.add_parser(
         "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.",

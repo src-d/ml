@@ -26,6 +26,7 @@ class MainTests(unittest.TestCase):
             "id2vec_preproc": "preprocess_id2vec",
             "id2vec_train": "run_swivel",
             "id2vec_postproc": "postprocess_id2vec",
+            "id2vec_projector": "projector_entry",
             "bigartm2asdf": "bigartm2asdf_entry",
             "bow2vw": "bow2vw_entry",
             "enry": "install_enry",
