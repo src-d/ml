@@ -165,6 +165,7 @@ class RepoCloner:
         if not full_path:
             raise FileNotFoundError("%s was not found. Install it: python3 -m ast2vec enry" %
                                     linguist)
+        self._log.info("linguist: %s", linguist)
         self._linguist = linguist
         with open(full_path, "rb") as fin:
             # Check if we're using https://github.com/github/linguist
