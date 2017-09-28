@@ -42,7 +42,7 @@ def resolve_parse_log_filename():
     parse_log_filename = os.getenv("AST2VEC_PARSE_LOG")
     if parse_log_filename:
         return parse_log_filename
-    return DEFAULT_PARSE_LOG_FILENAME
+    return None
 
 
 class BblfshFailedError(Exception):
@@ -90,6 +90,10 @@ class Repo2Base(PickleableLogger):
         self.threads = threads
         self._lines = 0
         self._time = 0
+        self._parse_log_filepath = resolve_parse_log_filename()
+        if self.PARSE_LOG_FILENAME:
+            with open(self.PARSE_LOG_FILENAME, "w") as f:
+                f.write("Thread, lines, time, speed, status, path")
 
     @property
     def tempdir(self):
@@ -147,7 +151,7 @@ class Repo2Base(PickleableLogger):
     @overwrite_existing.setter
     def overwrite_existing(self, value: bool):
         if not isinstance(value, bool):
-            raise TypeError("overwrite_existing must be an integer - got %s" % type(value))
+            raise TypeError("overwrite_existing must be an boolean - got %s" % type(value))
         self._overwrite_existing = value
 
     def convert_repository(self, url_or_path):
@@ -184,7 +188,8 @@ class Repo2Base(PickleableLogger):
         from grpc import RpcError
         status = "ERR"
         start_time = time()
-        lines = lines_count(filepath, self._log)
+        if self.PARSE_LOG_FILENAME:
+            lines = lines_count(filepath, self._log)
         try:
             res = self._bblfsh[thread_index].parse(
                 filepath, language=language, timeout=self._timeout)
@@ -196,21 +201,18 @@ class Repo2Base(PickleableLogger):
             self._log.error(msg, e)
         except RpcError as e:
             self._log.error("bblfsh: RpcError on %s: %s", filepath, e)
-            self._log.warning(msg)
             raise e from None
         finally:
-            self._write_debug_logs(thread_index, filepath, status, lines, start_time)
+            if self.PARSE_LOG_FILENAME:
+                self._write_debug_logs(thread_index, filepath, status, lines, start_time)
 
     def _write_debug_logs(self, thread_index, filepath, status, lines, start_time):
         time_spent = time() - start_time
         if not isnan(lines):
             self._lines += lines
             self._time += time_spent
-        if self._log.isEnabledFor(logging.DEBUG):
+        if self.PARSE_LOG_FILENAME:
             with lock:
-                if not os.path.exists(self.PARSE_LOG_FILENAME):
-                    with open(self.PARSE_LOG_FILENAME, "w") as f:
-                        f.write("Thread, lines, time, speed, status, path")
                 with open(self.PARSE_LOG_FILENAME, "a") as f:
                     f.write("% 2d, % 5d, % 6.2f, % 8.2f, % 3s, %s\n" %
                             (thread_index, lines, time_spent, lines / time_spent, status,
@@ -299,7 +301,7 @@ class Repo2Base(PickleableLogger):
                 "Received errors: %s", ", ".join(errors))
         if empty:
             self._log.warning("No files were processed for %s", url_or_path)
-        if self._log.isEnabledFor(logging.DEBUG):
+        if self.PARSE_LOG_FILENAME:
             self._log.debug("Average bblfsh speed % 6.2f line/sec for %s" %
                             (self._lines / self._time, url_or_path))
 
@@ -522,7 +524,7 @@ class RepoTransformer(Transformer):
                     failures += 1
 
         self._log.info("Finished, %d failed repos", failures)
-        if self._log.isEnabledFor(logging.DEBUG) and os.path.exists(
+        if self.WORKER_CLASS.PARSE_LOG_FILENAME and os.path.exists(
                 self.WORKER_CLASS.PARSE_LOG_FILENAME):
             lines, time_spent = parse_parse_logs(self.WORKER_CLASS.PARSE_LOG_FILENAME)
             threads = self._args.get("threads", self.WORKER_CLASS.DEFAULT_THREAD_COUNT)
@@ -573,8 +575,9 @@ def lines_count(filepath, log=None):
     :return: lines count
     """
     try:
-        with open(filepath, encoding="utf8")as f:
-            return f.read().count("\n")
+        with open(filepath, encoding="utf8") as f:
+            file_content = f.read()
+            return file_content.count("\n") + 0 if file_content[-1] == "\n" else 1
     except Exception as e:
         if log:
             log.exception("Can not get size for %s" % filepath)
