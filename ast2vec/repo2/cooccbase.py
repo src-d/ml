@@ -59,15 +59,22 @@ class Repo2CooccBase(Repo2Base):
 
     @staticmethod
     def _all2all(words, word2ind):
-        for i in range(len(words)):
-            for j in range(i + 1, len(words)):
+        # we do not care about how many times each tokens appears
+        words = set(words)
+        for wi in words:
+            try:
+                wi = word2ind[wi]
+            except KeyError:
+                continue
+            for wj in words:
                 try:
-                    wi = word2ind[words[i]]
-                    wj = word2ind[words[j]]
+                    wj = word2ind[wj]
                 except KeyError:
                     continue
+                if wi == wj:
+                    # discard the same token
+                    continue
                 yield wi, wj, 1
-                yield wj, wi, 1
 
     def _process_node(self, root, word2ind, mat):
         children = self._flatten_children(root)
