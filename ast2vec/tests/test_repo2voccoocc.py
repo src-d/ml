@@ -23,14 +23,14 @@ class Repo2VocCooccTests(unittest.TestCase):
     def test_obj(self):
         basedir = os.path.dirname(__file__)
         repo2 = Repo2VocCoocc(vocabulary={
-            "document": 0,
+            "basedir": 0,
             "repo": 1,
             "test": 2,
         }, linguist=tests.ENRY)
         coocc = repo2.convert_repository(os.path.join(basedir, "..", ".."))
         self.assertIsInstance(coocc, coo_matrix)
         self.assertEqual(coocc.shape, (3, 3))
-        self.assertEqual(coocc.getnnz(), 9)
+        self.assertEqual(coocc.getnnz(), 6)
 
 
 if __name__ == "__main__":
