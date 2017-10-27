@@ -10,26 +10,12 @@ from ast2vec.tests.test_dump import captured_output
 class MainTests(unittest.TestCase):
     def test_handlers(self):
         action2handler = {
-            "clone": "clone_repositories",
-            "repo2nbow": "repo2nbow_entry",
-            "repos2nbow": "repos2nbow_entry",
-            "repo2coocc": "repo2coocc_entry",
-            "repos2coocc": "repos2coocc_entry",
-            "join-bow": "joinbow_entry",
-            "repo2uast": "repo2uast_entry",
-            "repos2uast": "repos2uast_entry",
-            "repo2source": "repo2source_entry",
-            "repos2source": "repos2source_entry",
-            "uast2prox": "prox_entry",
-            "uast2df": "uast2df_entry",
-            "uast2bow": "uast2bow_entry",
             "id2vec_preproc": "preprocess_id2vec",
             "id2vec_train": "run_swivel",
             "id2vec_postproc": "postprocess_id2vec",
             "id2vec_projector": "projector_entry",
             "bigartm2asdf": "bigartm2asdf_entry",
             "bow2vw": "bow2vw_entry",
-            "enry": "install_enry",
             "bigartm": "install_bigartm",
             "dump": "dump_model",
         }

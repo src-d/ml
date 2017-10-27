@@ -1,6 +1,5 @@
 from collections import defaultdict
 
-from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
 from ast2vec.token_parser import TokenParser
 
 
@@ -19,31 +18,29 @@ class UastIds2Bag:
         :param token_parser: Specify token parser if you want to use a custome one. \
             :class:'TokenParser' is used if it is not specified.
         """
-        self._vocabulary = vocabulary if vocabulary is not None else FakeVocabulary()
+        self._vocabulary = FakeVocabulary() if vocabulary is None else vocabulary
         self._token_parser = TokenParser() if token_parser is None else token_parser
 
     @property
     def vocabulary(self):
         return self._vocabulary
 
-    def uast_to_bag(self, uast, role=SIMPLE_IDENTIFIER):
+    def uast_to_bag(self, uast, roles_filter="//*[@roleIdentifier and not(@roleQualified)]"):
         """
         Converts a UAST to a bag-of-words. The weights are identifier frequencies.
         The identifiers are preprocessed by :class:`TokenParser`.
 
-        :param uast:
-        :param role: Specify role of bblfsh Node if you want to get bag of words form them.
+        :param uast: The UAST root node.
+        :param roles_filter: The libuast xpath query to filter identifiers.
         :return:
         """
-        stack = [uast]
+        import bblfsh
+        nodes = bblfsh.filter(uast, roles_filter)
         bag = defaultdict(int)
-        while stack:
-            node = stack.pop(0)
-            if role in node.roles:
-                for sub in self._token_parser.process_token(node.token):
-                    try:
-                        bag[self._vocabulary[sub]] += 1
-                    except KeyError:
-                        continue
-            stack.extend(node.children)
+        for node in nodes:
+            for sub in self._token_parser.process_token(node.token):
+                try:
+                    bag[self._vocabulary[sub]] += 1
+                except KeyError:
+                    continue
         return bag
