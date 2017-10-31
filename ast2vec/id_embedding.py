@@ -16,6 +16,7 @@ from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
 from ast2vec.token_parser import TokenParser
 
+
 class Transformer:
     pass
 
