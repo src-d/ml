@@ -1,6 +1,5 @@
 import argparse
 import logging
-import multiprocessing
 import os
 import sys
 
