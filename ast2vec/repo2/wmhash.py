@@ -119,7 +119,11 @@ class IdentifiersBagExtractor(BagsExtractor):
         docfreq = self.docfreq
         log = numpy.log
         for key, val in self.id2bag.uast_to_bag(uast).items():
-            yield key, log(1 + val) * log(ndocs / docfreq[key])
+            try:
+                yield key, log(1 + val) * log(ndocs / docfreq[key])
+            except KeyError:
+                # docfreq_threshold
+                continue
 
     def inspect(self, uast):
         bag = self.id2bag.uast_to_bag(uast)
