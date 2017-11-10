@@ -16,7 +16,15 @@ class Repo2Base(PickleableLogger):
     def _get_log_name(self):
         return self.__class__.__name__
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["engine"]
+        del state["finalizer"]
+        state["serialized"] = True
+        return state
+
     def process_files(self, files=None):
+        assert not getattr(self, "serialized", False)
         if files is None:
             files = self.engine.repositories.references.head_ref.files
         classified = files.classify_languages()
