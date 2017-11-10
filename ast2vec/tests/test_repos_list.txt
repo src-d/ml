@@ -1,2 +1,0 @@
-git://github.com/src-d/gypogit.git
-git://github.com/src-d/sparkpickle.git

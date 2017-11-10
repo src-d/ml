@@ -1,6 +1,7 @@
+from setuptools import setup, find_packages
 import sys
 
-from setuptools import setup, find_packages
+import ast2vec
 
 if sys.version_info < (3, 5, 0):
     typing = ["typing"]
@@ -12,7 +13,7 @@ setup(
     description="Part of source{d}'s stack for machine learning on source "
                 "code. Provides API and tools to train and use models based "
                 "on source code identifiers extracted from Babelfish's UASTs.",
-    version="0.3.4-alpha",
+    version=".".join(map(str, ast2vec.__version__)),
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
@@ -25,15 +26,8 @@ setup(
     keywords=["machine learning on source code", "word2vec", "id2vec",
               "github", "swivel", "nbow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
-                      "numpy>=1.12,<2.0",
-                      "scipy>=0.17,<1.0",
-                      "clint>=0.5.0",
-                      "asdf>=1.2,<2.0",
-                      "google-cloud-storage>=1.0,<2.0",
-                      "python-dateutil",
-                      "modelforge>=0.2.6-alpha",
-                      "bblfsh>=0.2.1,<1.0",
-                      "netifaces>=0.10.6"] + typing,
+                      "bblfsh>-2.2.1,<3.0",
+                      "modelforge>=0.3.0-alpha"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],

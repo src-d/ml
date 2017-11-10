@@ -15,7 +15,10 @@ from ast2vec.coocc import Cooccurrences
 from ast2vec.df import DocumentFrequencies
 from ast2vec.id2vec import Id2Vec
 from ast2vec.token_parser import TokenParser
-from ast2vec.repo2.base import Transformer
+
+
+class Transformer:
+    pass
 
 
 class PreprocessTransformer(Transformer):
