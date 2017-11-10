@@ -2,8 +2,7 @@ import itertools
 
 import numpy
 
-from ast2vec.pickleable_logger import PickleableLogger
-from ast2vec.repo2.base import Repo2Base
+from ast2vec.repo2.base import Transformer
 from ast2vec.uast_ids_to_bag import UastIds2Bag
 
 
@@ -62,32 +61,30 @@ class BagsExtractor:
             self.docfreq[key] = value
 
 
-class Repo2WeightedSet(Repo2Base):
-    def __init__(self, engine, finalizer, languages=None, extractors=None, **kwargs):
-        super().__init__(engine, finalizer, languages, **kwargs)
+class Repo2WeightedSet(Transformer):
+    def __init__(self, extractors, **kwargs):
+        super().__init__(**kwargs)
         self.extractors = extractors
 
-    def process_uast(self, uast):
+    def __call__(self, rows):
+        return rows.flatMap(self.process_row)
+
+    def process_row(self, row):
         bag = {}
         for extractor in self.extractors:
-            bag.update(extractor.extract(uast.uast))
-        yield uast.file_hash, bag
+            bag.update(extractor.extract(row.uast))
+        yield row.file_hash, bag
 
 
-class Repo2DocFreq(Repo2Base):
+class Repo2DocFreq(Transformer):
     NDOCS_KEY = -1, 0
 
-    def __init__(self, engine, languages=None, extractors=None, **kwargs):
-        super().__init__(engine, self, languages, **kwargs)
+    def __init__(self, extractors, **kwargs):
+        super().__init__(**kwargs)
         self.extractors = extractors
 
-    def process_uast(self, uast):
-        yield self.NDOCS_KEY, 1
-        for i, extractor in enumerate(self.extractors):
-            for k in extractor.inspect(uast):
-                yield (i, k), 1
-
-    def __call__(self, processed):
+    def __call__(self, rows):
+        processed = rows.flatMap(self.process_row)
         reduced = processed.countByKey()
         ndocs = None
         for (i, key), value in reduced.items():
@@ -96,6 +93,12 @@ class Repo2DocFreq(Repo2Base):
             self.extractors[i].apply_docfreq(key, value)
         for extractor in self.extractors:
             extractor.ndocs = ndocs
+
+    def process_row(self, row):
+        yield self.NDOCS_KEY, 1
+        for i, extractor in enumerate(self.extractors):
+            for k in extractor.inspect(row.uast):
+                yield (i, k), 1
 
 
 @register_extractor
@@ -108,34 +111,32 @@ class IdentifiersBagExtractor(BagsExtractor):
 
     def __init__(self, docfreq_threshold=None, split_stem=False):
         super().__init__(docfreq_threshold)
-        self.id2bag_extract = UastIds2Bag(
-            self.docfreq, self.NoopTokenParser() if not split_stem else None)
-        self.id2bag_inspect = UastIds2Bag(
+        self.id2bag = UastIds2Bag(
             None, self.NoopTokenParser() if not split_stem else None)
 
     def extract(self, uast):
-        bag = self.id2bag_extract.uast_to_bag(uast)
+        ndocs = self.ndocs
+        docfreq = self.docfreq
         log = numpy.log
-        for key, val in bag.items():
-            yield key, log(1 + val) * log(self.ndocs / self.docfreq[key])
+        for key, val in self.id2bag.uast_to_bag(uast).items():
+            yield key, log(1 + val) * log(ndocs / docfreq[key])
 
     def inspect(self, uast):
-        bag = self.id2bag_inspect.uast_to_bag(uast)
+        bag = self.id2bag.uast_to_bag(uast)
         for key in bag:
             yield key
 
 
-class BagsFinalizer(PickleableLogger):
+class BagsBatcher(Transformer):
     CHUNK_SIZE = 8 * 1000 * 1000 * 1000
 
-    def __init__(self, extractors, finalizer, **kwargs):
+    def __init__(self, extractors, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors
-        self.finalizer = finalizer
         self.keys = {}
 
     def __call__(self, processed):
-        avglen = processed.mapValues(len).mean()
+        avglen = processed.values().map(len).mean()
         self._log.info("Average bag length: %.1f", avglen)
         keys = list(itertools.chain.from_iterable(e.docfreq for e in self.extractors))
         keys.sort()
@@ -145,8 +146,7 @@ class BagsFinalizer(PickleableLogger):
         chunklen = self.CHUNK_SIZE // (2 * 4 * avglen)
         nparts = ndocs // chunklen + 1
         self._log.info("chunk %d\tparts %d", chunklen, nparts)
-        indexed = processed.mapValues(self.bag2row)
-        self.finalizer(indexed)
+        return processed.mapValues(self.bag2row)
 
     def bag2row(self, bag):
         data = numpy.zeros(len(bag), dtype=numpy.float32)
