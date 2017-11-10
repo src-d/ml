@@ -83,8 +83,8 @@ class Repo2DocFreq(Repo2Base):
 
     def process_uast(self, uast):
         yield self.NDOCS_KEY, 1
-        for i, extractor in self.extractors:
-            for k in extractor.inspect():
+        for i, extractor in enumerate(self.extractors):
+            for k in extractor.inspect(uast):
                 yield (i, k), 1
 
     def __call__(self, processed):

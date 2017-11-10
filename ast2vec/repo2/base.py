@@ -1,3 +1,5 @@
+import importlib
+
 from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 
 
@@ -20,11 +22,18 @@ class Repo2Base(PickleableLogger):
         state = super().__getstate__()
         del state["engine"]
         del state["finalizer"]
-        state["serialized"] = True
+        state["worker"] = True
         return state
 
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        from bblfsh.sdkversion import VERSION
+        self.parse_uast = importlib.import_module(
+            "bblfsh.gopkg.in.bblfsh.sdk.%s.uast.generated_pb2" % VERSION
+        ).Node.FromString
+
     def process_files(self, files=None):
-        assert not getattr(self, "serialized", False)
+        assert not getattr(self, "worker", False)
         if files is None:
             files = self.engine.repositories.references.head_ref.files
         classified = files.classify_languages()
@@ -33,8 +42,11 @@ class Repo2Base(PickleableLogger):
             lang_filter |= classified.lang == lang
         filtered_by_lang = classified.filter(lang_filter)
         uasts = filtered_by_lang.extract_uasts()
-        processed = uasts.rdd.flatMap(self.process_uast)
+        processed = uasts.rdd.flatMap(self._process_uast_entry)
         self.finalizer(processed)
+
+    def _process_uast_entry(self, row):
+        return self.process_uast(self.parse_uast(row.uast[0]))
 
     def process_uast(self, uast):
         raise NotImplementedError()
