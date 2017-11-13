@@ -36,7 +36,7 @@ This project exposes two interfaces: API and command line. The command line is
 ast2vec --help
 ```
 
-There is an example of using Python API [here](Doc/how_to_use_ast2vec.ipynb).
+There is an example of using Python API [here](doc/how_to_use_ast2vec.ipynb).
 
 It exposes several tools to generate the models and setup the environment.
 
