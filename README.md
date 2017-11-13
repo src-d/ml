@@ -17,7 +17,7 @@ Here is the list of projects which are built with ast2vec:
 
 * [vecino](https://github.com/src-d/vecino) - finding similar repositories
 * [tmsc](https://github.com/src-d/tmsc) - topic modeling of repositories
-* [role2vec](https://github.com/src-d/rol2vec) - AST node embedding and correction
+* [role2vec](https://github.com/src-d/role2vec) - AST node embedding and correction
 * [snippet-ranger](https://github.com/src-d/snippet-ranger) - topic modeling of source code snippets
 
 ## Installation
