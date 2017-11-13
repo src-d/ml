@@ -1,6 +1,8 @@
 import importlib
 from typing import Union
 
+from pyspark import StorageLevel
+
 from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 
 
@@ -38,6 +40,15 @@ class Transformer(PickleableLogger):
 class Collector(Transformer):
     def __call__(self, head):
         return head.collect()
+
+
+class Cacher(Transformer):
+    def __init__(self, persistence, **kwargs):
+        super().__init__(**kwargs)
+        self.persistence = getattr(StorageLevel, persistence)
+
+    def __call__(self, head):
+        return head.persist(self.persistence)
 
 
 class UastExtractor(Transformer):

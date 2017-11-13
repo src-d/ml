@@ -58,7 +58,9 @@ class BagsExtractor:
 
     def apply_docfreq(self, key, value):
         if value >= self.docfreq_threshold:
-            self.docfreq[key] = value
+            if not isinstance(key, str):
+                raise TypeError("key is %s" % type(key))
+            self.docfreq[str(key)] = value
 
 
 class Repo2WeightedSet(Transformer):
@@ -90,7 +92,9 @@ class Repo2DocFreq(Transformer):
         for (i, key), value in reduced.items():
             if (i, key) == self.NDOCS_KEY:
                 ndocs = value
+                continue
             self.extractors[i].apply_docfreq(key, value)
+
         for extractor in self.extractors:
             extractor.ndocs = ndocs
 
@@ -132,12 +136,13 @@ class IdentifiersBagExtractor(BagsExtractor):
 
 
 class BagsBatcher(Transformer):
-    CHUNK_SIZE = 8 * 1000 * 1000 * 1000
+    DEFAULT_CHUNK_SIZE = 1.5 * 1000 * 1000 * 1000
 
-    def __init__(self, extractors, **kwargs):
+    def __init__(self, extractors, chunk_size=DEFAULT_CHUNK_SIZE, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors
         self.keys = {}
+        self.chunk_size = chunk_size
 
     def __call__(self, processed):
         avglen = processed.values().map(len).mean()
@@ -147,10 +152,11 @@ class BagsBatcher(Transformer):
         self.keys = {k: i for i, k in enumerate(keys)}
         del keys
         ndocs = self.extractors[0].ndocs
-        chunklen = self.CHUNK_SIZE // (2 * 4 * avglen)
+        chunklen = int(self.chunk_size / (2 * 4 * avglen))
         nparts = ndocs // chunklen + 1
+        chunklen = int(ndocs / nparts * (2 * 4 * avglen))
         self._log.info("chunk %d\tparts %d", chunklen, nparts)
-        return processed.mapValues(self.bag2row)
+        return processed.mapValues(self.bag2row).repartition(nparts)
 
     def bag2row(self, bag):
         data = numpy.zeros(len(bag), dtype=numpy.float32)
@@ -159,3 +165,31 @@ class BagsBatcher(Transformer):
             data[i] = v
             indices[i] = k
         return data, indices
+
+
+class BagsBatchSaver(Transformer):
+    def __init__(self, path, **kwargs):
+        super().__init__(**kwargs)
+        self.path = path
+
+    def __call__(self, head):
+        head.mapPartitions(self.concatenate).toDF().write.parquet(self.path)
+
+    def concatenate(self, part):
+        data = []
+        indices = []
+        indptr = [0]
+        keys = []
+        for k, (d, i) in part:
+            keys.append(k)
+            data.append(d)
+            indices.append(i)
+            indptr.append(indptr[-1] + d.shape[0])
+        data = numpy.concatenate(data).astype(dtype=numpy.float32)
+        indices = numpy.concatenate(indices).astype(dtype=numpy.int32)
+        indptr = numpy.array(indptr, dtype=numpy.int64)
+        return {"keys": keys,
+                "data": bytes(data.data),
+                "indices": bytes(indices.data),
+                "indptr": bytes(indptr.data),
+                "rows": indptr.shape[0]}
