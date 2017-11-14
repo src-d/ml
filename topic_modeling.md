@@ -6,14 +6,14 @@ Science: [paper](https://arxiv.org/abs/1704.00135)
 Pipeline:
 
 1. Collect the list of GitHub repositories to process.
-2. Fetch repositories and save them as [`UASTModel`](ast2vec/uast.py) (a.k.a. `UAST` model).
+2. Fetch repositories and save them as [`UASTModel`](sourced/ml/uast.py) (a.k.a. `UAST` model).
 3. Calculate document frequencies.
 4. Produce BOW (bag-of-words) models from `UAST` models.
 5. Join BOW models into the single BOW model.
 6. Convert the BOW model to Vowpal Wabbit format.
 7. Convert Vowpal Wabbit dataset to [BigARTM](https://github.com/bigartm/bigartm) batches.
 8. Train the topic model using BigARTM.
-9. Convert the result to [`TopicModel`](ast2vec/topic_model.py).
+9. Convert the result to [`TopicModel`](sourced/ml/topic_model.py).
 
 #### Collect the list of GitHub repositories to process
 
@@ -37,13 +37,13 @@ source{d}'s source code classifer. The following command should produce `enry` e
 in the current directory. In the future, we suppose that we do not leave this directory.
 
 ```
-ast2vec enry
+sourcedml enry
 ```
 
 Let's run the cloning pipeline:
 
 ```
-ast2vec repos2uast -p 16 -t 4 --organize-files 2 -o uasts repos.txt
+sourcedml repos2uast -p 16 -t 4 --organize-files 2 -o uasts repos.txt
 ```
 
 This will run 16 processes, each clones a repository, converts files to
@@ -71,7 +71,7 @@ If resuming the pipeline, make sure to pass `--disable-overwrite` to not do the 
 #### Calculate document frequencies
 
 ```
-ast2vec uasts2df -p 4 uasts docfreq.asdf
+sourcedml uasts2df -p 4 uasts docfreq.asdf
 ```
 
 We run 4 workers and save the result to `docfreq.asdf`.
@@ -79,7 +79,7 @@ We run 4 workers and save the result to `docfreq.asdf`.
 #### Produce BOW (bag-of-words) models from `UAST` models
 
 ```
-ast2vec uast2bow --df docfreq.asdf -v 100000 -p 4 uasts bows
+sourcedml uast2bow --df docfreq.asdf -v 100000 -p 4 uasts bows
 ```
 
 Again, 4 workers. We set the number of distinct tokens to 100k here. The bigger the vocabulary size,
@@ -91,7 +91,7 @@ The results will be in `bow` directory.
 #### Join BOW models into the single BOW model
 
 ```
-ast2vec join-bow -p 4 --bow bows joined_bow.asdf
+sourcedml join-bow -p 4 --bow bows joined_bow.asdf
 ```
 
 4 workers merge the individual bags-of-words together into `joined_bow.asdf`.
@@ -99,7 +99,7 @@ ast2vec join-bow -p 4 --bow bows joined_bow.asdf
 #### Convert the BOW model to Vowpal Wabbit format
 
 ```
-ast2vec bow2vw --bow joined_bow.asdf -o vw_dataset.txt
+sourcedml bow2vw --bow joined_bow.asdf -o vw_dataset.txt
 ```
 
 We transform the merged BOW model stored in ASDF binary format to simple text "Vowpal Wabbit" format.
@@ -114,7 +114,7 @@ You will need a working `bigartm` command-line application. The following comman
 system.
 
 ```
-ast2vec bigartm
+sourcedml bigartm
 ```
 
 The actual conversion:
@@ -152,5 +152,5 @@ First we convert the model to the text format:
 Second we convert the text format to the ASDF:
 
 ```
-ast2vec bigartm2asdf readable_stage2.txt topic_model.asdf
+sourcedml bigartm2asdf readable_stage2.txt topic_model.asdf
 ```

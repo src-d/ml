@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-import ast2vec
+import sourced.ml
 
 if sys.version_info < (3, 5, 0):
     typing = ["typing"]
@@ -9,25 +9,25 @@ else:
     typing = []
 
 setup(
-    name="ast2vec",
+    name="sourcedml",
     description="Part of source{d}'s stack for machine learning on source "
                 "code. Provides API and tools to train and use models based "
                 "on source code identifiers extracted from Babelfish's UASTs.",
-    version=".".join(map(str, ast2vec.__version__)),
+    version=".".join(map(str, sourced.ml.__version__)),
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
-    url="https://github.com/src-d/ast2vec",
-    download_url="https://github.com/src-d/ast2vec",
-    packages=find_packages(exclude=("ast2vec.tests",)),
+    url="https://github.com/src-d/sourced.ml",
+    download_url="https://github.com/src-d/sourced.ml",
+    packages=find_packages(exclude=("sourced.ml.tests",)),
     entry_points={
-        "console_scripts": ["ast2vec=ast2vec.__main__:main"],
+        "console_scripts": ["sourcedml=sourced.ml.__main__:main"],
     },
     keywords=["machine learning on source code", "word2vec", "id2vec",
               "github", "swivel", "nbow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
                       "bblfsh>-2.2.1,<3.0",
-                      "modelforge>=0.3.0-alpha"] + typing,
+                      "modelforge>=0.4.0-alpha"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
