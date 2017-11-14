@@ -123,11 +123,14 @@ class BOW(BOWBase):
         if not deps:
             raise ValueError("You must specify DocumentFrequencies dependency to save BOW.")
         self._meta = generate_meta(self.NAME, ast2vec.__version__, *deps)
-        write_model(self._meta,
-                    {"repos": merge_strings(self._repos),
-                     "matrix": disassemble_sparse_matrix(self.matrix),
-                     "tokens": merge_strings(self.tokens)},
-                    output)
+        if self.tokens:
+            write_model(self._meta,
+                        {"repos": merge_strings(self._repos),
+                         "matrix": disassemble_sparse_matrix(self.matrix),
+                         "tokens": merge_strings(self.tokens)},
+                        output)
+        else:
+            self._log.warning("Did not write %s because the model is empty", output)
 
     def dump(self):
         txt = super().dump()
