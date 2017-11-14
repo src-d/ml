@@ -15,7 +15,7 @@ class Source2DocFreqTests(unittest.TestCase):
                 filter="**/source_*.asdf")
             uast2df_entry(args)
             merged = DocumentFrequencies().load(tmpf.name)
-        self.assertEqual(len(merged), 335)
+        self.assertEqual(len(merged), 334)
 
 
 if __name__ == "__main__":

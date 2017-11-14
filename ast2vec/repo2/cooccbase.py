@@ -3,7 +3,7 @@ from collections import defaultdict
 import numpy
 from scipy.sparse import coo_matrix
 
-from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
+from ast2vec.bblfsh_roles import IDENTIFIER, QUALIFIED
 from ast2vec.token_parser import TokenParser
 from ast2vec.repo2.base import Repo2Base
 
@@ -51,7 +51,7 @@ class Repo2CooccBase(Repo2Base):
         ids = []
         stack = list(root.children)
         for node in stack:
-            if SIMPLE_IDENTIFIER in node.roles:
+            if IDENTIFIER in node.roles and QUALIFIED not in node.roles:
                 ids.append(node)
             else:
                 stack.extend(node.children)
@@ -77,7 +77,7 @@ class Repo2CooccBase(Repo2Base):
             self._update_dict(self._token_parser.process_token(ch.token), word2ind, tokens)
 
         if (root.token.strip() is not None and root.token.strip() != "" and
-                SIMPLE_IDENTIFIER in root.roles):
+                IDENTIFIER in root.roles and QUALIFIED not in root.roles):
             self._update_dict(self._token_parser.process_token(root.token), word2ind, tokens)
 
         for triplet in self._all2all(tokens, word2ind):
@@ -88,7 +88,7 @@ class Repo2CooccBase(Repo2Base):
         queue = [root]
         while queue:
             node = queue.pop()
-            if SIMPLE_IDENTIFIER in node.roles:
+            if IDENTIFIER in node.roles and QUALIFIED not in root.roles:
                 yield node.token
             queue.extend(node.children)
 

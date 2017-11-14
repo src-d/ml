@@ -85,6 +85,11 @@ Number of documents: %d""" % (
         self._meta = generate_meta(self.NAME, ast2vec.__version__, *deps)
         tokens = self.tokens()
         freqs = numpy.array([self._df[t] for t in tokens], dtype=numpy.float32)
-        write_model(self._meta,
-                    {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs},
-                    output)
+        if tokens:
+            write_model(self._meta,
+                        {"docs": self.docs,
+                         "tokens": merge_strings(tokens),
+                         "freqs": freqs},
+                        output)
+        else:
+            self._log.warning("Did not write %s because the model is empty", output)

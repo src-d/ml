@@ -8,7 +8,7 @@ import asdf
 from scipy.sparse import coo_matrix
 
 from ast2vec import Repo2Coocc, Repo2CooccTransformer
-from ast2vec.bblfsh_roles import SIMPLE_IDENTIFIER
+from ast2vec.bblfsh_roles import IDENTIFIER
 import ast2vec.tests as tests
 from ast2vec.repo2.coocc import repo2coocc_entry
 
@@ -61,10 +61,10 @@ class Repo2CooccTests(unittest.TestCase):
 
     def test_extract_ids(self):
         Node = namedtuple("Node", ["roles", "token", "children"])
-        node1 = Node([SIMPLE_IDENTIFIER], 1, [])
+        node1 = Node([IDENTIFIER], 1, [])
         node2 = Node([], 2, [])
-        node3 = Node([SIMPLE_IDENTIFIER], 3, [node1, node2])
-        node4 = Node([SIMPLE_IDENTIFIER], 4, [])
+        node3 = Node([IDENTIFIER], 3, [node1, node2])
+        node4 = Node([IDENTIFIER], 4, [])
         root = Node([], 5, [node3, node4])
         repo2 = Repo2Coocc(linguist=tests.ENRY)
         self.assertEqual(list(repo2._extract_ids(root)), [4, 3, 1])
