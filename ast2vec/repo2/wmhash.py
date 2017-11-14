@@ -131,7 +131,10 @@ class IdentifiersBagExtractor(BagsExtractor):
                 continue
 
     def inspect(self, uast):
-        bag = self.id2bag.uast_to_bag(uast)
+        try:
+            bag = self.id2bag.uast_to_bag(uast)
+        except RuntimeError as e:
+            raise ValueError(str(uast)) from e
         for key in bag:
             yield key
 

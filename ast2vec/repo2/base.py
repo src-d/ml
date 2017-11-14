@@ -2,6 +2,7 @@ import importlib
 from typing import Union
 
 from pyspark import StorageLevel
+from pyspark.sql.types import Row
 
 from ast2vec.pickleable_logger import PickleableLogger  # nopep8
 
@@ -60,15 +61,7 @@ class UastExtractor(Transformer):
     def __getstate__(self):
         state = super().__getstate__()
         del state["engine"]
-        state["worker"] = True
         return state
-
-    def __setstate__(self, state):
-        super().__setstate__(state)
-        from bblfsh.sdkversion import VERSION
-        self.parse_uast = importlib.import_module(
-            "bblfsh.gopkg.in.bblfsh.sdk.%s.uast.generated_pb2" % VERSION
-        ).Node.FromString
 
     def execute(self, files=None):
         if files is None:
@@ -76,15 +69,29 @@ class UastExtractor(Transformer):
         return super().execute(files)
 
     def __call__(self, files):
-        assert not getattr(self, "worker", False)
         classified = files.classify_languages()
         lang_filter = classified.lang == self.languages[0]
         for lang in self.languages[1:]:
             lang_filter |= classified.lang == lang
         filtered_by_lang = classified.filter(lang_filter)
         uasts = filtered_by_lang.extract_uasts()
-        return uasts.rdd.map(self.process_row)
+        return uasts
 
-    def process_row(self, row):
-        row.__dict__["uast"] = self.parse_uast(row.uast[0])
-        return row
+
+class UastDeserializer(Transformer):
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        from bblfsh.sdkversion import VERSION
+        self.parse_uast = importlib.import_module(
+            "bblfsh.gopkg.in.bblfsh.sdk.%s.uast.generated_pb2" % VERSION
+        ).Node.FromString
+
+    def __call__(self, rows):
+        return rows.rdd.flatMap(self.deserialize_uast)
+
+    def deserialize_uast(self, row):
+        if not row.uast:
+            return
+        row_dict = row.asDict()
+        row_dict["uast"] = self.parse_uast(row.uast[0])
+        yield Row(**row_dict)
