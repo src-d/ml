@@ -37,7 +37,8 @@ matrix:
         - codecov
   fast_finish: true
 before_script:
-- BBLFSH_DRIVER_IMAGES="python=docker://bblfsh/python-driver:v0.8.2" docker run -d -e BBLFSH_DRIVER_IMAGES --privileged -p 9432:9432 --name bblfsh bblfsh/server:v0.7.0
+- docker run -d --privileged -p 9432:9432 --name bblfsh bblfsh/bblfshd
+- docker exec -it bblfshd bblfshctl driver install --all
 script:
 - (eval "$SCRIPT")
 notifications:
