@@ -1,6 +1,7 @@
 import itertools
 
 import numpy
+from pyspark.sql.types import Row
 
 from ast2vec.repo2.base import Transformer
 from ast2vec.uast_ids_to_bag import UastIds2Bag
@@ -173,7 +174,12 @@ class BagsBatchSaver(Transformer):
         self.path = path
 
     def __call__(self, head):
-        head.mapPartitions(self.concatenate).toDF().write.parquet(self.path)
+        self._log.info("Writing to %s", self.path)
+        head \
+            .mapPartitions(self.concatenate) \
+            .map(lambda x: Row(**x)) \
+            .toDF() \
+            .write.parquet(self.path)
 
     def concatenate(self, part):
         data = []
@@ -188,8 +194,8 @@ class BagsBatchSaver(Transformer):
         data = numpy.concatenate(data).astype(dtype=numpy.float32)
         indices = numpy.concatenate(indices).astype(dtype=numpy.int32)
         indptr = numpy.array(indptr, dtype=numpy.int64)
-        return {"keys": keys,
-                "data": bytes(data.data),
-                "indices": bytes(indices.data),
-                "indptr": bytes(indptr.data),
-                "rows": indptr.shape[0]}
+        return [{"keys": bytearray("\0".join(keys).encode()),
+                 "data": bytearray(data.data),
+                 "indices": bytearray(indices.data),
+                 "indptr": bytearray(indptr.data),
+                 "rows": indptr.shape[0]}]
