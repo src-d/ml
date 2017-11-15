@@ -134,7 +134,7 @@ def get_parser() -> argparse.ArgumentParser:
     df_arg = one_arg_parser(
         "-d", "--df", dest="docfreq", help="URL or path to the document frequencies.")
     prune_arg = one_arg_parser(
-        "--prune-df", default=20,
+        "--prune-df", default=20, type=int,
         help="Minimum document frequency to leave an identifier.")
     outputdir_arg = one_arg_parser("--output", default=os.getcwd(), help="Output directory.")
 
