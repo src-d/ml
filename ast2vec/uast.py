@@ -40,7 +40,7 @@ class UASTModel(Model):
 
     def dump(self):
         symbols_num = 100
-        out = self._uasts[0][:symbols_num]
+        out = str(self._uasts[0])[:symbols_num]
         return "Repository: %s\nNumber of files: %d. First %d symbols:\n %s" % (
             self._repo, len(self), symbols_num, out)
 
