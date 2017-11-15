@@ -141,6 +141,7 @@ class IdentifiersBagExtractor(BagsExtractor):
 
 class BagsBatcher(Transformer):
     DEFAULT_CHUNK_SIZE = 1.5 * 1000 * 1000 * 1000
+    BLOCKS = True
 
     def __init__(self, extractors, chunk_size=DEFAULT_CHUNK_SIZE, **kwargs):
         super().__init__(**kwargs)

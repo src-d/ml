@@ -8,6 +8,8 @@ from sourced.ml.pickleable_logger import PickleableLogger  # nopep8
 
 
 class Transformer(PickleableLogger):
+    BLOCKS = False  # set to True if __call__ launches PySpark
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._children = []
@@ -34,7 +36,7 @@ class Transformer(PickleableLogger):
     def _explode(self, head, context):
         if context[-1] is not self:
             context.append(self)
-            if not self._children:
+            if not self._children or self.BLOCKS:
                 self._log.info(self._format_pipeline(context))
             head = self(head)
         results = []
@@ -54,7 +56,7 @@ class Transformer(PickleableLogger):
         """
         if self.parent is not None:
             head = self.execute(head)
-        pipeline = [type(self).__name__]
+        pipeline = [self]
         node = self
         while node.parent is not None:
             node = node.parent
