@@ -17,8 +17,8 @@ setup(
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
-    url="https://github.com/src-d/sourced.ml",
-    download_url="https://github.com/src-d/sourced.ml",
+    url="https://github.com/src-d/ml",
+    download_url="https://github.com/src-d/ml",
     packages=find_packages(exclude=("sourced.ml.tests",)),
     entry_points={
         "console_scripts": ["sourcedml=sourced.ml.__main__:main"],

@@ -3,7 +3,7 @@ import unittest
 
 import numpy
 
-from sourced.ml import NBOW, BOW
+from sourced.ml.bow import NBOW, BOW
 import sourced.ml.tests.models as paths
 
 

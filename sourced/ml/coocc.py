@@ -1,4 +1,3 @@
-from modelforge import generate_meta
 from modelforge.model import Model, split_strings, assemble_sparse_matrix, write_model, \
     merge_strings, disassemble_sparse_matrix
 from modelforge.models import register_model

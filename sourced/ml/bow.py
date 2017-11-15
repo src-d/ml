@@ -1,7 +1,6 @@
 import argparse
 from typing import Union
 
-from modelforge import generate_meta
 from modelforge.model import Model, split_strings, assemble_sparse_matrix, write_model, \
     merge_strings, disassemble_sparse_matrix
 from modelforge.models import register_model
@@ -162,12 +161,14 @@ class NBOW(BOWBase):
         del id2vec
         return bow
 
-    def save(self, output, deps=None):
+    def save(self, output, deps=tuple()):
         if not deps or len(deps) < 2:
             raise ValueError("You must specify DocumentFrequencies and Id2Vec dependencies "
                              "to save NBOW.")
-        self._meta = generate_meta(self.NAME, ast2vec.__version__, *deps)
-        write_model(self._meta,
+        super().save(output, deps)
+
+    def _write(self, output):
+        write_model(self.meta,
                     {"repos": merge_strings(self._repos),
                      "matrix": disassemble_sparse_matrix(self._matrix)},
                     output)

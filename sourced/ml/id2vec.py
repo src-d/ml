@@ -73,7 +73,7 @@ def projector_entry(args):
     log = logging.getLogger("id2vec_projector")
     id2vec = Id2Vec(log_level=args.log_level).load(source=args.input)
     if args.df:
-        from ast2vec.df import DocumentFrequencies
+        from sourced.ml.df import DocumentFrequencies
         df = DocumentFrequencies(log_level=args.log_level).load(source=args.df)
     else:
         df = None

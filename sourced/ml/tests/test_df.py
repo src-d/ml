@@ -47,5 +47,6 @@ class DocumentFrequenciesTests(unittest.TestCase):
             self.assertGreaterEqual(freq, 4)
         self.assertEqual(len(pruned), 346)
 
+
 if __name__ == "__main__":
     unittest.main()
