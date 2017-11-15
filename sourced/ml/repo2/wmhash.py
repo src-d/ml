@@ -150,12 +150,13 @@ class BagsBatcher(Transformer):
 
     def __call__(self, processed):
         avglen = processed.values().map(len).mean()
+        ndocs = self.extractors[0].ndocs
         self._log.info("Average bag length: %.1f", avglen)
+        self._log.info("Number of documents: %d", ndocs)
         keys = list(itertools.chain.from_iterable(e.docfreq for e in self.extractors))
         keys.sort()
         self.keys = {k: i for i, k in enumerate(keys)}
         del keys
-        ndocs = self.extractors[0].ndocs
         chunklen = int(self.chunk_size / (2 * 4 * avglen))
         nparts = ndocs // chunklen + 1
         chunklen = int(ndocs / nparts * (2 * 4 * avglen))
