@@ -4,7 +4,7 @@ import logging
 from modelforge.progress_bar import progress_bar
 
 from sourced.ml.id2vec import Id2Vec
-from ast2vec.bow import BOW, NBOW
+from sourced.ml.bow import BOW, NBOW
 
 
 def convert_bow_to_vw(bow: BOW, output: str):

@@ -1,7 +1,7 @@
 
 [run]
 branch = True
-source = ast2vec
+source = sourced.ml
 
 [report]
 exclude_lines =
@@ -10,6 +10,6 @@ exclude_lines =
     if __name__ == "__main__":
 ignore_errors = True
 omit =
-    ast2vec/tests/*
-    ast2vec/swivel.py
-    ast2vec/bigartm.py
+    sourced/ml/tests/*
+    sourced/ml/swivel.py
+    sourced/ml/bigartm.py

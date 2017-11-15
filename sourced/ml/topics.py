@@ -1,7 +1,7 @@
 import sys
 from typing import Union
 
-from modelforge.model import split_strings, assemble_sparse_matrix, generate_meta, \
+from modelforge.model import split_strings, assemble_sparse_matrix, \
     write_model, merge_strings, disassemble_sparse_matrix, Model
 from modelforge.models import register_model
 import numpy

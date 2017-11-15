@@ -52,5 +52,6 @@ non-zero elements: 6211  (0.019409)""")  # nopep8
             self.assertEqual(len(model), 320)
             self.assertEqual(len(model.tokens), 1000)
 
+
 if __name__ == "__main__":
     unittest.main()

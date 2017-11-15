@@ -1,7 +1,14 @@
+#Mac OS
+*.DS_Store
+
+#PyCharm IDE
 .idea/
+
+# Documentation build files
 doc/_build/
 doc/ast2vec.rst
 doc/modules.rst
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

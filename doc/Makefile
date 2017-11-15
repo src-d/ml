@@ -4,7 +4,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= python3 -m sphinx
 SPHINXAPIDOC  ?= python3 -m sphinx.apidoc
-SPHINXPROJ    ?= ast2vec
+SPHINXPROJ    ?= sourced
 SOURCEDIR     ?= .
 BUILDDIR      ?= _build
 

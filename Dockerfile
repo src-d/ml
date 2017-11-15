@@ -1,10 +1,9 @@
 FROM ubuntu:16.04
 
 ADD requirements.txt setup.py package/
-ADD ast2vec package/ast2vec
-ADD ./enry /usr/local/bin/
+ADD sourced package/sourced
 
-RUN rm -rf package/ast2vec/tests && \
+RUN rm -rf package/sourced/ml/tests && \
     apt-get update && \
     apt-get install -y --no-install-suggests --no-install-recommends ca-certificates locales git python3 python3-dev libxml2 libxml2-dev libonig2 make gcc curl && \
     curl https://bootstrap.pypa.io/get-pip.py | python3 && \
@@ -30,4 +29,4 @@ EXPOSE 8000
 ENV BROWSER /browser
 ENV LC_ALL en_US.UTF-8
 
-ENTRYPOINT ["ast2vec"]
+ENTRYPOINT ["sourcedml"]
