@@ -1,7 +1,12 @@
+from collections import namedtuple
 import itertools
+from glob import glob
+import os
 
 import numpy
+import parquet
 from pyspark.sql.types import Row
+from scipy.sparse import csr_matrix
 
 from sourced.ml.repo2.base import Transformer
 from sourced.ml.uast_ids_to_bag import UastIds2Bag
@@ -174,12 +179,17 @@ class BagsBatcher(Transformer):
 
 
 class BagsBatchSaver(Transformer):
-    def __init__(self, path, **kwargs):
+    def __init__(self, path, batcher, **kwargs):
         super().__init__(**kwargs)
         self.path = path
+        self.batcher = batcher
+        self.vocabulary_size = 0
 
     def __call__(self, head):
         self._log.info("Writing to %s", self.path)
+        if self.batcher is not None:
+            self.vocabulary_size = len(self.batcher.keys)
+            self.batcher = None
         head \
             .mapPartitions(self.concatenate) \
             .map(lambda x: Row(**x)) \
@@ -203,4 +213,37 @@ class BagsBatchSaver(Transformer):
                  "data": bytearray(data.data),
                  "indices": bytearray(indices.data),
                  "indptr": bytearray(indptr.data),
-                 "rows": indptr.shape[0]}]
+                 "rows": indptr.shape[0] - 1,
+                 "cols": self.vocabulary_size}]
+
+
+BagsBatch = namedtuple("BagsBatch", ("keys", "matrix"))
+
+class BagsBatchParquetLoader:
+    class BagsBatchParquetLoaderIterator:
+        def __init__(self, files):
+            self._files = files
+            self._pos = 0
+
+        def __next__(self):
+            if self._pos < len(self._files):
+                f = self._files[self._pos]
+                self._pos += 1
+                with open(f, "rb") as fin:
+                    rows = list(parquet.DictReader(fin))
+                    if len(rows) != 1:
+                        raise ValueError("%s contains more than one row" % f)
+                    row = rows[0]
+                    keys = row["keys"].decode().split("\0")
+                    matrix = csr_matrix((numpy.frombuffer(row["data"], numpy.float32),
+                                         numpy.frombuffer(row["indices"], numpy.int32),
+                                         numpy.frombuffer(row["indptr"], numpy.int64)),
+                                        shape=(row["rows"], row["cols"]))
+                    return BagsBatch(keys=keys, matrix=matrix)
+            raise StopIteration()
+
+    def __init__(self, path):
+        self._files = glob(os.path.join(path, "*.parquet"))
+
+    def __iter__(self):
+        return self.BagsBatchParquetLoaderIterator(self._files)
