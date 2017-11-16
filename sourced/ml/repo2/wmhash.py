@@ -8,6 +8,7 @@ import parquet
 from pyspark.sql.types import Row
 from scipy.sparse import csr_matrix
 
+from sourced.ml.pickleable_logger import PickleableLogger
 from sourced.ml.repo2.base import Transformer
 from sourced.ml.uast_ids_to_bag import UastIds2Bag
 
@@ -219,31 +220,43 @@ class BagsBatchSaver(Transformer):
 
 BagsBatch = namedtuple("BagsBatch", ("keys", "matrix"))
 
-class BagsBatchParquetLoader:
-    class BagsBatchParquetLoaderIterator:
-        def __init__(self, files):
+
+class BagsBatchParquetLoader(PickleableLogger):
+    class BagsBatchParquetLoaderIterator(PickleableLogger):
+        def __init__(self, files,**kwargs):
+            super().__init__(**kwargs)
             self._files = files
             self._pos = 0
+
+        def _get_log_name(self):
+            return BagsBatchParquetLoader.__name__
 
         def __next__(self):
             if self._pos < len(self._files):
                 f = self._files[self._pos]
                 self._pos += 1
-                with open(f, "rb") as fin:
-                    rows = list(parquet.DictReader(fin))
-                    if len(rows) != 1:
-                        raise ValueError("%s contains more than one row" % f)
-                    row = rows[0]
-                    keys = row["keys"].decode().split("\0")
-                    matrix = csr_matrix((numpy.frombuffer(row["data"], numpy.float32),
-                                         numpy.frombuffer(row["indices"], numpy.int32),
-                                         numpy.frombuffer(row["indptr"], numpy.int64)),
-                                        shape=(row["rows"], row["cols"]))
-                    return BagsBatch(keys=keys, matrix=matrix)
+                try:
+                    with open(f, "rb") as fin:
+                        rows = list(parquet.DictReader(fin))
+                        if len(rows) != 1:
+                            raise ValueError("%s contains more than one row" % f)
+                        row = rows[0]
+                        keys = row["keys"].decode().split("\0")
+                        matrix = csr_matrix((numpy.frombuffer(row["data"], numpy.float32),
+                                             numpy.frombuffer(row["indices"], numpy.int32),
+                                             numpy.frombuffer(row["indptr"], numpy.int64)),
+                                            shape=(row["rows"], row["cols"]))
+                        return BagsBatch(keys=keys, matrix=matrix)
+                except Exception as e:
+                    self._log.error("Loading %s: %s: %s", f, type(e).__name__, e)
             raise StopIteration()
 
-    def __init__(self, path):
+    def __init__(self, path, **kwargs):
+        super().__init__(**kwargs)
         self._files = glob(os.path.join(path, "*.parquet"))
 
+    def _get_log_name(self):
+        return type(self).__name__
+
     def __iter__(self):
-        return self.BagsBatchParquetLoaderIterator(self._files)
+        return self.BagsBatchParquetLoaderIterator(self._files, log_level=self._log.level)
