@@ -1,4 +1,5 @@
 import importlib
+from io import StringIO
 from typing import Union
 
 from pyspark import StorageLevel
@@ -82,6 +83,30 @@ class Transformer(PickleableLogger):
         for node in pipeline:
             head = node(head)
         return head
+
+    def graph(self, name="source-d", stream=None):
+        if stream is None:
+            stream = StringIO()
+        stream.write("digraph %s {\n" % name)
+        counters = {}
+        nodes = {}
+        queue = [(self, None)]
+        while queue:
+            node, parent = queue.pop(0)
+            try:
+                myself = nodes[node]
+            except KeyError:
+                index = counters.setdefault(type(node), 0)
+                index += 1
+                counters[type(node)] = index
+                myself = "%s %d" % (type(node).__name__, index)
+                nodes[node] = myself
+            if parent is not None:
+                stream.write("\t\"%s\" -> \"%s\"\n" % (parent, myself))
+            for child in node._children:
+                queue.append((child, myself))
+        stream.write("}\n")
+        return stream
 
     def _get_log_name(self):
         return self.__class__.__name__
