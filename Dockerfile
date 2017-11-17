@@ -9,7 +9,7 @@ RUN rm -rf package/sourced/ml/tests && \
     curl https://bootstrap.pypa.io/get-pip.py | python3 && \
     pip3 install --no-cache-dir -r package/requirements.txt && \
     apt-get remove -y python3-dev libxml2-dev make gcc curl && \
-    apt-get remove -y *-doc *-man && \
+    apt-get remove -y *-doc *-man >/dev/null && \
     apt-get autoremove -y && \
     apt-get install -y --no-install-suggests --no-install-recommends git && \
     apt-get clean && \

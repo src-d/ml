@@ -1,5 +1,4 @@
-from modelforge.model import Model, assemble_sparse_matrix, disassemble_sparse_matrix, write_model
-from modelforge.models import register_model
+from modelforge import Model, assemble_sparse_matrix, disassemble_sparse_matrix, register_model
 
 
 @register_model
@@ -34,7 +33,5 @@ Matrix: shape: %s non-zero: %d""" % (
         """
         return self._matrix.shape[0]
 
-    def _write(self, output):
-        write_model(self.meta,
-                    {"matrix": disassemble_sparse_matrix(self.matrix)},
-                    output)
+    def _generate_tree(self):
+        return {"matrix": disassemble_sparse_matrix(self.matrix)}

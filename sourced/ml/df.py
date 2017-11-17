@@ -1,5 +1,6 @@
-from modelforge.model import Model, split_strings, write_model, merge_strings
-from modelforge.models import register_model
+from typing import Iterable, Union, Dict
+
+from modelforge import Model, split_strings, merge_strings, register_model
 import numpy
 
 
@@ -11,15 +12,29 @@ class DocumentFrequencies(Model):
     """
     NAME = "docfreq"
 
-    def construct(self, docs, tokens, freqs):
+    def construct(self, docs, tokfreq: Dict[str, int], **kwargs):
+        """
+        Initializes this model.
+        :param docs: The number of documents.
+        :param tokfreq: The dictionary of token -> frequency.
+        :param kwargs: Not used.
+        :return: self
+        """
         self._docs = docs
-        self._log.info("Building the docfreq dictionary...")
-        self._df = dict(zip(tokens, freqs))
+        self._df = tokfreq
         return self
 
     def _load_tree(self, tree):
-        self.construct(docs=tree["docs"], tokens=split_strings(tree["tokens"]),
-                       freqs=tree["freqs"])
+        tokens = split_strings(tree["tokens"])
+        freqs = tree["freqs"]
+        self._log.info("Building the docfreq dictionary...")
+        tokfreq = dict(zip(tokens, freqs))
+        self.construct(docs=tree["docs"], tokfreq=tokfreq, tokens=tokens)
+
+    def _generate_tree(self):
+        tokens = self.tokens()
+        freqs = numpy.array([self._df[t] for t in tokens], dtype=numpy.float32)
+        return {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs}
 
     def dump(self):
         return """Number of words: %d
@@ -75,10 +90,3 @@ Number of documents: %d""" % (
         Returns the sorted list of tokens.
         """
         return sorted(self._df)
-
-    def _write(self, output):
-        tokens = self.tokens()
-        freqs = numpy.array([self._df[t] for t in tokens], dtype=numpy.float32)
-        write_model(self._meta,
-                    {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs},
-                    output)

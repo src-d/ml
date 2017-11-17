@@ -27,7 +27,7 @@ setup(
               "github", "swivel", "nbow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
                       "bblfsh>-2.2.1,<3.0",
-                      "modelforge>=0.4.0-alpha"] + typing,
+                      "modelforge>=0.5.0-alpha"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],

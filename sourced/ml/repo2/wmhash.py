@@ -2,12 +2,15 @@ from collections import namedtuple
 import itertools
 from glob import glob
 import os
+from typing import Iterable, Dict
 
+from modelforge import merge_strings, register_model
 import numpy
 import parquet
 from pyspark.sql.types import Row
 from scipy.sparse import csr_matrix
 
+from sourced.ml.df import DocumentFrequencies
 from sourced.ml.pickleable_logger import PickleableLogger
 from sourced.ml.repo2.base import Transformer
 from sourced.ml.uast_ids_to_bag import UastIds2Bag
@@ -145,6 +148,55 @@ class IdentifiersBagExtractor(BagsExtractor):
             yield key
 
 
+@register_model
+class OrderedDocumentFrequencies(DocumentFrequencies):
+    """
+    Compatible with the original DocumentFrequencies.
+    """
+    NAME = "ordered_docfreq"
+
+    def construct(self, docs: int, dicts: Iterable[Dict[str, int]]):
+        df = {}
+        for d in dicts:
+            df.update(d)
+        super().construct(docs, df)
+        self._log.info("Ordering the keys...")
+        keys = list(self._df)
+        keys.sort()
+        self._order = {k: i for i, k in enumerate(keys)}
+        return self
+
+    @property
+    def order(self):
+        return self._order
+
+    def _load_tree(self, tree):
+        tokens = None
+        original_construct = self.construct
+        super_construct = super().construct
+
+        def hacked_construct(docs, tokfreq, **kwargs):
+            super_construct(docs=docs, tokfreq=tokfreq)
+            nonlocal tokens
+            tokens = kwargs["tokens"]
+
+        self.construct = hacked_construct
+        try:
+            super()._load_tree(tree)
+        finally:
+            self.construct = original_construct
+        self._log.info("Mapping the keys order...")
+        self._order = {k: i for i, k in enumerate(tokens)}
+
+    def _generate_tree(self):
+        tokens = [None] * len(self)
+        freqs = numpy.zeros(len(self), dtype=numpy.float32)
+        for k, i in self._order.items():
+            tokens[i] = k
+            freqs[i] = self._df[k]
+        return {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs}
+
+
 class BagsBatcher(Transformer):
     DEFAULT_CHUNK_SIZE = 1.5 * 1000 * 1000 * 1000
     BLOCKS = True
@@ -152,18 +204,24 @@ class BagsBatcher(Transformer):
     def __init__(self, extractors, chunk_size=DEFAULT_CHUNK_SIZE, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors
-        self.keys = {}
+        self.model = None
         self.chunk_size = chunk_size
+
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["extractors"]
+        del state["model"]
+        if self.model is not None:
+            state["keys"] = self.model.order
+        return state
 
     def __call__(self, processed):
         avglen = processed.values().map(len).mean()
         ndocs = self.extractors[0].ndocs
         self._log.info("Average bag length: %.1f", avglen)
         self._log.info("Number of documents: %d", ndocs)
-        keys = list(itertools.chain.from_iterable(e.docfreq for e in self.extractors))
-        keys.sort()
-        self.keys = {k: i for i, k in enumerate(keys)}
-        del keys
+        self.model = OrderedDocumentFrequencies().construct(
+            self.extractors[0].ndocs, [e.docfreq for e in self.extractors])
         chunklen = int(self.chunk_size / (2 * 4 * avglen))
         nparts = ndocs // chunklen + 1
         chunklen = int(ndocs / nparts * (2 * 4 * avglen))
@@ -173,6 +231,7 @@ class BagsBatcher(Transformer):
     def bag2row(self, bag):
         data = numpy.zeros(len(bag), dtype=numpy.float32)
         indices = numpy.zeros(len(bag), dtype=numpy.int32)
+        # self.keys emerges after __getstate__
         for i, (k, v) in enumerate(sorted((self.keys[k], v) for k, v in bag.items())):
             data[i] = v
             indices[i] = k
@@ -186,11 +245,14 @@ class BagsBatchSaver(Transformer):
         self.batcher = batcher
         self.vocabulary_size = 0
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["batcher"]
+        return state
+
     def __call__(self, head):
         self._log.info("Writing to %s", self.path)
-        if self.batcher is not None:
-            self.vocabulary_size = len(self.batcher.keys)
-            self.batcher = None
+        self.vocabulary_size = len(self.batcher.model)
         head \
             .mapPartitions(self.concatenate) \
             .map(lambda x: Row(**x)) \

@@ -1,7 +1,6 @@
 import logging
 
-from modelforge.model import Model, split_strings, write_model, merge_strings
-from modelforge.models import register_model
+from modelforge import Model, split_strings, merge_strings, register_model
 import numpy
 
 
@@ -61,10 +60,8 @@ First 10 words: %s""" % (
         """
         return len(self._tokens)
 
-    def _write(self, output):
-        write_model(self._meta,
-                    {"embeddings": self.embeddings, "tokens": merge_strings(self.tokens)},
-                    output)
+    def _generate_tree(self):
+        return {"embeddings": self.embeddings, "tokens": merge_strings(self.tokens)}
 
 
 def projector_entry(args):

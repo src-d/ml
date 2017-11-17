@@ -1,9 +1,8 @@
 import sys
 from typing import Union
 
-from modelforge.model import split_strings, assemble_sparse_matrix, \
-    write_model, merge_strings, disassemble_sparse_matrix, Model
-from modelforge.models import register_model
+from modelforge import split_strings, assemble_sparse_matrix, \
+    merge_strings, disassemble_sparse_matrix, Model, register_model
 import numpy
 from scipy.sparse import csr_matrix
 
@@ -56,12 +55,10 @@ class Topics(Model):
             nnz, nnz / (self.matrix.shape[0] * self.matrix.shape[1]))
         return res
 
-    def _write(self, output):
-        write_model(self.meta,
-                    {"tokens": merge_strings(self.tokens),
-                     "topics": merge_strings(self.topics) if self.topics is not None else False,
-                     "matrix": disassemble_sparse_matrix(self.matrix)},
-                    output)
+    def _generate_tree(self):
+        return {"tokens": merge_strings(self.tokens),
+                "topics": merge_strings(self.topics) if self.topics is not None else False,
+                "matrix": disassemble_sparse_matrix(self.matrix)}
 
     def __len__(self):
         """

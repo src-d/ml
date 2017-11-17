@@ -1,9 +1,8 @@
 import argparse
 from typing import Union
 
-from modelforge.model import Model, split_strings, assemble_sparse_matrix, write_model, \
-    merge_strings, disassemble_sparse_matrix
-from modelforge.models import register_model
+from modelforge import Model, split_strings, assemble_sparse_matrix, \
+    merge_strings, disassemble_sparse_matrix, register_model
 
 from sourced.ml.id2vec import Id2Vec
 
@@ -86,6 +85,10 @@ First 10 repos: %s""" % (
         self._log.info("Building the repository names mapping...")
         self._repos_map = {r: i for i, r in enumerate(self._repos)}
 
+    def _generate_tree(self):
+        return {"repos": merge_strings(self._repos),
+                "matrix": disassemble_sparse_matrix(self._matrix)}
+
 
 @register_model
 class BOW(BOWBase):
@@ -122,12 +125,10 @@ class BOW(BOWBase):
             raise ValueError("You must specify DocumentFrequencies dependency to save BOW.")
         super().save(output, deps)
 
-    def _write(self, output):
-        write_model(self.meta,
-                    {"repos": merge_strings(self._repos),
-                     "matrix": disassemble_sparse_matrix(self.matrix),
-                     "tokens": merge_strings(self.tokens)},
-                    output)
+    def _generate_tree(self):
+        tree = super()._generate_tree()
+        tree["tokens"] = merge_strings(self.tokens)
+        return tree
 
     def dump(self):
         txt = super().dump()
@@ -166,12 +167,6 @@ class NBOW(BOWBase):
             raise ValueError("You must specify DocumentFrequencies and Id2Vec dependencies "
                              "to save NBOW.")
         super().save(output, deps)
-
-    def _write(self, output):
-        write_model(self.meta,
-                    {"repos": merge_strings(self._repos),
-                     "matrix": disassemble_sparse_matrix(self._matrix)},
-                    output)
 
 
 def nbow2bow_entry(args: argparse.Namespace):
