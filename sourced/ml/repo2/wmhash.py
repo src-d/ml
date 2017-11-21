@@ -79,13 +79,13 @@ class Repo2WeightedSet(Transformer):
         self.extractors = extractors
 
     def __call__(self, rows):
-        return rows.flatMap(self.process_row)
+        return rows.map(self.process_row)
 
     def process_row(self, row):
         bag = {}
         for extractor in self.extractors:
             bag.update(extractor.extract(row.uast))
-        yield row.file_hash, bag
+        return row.file_hash, bag
 
 
 class Repo2DocFreq(Transformer):
@@ -134,7 +134,7 @@ class IdentifiersBagExtractor(BagsExtractor):
         log = numpy.log
         for key, val in self.id2bag.uast_to_bag(uast).items():
             try:
-                yield key, log(1 + val) * log(ndocs / docfreq[key])
+                yield "i." + key, log(1 + val) * log(ndocs / docfreq[key])
             except KeyError:
                 # docfreq_threshold
                 continue
@@ -145,7 +145,7 @@ class IdentifiersBagExtractor(BagsExtractor):
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
         for key in bag:
-            yield key
+            yield "i." + key
 
 
 @register_model
