@@ -11,10 +11,17 @@ from sourced.ml.pickleable_logger import PickleableLogger  # nopep8
 class Transformer(PickleableLogger):
     BLOCKS = False  # set to True if __call__ launches PySpark
 
-    def __init__(self, **kwargs):
+    def __init__(self, explain=None, **kwargs):
         super().__init__(**kwargs)
         self._children = []
         self._parent = None
+        self._explained = explain
+
+    @property
+    def explained(self):
+        if self._explained is None and self.parent is not None:
+            return self.parent.explained
+        return bool(self._explained)
 
     @property
     def children(self):

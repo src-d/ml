@@ -125,6 +125,8 @@ class Repo2DocFreq(Transformer):
 
     def __call__(self, rows):
         processed = rows.flatMap(self.process_row)
+        if self.explained:
+            self._log.info("toDebugString():\n%s", processed.toDebugString().decode())
         reduced = processed.countByKey()
         ndocs = None
         for (i, key), value in reduced.items():
@@ -265,7 +267,10 @@ class BagsBatcher(Transformer):
         return state
 
     def __call__(self, processed):
-        avglen = processed.values().map(len).mean()
+        lengths = processed.values().map(len)
+        if self.explained:
+            self._log.info("toDebugString():\n%s", lengths.toDebugString().decode())
+        avglen = lengths.mean()
         ndocs = self.extractors[0].ndocs
         self._log.info("Average bag length: %.1f", avglen)
         self._log.info("Number of documents: %d", ndocs)
@@ -302,11 +307,12 @@ class BagsBatchSaver(Transformer):
     def __call__(self, head):
         self._log.info("Writing to %s", self.path)
         self.vocabulary_size = len(self.batcher.model)
-        head \
+        rows = head \
             .mapPartitions(self.concatenate) \
-            .map(lambda x: Row(**x)) \
-            .toDF() \
-            .write.parquet(self.path)
+            .map(lambda x: Row(**x))
+        if self.explained:
+            self._log.info("toDebugString():\n%s", rows.toDebugString().decode())
+        rows.toDF().write.parquet(self.path)
 
     def concatenate(self, part):
         data = []
