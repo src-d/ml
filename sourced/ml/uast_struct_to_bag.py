@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-from random import random, choice
+import random
 
 from sourced.ml.uast_ids_to_bag import FakeVocabulary
 
@@ -9,9 +9,9 @@ class UastStructure2BagBase:
         raise NotImplemented
 
 
-class Uast2Seq2Bag(UastStructure2BagBase):
+class UastSeq2Bag(UastStructure2BagBase):
     """
-    DFS traversal + preserve order of node children.
+    DFS traversal + preserves the order of node children.
     """
     def __init__(self, type2ind=None, stride=1, seq_len=5):
         self.type2ind = type2ind if type2ind is not None else FakeVocabulary()
@@ -23,7 +23,7 @@ class Uast2Seq2Bag(UastStructure2BagBase):
         stack = [root]
         nodes[id(root)].extend(root.children)
         while stack:
-            if len(nodes[id(stack[-1])]):
+            if nodes[id(stack[-1])]:
                 child = stack[-1].popleft()
                 nodes[id(child)].extend(child.children)
                 stack.append(child)
@@ -61,21 +61,21 @@ class Uast2RandomWalks:
     def __init__(self, p_explore_neighborhood, q_leave_neighborhood, n_walks, n_steps,
                  type2ind=None):
         """
-        :param p_explore_neighborhood: return parameter, p. Parameter p controls the likelihood of
-                                       immediately revisiting a node in the walk. Setting it to a
-                                       high value (> max(q, 1)) ensures that we are less likely to
-                                       sample an already visited node in the following two steps
-                                       (unless the next node in the walk had no other neighbor).
-                                       This strategy encourages moderate exploration and avoids
-                                       2-hop redundancy in sampling
-        :param q_leave_neighborhood: in-out parameter, q. Parameter q allows the search to
-                                     differentiate between “inward” and “outward” nodes. Such walks
-                                     obtain a local view of the underlying graph with respect to
-                                     the start node in the walk and approximate BFS behavior in the
-                                     sense that our samples comprise of nodes within a small
-                                     locality
-        :param n_walks: number of walks from each node
-        :param n_steps: number of steps in walk
+        :param p_explore_neighborhood: return parameter, p. Parameter p controls the likelihood of\
+                                       immediately revisiting a node in the walk. Setting it to a\
+                                       high value (> max(q, 1)) ensures that we are less likely to\
+                                       sample an already visited node in the following two steps\
+                                       (unless the next node in the walk had no other neighbor).\
+                                       This strategy encourages moderate exploration and avoids\
+                                       2-hop redundancy in sampling.
+        :param q_leave_neighborhood: in-out parameter, q. Parameter q allows the search to\
+                                     differentiate between “inward” and “outward” nodes. Such \
+                                     walks obtain a local view of the underlying graph with \
+                                     respect to the start node in the walk and approximate BFS \
+                                     behavior in the sense that our samples comprise of nodes \
+                                     within a small locality.
+        :param n_walks: Number of walks from each node.
+        :param n_steps: Number of steps in walk.
         """
         self.p_explore_neighborhood = p_explore_neighborhood
         self.q_leave_neighborhood = q_leave_neighborhood
@@ -105,8 +105,8 @@ class Uast2RandomWalks:
         starting_nodes.append(node)
 
         for ch in root.children:
-            node.children.append(self._prepare_starting_nodes(ch, parent=node,
-                                                              starting_nodes=starting_nodes))
+            node.children.append(self._prepare_starting_nodes(
+                ch, parent=node, starting_nodes=starting_nodes))
 
         return node
 
@@ -132,7 +132,7 @@ class Uast2RandomWalks:
         v = walk[-1]
 
         if len(walk) == 1 and len(v.children) > 0:
-            return choice(v.children)
+            return random.choice(v.children)
         elif len(v.children) == 0:
             return v
 
@@ -141,33 +141,35 @@ class Uast2RandomWalks:
         threshold /= ((1 / self.p_explore_neighborhood) +
                       len(v.children) / self.q_leave_neighborhood)
 
-        if random() <= threshold:
+        if random.random() <= threshold:
             return t
 
         options = []
         if v.parent is not None:
             options.append(v.parent)
         options.extend(v.children)
-        return choice(options)
+        return random.choice(options)
 
 
 class Uast2RandomWalk2Bag(UastStructure2BagBase):
     def __init__(self, p_explore_neighborhood=0.5, q_leave_neighborhood=0.5, n_walks=5, n_steps=19,
-                 stride=1, seq_len=[5, 6]):
+                 stride=1, seq_len=(5, 6), seed=42):
         self.random_walker = Uast2RandomWalks(p_explore_neighborhood=p_explore_neighborhood,
                                               q_leave_neighborhood=q_leave_neighborhood,
                                               n_walks=n_walks, n_steps=n_steps)
         self.stride = stride
 
-        if (not isinstance(seq_len, int) and not isinstance(seq_len, list) and
-                not isinstance(seq_len, list)):
+        if not isinstance(seq_len, (int, tuple, list)):
             raise TypeError("Unexpected type of seq_len: %s" % type(seq_len))
 
         self.seq_len = seq_len
+        self.seed = seed
 
     def uast_to_bag(self, uast):
-        bag = defaultdict(int)
+        if self.seed is not None:
+            random.seed(self.seed)
 
+        bag = defaultdict(int)
         walks = self.random_walker.uast2walks(uast)
         if isinstance(self.seq_len, int):
             seq_lens = [self.seq_len]
