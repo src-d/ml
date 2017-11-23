@@ -34,7 +34,7 @@ class BagsExtractor:
     """
     DEFAULT_DOCFREQ_THRESHOLD = 5
     NAMESPACE = None  # the beginning of each element in the bag
-    OPTS = tuple()  # cmdline args which are passed into __init__()
+    OPTS = {}  # cmdline args which are passed into __init__()
 
     def __init__(self, docfreq_threshold=None):
         """
@@ -169,6 +169,25 @@ class IdentifiersBagExtractor(BagsExtractor):
 
     def uast_to_bag(self, uast):
         return self.id2bag.uast_to_bag(uast)
+
+
+@register_extractor
+class LiteralsBagExtractor(BagsExtractor):
+    NAME = "lit"
+    NAMESPACE = "l."
+
+    class HashedTokenParser:
+        def process_token(self, token):
+            yield hash(token)
+
+    def __init__(self, docfreq_threshold=None):
+        super().__init__(docfreq_threshold)
+        self.id2bag = UastIds2Bag(None, self.HashedTokenParser())
+
+    def uast_to_bag(self, uast):
+        if os.getenv("PYTHONHASHSEED", "random") == "random":
+            raise RuntimeError("PYTHONHASHSEED must be set")
+        return self.id2bag.uast_to_bag(uast, roles_filter="//roleLiteral")
 
 
 @register_extractor
