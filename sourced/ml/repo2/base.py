@@ -24,6 +24,15 @@ class Transformer(PickleableLogger):
     def parent(self):
         return self._parent
 
+    def path(self):
+        node = self
+        path = []
+        while node is not None:
+            path.append(node)
+            node = node.parent
+        path.reverse()
+        return path
+
     def link(self, transformer):
         self._children.append(transformer)
         transformer._parent = self
@@ -72,12 +81,7 @@ class Transformer(PickleableLogger):
                      will be used if possible.
         :return: The result of the execution.
         """
-        pipeline = [self]
-        node = self
-        while node.parent is not None:
-            node = node.parent
-            pipeline.append(node)
-        pipeline.reverse()
+        pipeline = self.path()
         if not self._children:
             self._log.info(self._format_pipeline(pipeline))
         for node in pipeline:
@@ -128,9 +132,20 @@ class Cacher(Transformer):
     def __init__(self, persistence, **kwargs):
         super().__init__(**kwargs)
         self.persistence = getattr(StorageLevel, persistence)
+        self.head = None
+        self.trace = None
+
+    def __getstate__(self):
+        state = super().__getstate__()
+        state["head"] = None
+        state["trace"] = None
+        return state
 
     def __call__(self, head):
-        return head.persist(self.persistence)
+        if self.head is None or self.trace != self.path():
+            self.head = head.persist(self.persistence)
+            self.trace = self.path()
+        return self.head
 
 
 class UastExtractor(Transformer):
