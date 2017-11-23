@@ -39,7 +39,7 @@ class UastSeq2Bag(UastStructure2BagBase):
 
         for i in range(0, len(seq) - self.seq_len, self.stride):
             # convert to str - requirement from wmhash.BagsExtractor
-            bag[str(seq[i:i + self.seq_len])] += 1
+            bag["".join(seq[i:i + self.seq_len])] += 1
         return bag
 
     def node2ind(self, node):
@@ -179,5 +179,5 @@ class Uast2RandomWalk2Bag(UastStructure2BagBase):
             for seq_len in seq_lens:
                 for i in range(0, len(walk) - seq_len, self.stride):
                     # convert to str - requirement from wmhash.BagsExtractor
-                    bag[str(walk[i:i + seq_len])] += 1
+                    bag["".join(walk[i:i + seq_len])] += 1
         return bag

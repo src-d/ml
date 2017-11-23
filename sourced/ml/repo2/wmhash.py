@@ -76,8 +76,9 @@ class BagsExtractor:
         docfreq = self.docfreq
         log = numpy.log
         for key, val in self.uast_to_bag(uast).items():
+            key = self.NAMESPACE + key
             try:
-                yield self.NAMESPACE + key, log(1 + val) * log(ndocs / docfreq[key])
+                yield key, log(1 + val) * log(ndocs / docfreq[key])
             except KeyError:
                 # docfreq_threshold
                 continue
