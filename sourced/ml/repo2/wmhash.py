@@ -1,5 +1,4 @@
 from collections import namedtuple
-import itertools
 from glob import glob
 import os
 from typing import Iterable, Dict
@@ -14,6 +13,7 @@ from sourced.ml.df import DocumentFrequencies
 from sourced.ml.pickleable_logger import PickleableLogger
 from sourced.ml.repo2.base import Transformer
 from sourced.ml.uast_ids_to_bag import UastIds2Bag
+from sourced.ml.uast_struct_to_bag import Uast2RandomWalk2Bag, Uast2Seq2Bag
 
 
 __extractors__ = {}
@@ -29,12 +29,18 @@ def register_extractor(cls):
 class BagsExtractor:
     DEFAULT_DOCFREQ_THRESHOLD = 5
 
-    def __init__(self, docfreq_threshold=None):
+    def __init__(self, namespace, docfreq_threshold=None):
+        """
+
+        :param namespace: namespaces for
+        :param docfreq_threshold:
+        """
         if docfreq_threshold is None:
             docfreq_threshold = self.DEFAULT_DOCFREQ_THRESHOLD
         self.docfreq_threshold = docfreq_threshold
         self.docfreq = {}
         self._ndocs = 0
+        self.namespace = namespace
 
     @property
     def docfreq_threhold(self):
@@ -61,16 +67,32 @@ class BagsExtractor:
         self._ndocs = value
 
     def extract(self, uast):
-        raise NotImplementedError()
+        ndocs = self.ndocs
+        docfreq = self.docfreq
+        log = numpy.log
+        for key, val in self.uast_to_bag(uast).items():
+            try:
+                yield self.namespace + key, log(1 + val) * log(ndocs / docfreq[key])
+            except KeyError:
+                # docfreq_threshold
+                continue
 
     def inspect(self, uast):
-        raise NotImplementedError()
+        try:
+            bag = self.uast_to_bag(uast)
+        except RuntimeError as e:
+            raise ValueError(str(uast)) from e
+        for key in bag:
+            yield self.namespace + key
 
     def apply_docfreq(self, key, value):
         if value >= self.docfreq_threshold:
             if not isinstance(key, str):
                 raise TypeError("key is %s" % type(key))
             self.docfreq[str(key)] = value
+
+    def uast_to_bag(self, uast):
+        raise NotImplementedError()
 
 
 class Repo2WeightedSet(Transformer):
@@ -123,29 +145,13 @@ class IdentifiersBagExtractor(BagsExtractor):
         def process_token(self, token):
             yield token
 
-    def __init__(self, docfreq_threshold=None, split_stem=False):
-        super().__init__(docfreq_threshold)
+    def __init__(self, namespace="i.", docfreq_threshold=None, split_stem=False):
+        super().__init__(namespace, docfreq_threshold)
         self.id2bag = UastIds2Bag(
             None, self.NoopTokenParser() if not split_stem else None)
 
-    def extract(self, uast):
-        ndocs = self.ndocs
-        docfreq = self.docfreq
-        log = numpy.log
-        for key, val in self.id2bag.uast_to_bag(uast).items():
-            try:
-                yield "i." + key, log(1 + val) * log(ndocs / docfreq[key])
-            except KeyError:
-                # docfreq_threshold
-                continue
-
-    def inspect(self, uast):
-        try:
-            bag = self.id2bag.uast_to_bag(uast)
-        except RuntimeError as e:
-            raise ValueError(str(uast)) from e
-        for key in bag:
-            yield "i." + key
+    def uast_to_bag(self, uast):
+        return self.id2bag.uast_to_bag(uast)
 
 
 @register_model
@@ -195,6 +201,30 @@ class OrderedDocumentFrequencies(DocumentFrequencies):
             tokens[i] = k
             freqs[i] = self._df[k]
         return {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs}
+
+
+@register_extractor
+class UastSeqBagExtractor(BagsExtractor):
+    NAME = "uast2seq"
+
+    def __init__(self, namespace="s.", docfreq_threshold=None, uast2bag=None):
+        super().__init__(namespace, docfreq_threshold)
+        self.uast2bag = uast2bag if uast2bag is not None else Uast2Seq2Bag()
+
+    def uast_to_bag(self, uast):
+        return self.uast2bag.uast_to_bag(uast)
+
+
+@register_extractor
+class UastRandomWalkBagExtractor(BagsExtractor):
+    NAME = "node2vec"
+
+    def __init__(self, namespace="r.", docfreq_threshold=None, uast2bag=None):
+        super().__init__(namespace, docfreq_threshold)
+        self.uast2bag = uast2bag if uast2bag is not None else Uast2RandomWalk2Bag()
+
+    def uast_to_bag(self, uast):
+        return self.uast2bag.uast_to_bag(uast)
 
 
 class BagsBatcher(Transformer):
@@ -285,7 +315,7 @@ BagsBatch = namedtuple("BagsBatch", ("keys", "matrix"))
 
 class BagsBatchParquetLoader(PickleableLogger):
     class BagsBatchParquetLoaderIterator(PickleableLogger):
-        def __init__(self, files,**kwargs):
+        def __init__(self, files, **kwargs):
             super().__init__(**kwargs)
             self._files = files
             self._pos = 0

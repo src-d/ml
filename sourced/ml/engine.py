@@ -3,8 +3,8 @@ import os
 import sys
 os.environ["PYSPARK_PYTHON"] = sys.executable
 
-from pyspark.sql import SparkSession
-from sourced.engine import Engine
+from pyspark.sql import SparkSession  # nopep8
+from sourced.engine import Engine  # nopep8
 
 
 def create_spark(session_name, kwargs):
