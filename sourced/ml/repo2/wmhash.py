@@ -1,3 +1,4 @@
+import codecs
 from collections import namedtuple
 from glob import glob
 import inspect
@@ -97,6 +98,15 @@ class BagsExtractor:
                 raise TypeError("key is %s" % type(key))
             self.docfreq[str(key)] = value
 
+    @classmethod
+    def get_kwargs_fromcmdline(cls, args):
+        prefix = cls.NAME + "_"
+        result = {}
+        for k, v in args.__dict__.items():
+            if k.startswith(prefix):
+                result[k[len(prefix):]] = v
+        return result
+
     def uast_to_bag(self, uast):
         raise NotImplementedError()
 
@@ -178,7 +188,7 @@ class LiteralsBagExtractor(BagsExtractor):
 
     class HashedTokenParser:
         def process_token(self, token):
-            yield hash(token)
+            yield codecs.encode(hash(token).to_bytes(8, "little"), "hex_codec")
 
     def __init__(self, docfreq_threshold=None):
         super().__init__(docfreq_threshold)
@@ -187,7 +197,7 @@ class LiteralsBagExtractor(BagsExtractor):
     def uast_to_bag(self, uast):
         if os.getenv("PYTHONHASHSEED", "random") == "random":
             raise RuntimeError("PYTHONHASHSEED must be set")
-        return self.id2bag.uast_to_bag(uast, roles_filter="//roleLiteral")
+        return self.id2bag.uast_to_bag(uast, roles_filter="//@roleLiteral")
 
 
 @register_extractor
