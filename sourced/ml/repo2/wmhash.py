@@ -312,6 +312,7 @@ class BagsBatcher(Transformer):
         self._log.info("Number of documents: %d", ndocs)
         self.model = OrderedDocumentFrequencies().construct(
             self.extractors[0].ndocs, [e.docfreq for e in self.extractors])
+        self._log.info("Vocabulary size: %d", len(self.model))
         chunklen = int(self.chunk_size / (2 * 4 * avglen))
         nparts = ndocs // chunklen + 1
         chunklen = int(ndocs / nparts * (2 * 4 * avglen))

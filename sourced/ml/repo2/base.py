@@ -169,6 +169,7 @@ class UastExtractor(Transformer):
     def __call__(self, files):
         if files is None:
             files = self.engine.repositories.references.head_ref.files
+        files = files.dropDuplicates(("file_hash",))
         classified = files.classify_languages()
         lang_filter = classified.lang == self.languages[0]
         for lang in self.languages[1:]:
