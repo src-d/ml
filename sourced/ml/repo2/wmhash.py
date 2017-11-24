@@ -15,7 +15,7 @@ from sourced.ml.df import DocumentFrequencies
 from sourced.ml.pickleable_logger import PickleableLogger
 from sourced.ml.repo2.base import Transformer
 from sourced.ml.uast_ids_to_bag import UastIds2Bag
-from sourced.ml.uast_struct_to_bag import Uast2RandomWalk2Bag, UastSeq2Bag
+from sourced.ml.uast_struct_to_bag import UastRandomWalk2Bag, UastSeq2Bag
 
 
 __extractors__ = {}
@@ -223,12 +223,12 @@ class UastSeqBagExtractor(BagsExtractor):
 class UastRandomWalkBagExtractor(BagsExtractor):
     NAME = "node2vec"
     NAMESPACE = "r."
-    OPTS = dict(get_names_from_kwargs(Uast2RandomWalk2Bag.__init__))
+    OPTS = dict(get_names_from_kwargs(UastRandomWalk2Bag.__init__))
 
     def __init__(self, docfreq_threshold=None, **kwargs):
         super().__init__(docfreq_threshold)
         self._log.debug("__init__ %s", kwargs)
-        self.uast2bag = Uast2RandomWalk2Bag(**kwargs)
+        self.uast2bag = UastRandomWalk2Bag(**kwargs)
 
     def uast_to_bag(self, uast):
         return self.uast2bag.uast_to_bag(uast)
