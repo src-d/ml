@@ -24,7 +24,7 @@ class UastSeq2Bag(UastStructure2BagBase):
         nodes[id(root)].extend(root.children)
         while stack:
             if nodes[id(stack[-1])]:
-                child = stack[-1].popleft()
+                child = nodes[id(stack[-1])].popleft()
                 nodes[id(child)].extend(child.children)
                 stack.append(child)
             else:
@@ -37,9 +37,15 @@ class UastSeq2Bag(UastStructure2BagBase):
 
         seq = [self.node2ind(n) for n in seq]
 
-        for i in range(0, len(seq) - self.seq_len, self.stride):
-            # convert to str - requirement from wmhash.BagsExtractor
-            bag["".join(seq[i:i + self.seq_len])] += 1
+        if isinstance(self.seq_len, int):
+            seq_lens = [self.seq_len]
+        else:
+            seq_lens = self.seq_len
+        for seq_ in seq:
+            for seq_len in seq_lens:
+                for i in range(0, len(seq_) - seq_len, self.stride):
+                    # convert to str - requirement from wmhash.BagsExtractor
+                    bag["".join(seq_[i:i + seq_len])] += 1
         return bag
 
     def node2ind(self, node):
@@ -151,7 +157,7 @@ class Uast2RandomWalks:
         return random.choice(options)
 
 
-class Uast2RandomWalk2Bag(UastStructure2BagBase):
+class UastRandomWalk2Bag(UastStructure2BagBase):
     def __init__(self, p_explore_neighborhood=0.5, q_leave_neighborhood=0.5, n_walks=5, n_steps=19,
                  stride=1, seq_len=(5, 6), seed=42):
         self.random_walker = Uast2RandomWalks(p_explore_neighborhood=p_explore_neighborhood,
