@@ -208,6 +208,7 @@ class UastSeqBagExtractor(BagsExtractor):
 
     def __init__(self, docfreq_threshold=None, **kwargs):
         super().__init__(docfreq_threshold)
+        self._log.debug("__init__ %s", kwargs)
         self.uast2bag = UastSeq2Bag(**kwargs)
 
     def uast_to_bag(self, uast):
@@ -222,6 +223,7 @@ class UastRandomWalkBagExtractor(BagsExtractor):
 
     def __init__(self, docfreq_threshold=None, **kwargs):
         super().__init__(docfreq_threshold)
+        self._log.debug("__init__ %s", kwargs)
         self.uast2bag = Uast2RandomWalk2Bag(**kwargs)
 
     def uast_to_bag(self, uast):
