@@ -28,7 +28,7 @@ def register_extractor(cls):
     return cls
 
 
-class BagsExtractor:
+class BagsExtractor(PickleableLogger):
     """
     Converts a single UAST into the weighted set (dictionary), where elements are strings
     and the values are floats. The derived classes must implement uast_to_bag().
@@ -37,11 +37,12 @@ class BagsExtractor:
     NAMESPACE = None  # the beginning of each element in the bag
     OPTS = {}  # cmdline args which are passed into __init__()
 
-    def __init__(self, docfreq_threshold=None):
+    def __init__(self, docfreq_threshold=None, **kwargs):
         """
         :param docfreq_threshold: The minimum number of occurrences of an element to be included \
                                   into the bag
         """
+        super().__init__(**kwargs)
         if docfreq_threshold is None:
             docfreq_threshold = self.DEFAULT_DOCFREQ_THRESHOLD
         self.docfreq_threshold = docfreq_threshold
@@ -71,6 +72,9 @@ class BagsExtractor:
         if value < 1:
             raise ValueError("ndocs must be >= 1, got %d" % value)
         self._ndocs = value
+
+    def _get_log_name(self):
+        return type(self).__name__
 
     def extract(self, uast):
         ndocs = self.ndocs

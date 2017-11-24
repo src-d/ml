@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from sourced.ml.bblfsh_meta import LITERAL
 from sourced.ml.token_parser import TokenParser
 
 
@@ -36,7 +37,6 @@ class UastIds2Bag:
         """
         # FIXME(vmarkovtsev): remove this workaround when https://github.com/bblfsh/client-python/issues/60 is fixed # nopep8
         if roles_filter == "//@roleLiteral":
-            from sourced.ml.bblfsh_meta import LITERAL
             queue = [uast]
             nodes = []
             while queue:
