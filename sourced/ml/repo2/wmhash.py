@@ -192,7 +192,8 @@ class LiteralsBagExtractor(BagsExtractor):
 
     class HashedTokenParser:
         def process_token(self, token):
-            yield codecs.encode(hash(token).to_bytes(8, "little"), "hex_codec")
+            yield codecs.encode((hash(token) & 0xffffffffffffffff).to_bytes(8, "little"),
+                                "hex_codec").decode()
 
     def __init__(self, docfreq_threshold=None):
         super().__init__(docfreq_threshold)
@@ -201,7 +202,7 @@ class LiteralsBagExtractor(BagsExtractor):
     def uast_to_bag(self, uast):
         if os.getenv("PYTHONHASHSEED", "random") == "random":
             raise RuntimeError("PYTHONHASHSEED must be set")
-        return self.id2bag.uast_to_bag(uast, roles_filter="//@roleLiteral")
+        return self.id2bag.uast_to_bag(uast, roles_filter="//*[@roleLiteral]")
 
 
 @register_extractor
