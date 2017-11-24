@@ -34,8 +34,20 @@ class UastIds2Bag:
         :param roles_filter: The libuast xpath query to filter identifiers.
         :return:
         """
-        import bblfsh
-        nodes = bblfsh.filter(uast, roles_filter)
+        # FIXME(vmarkovtsev): remove this workaround when https://github.com/bblfsh/client-python/issues/60 is fixed # nopep8
+        if roles_filter == "//@roleLiteral":
+            from sourced.ml.bblfsh_meta import LITERAL
+            queue = [uast]
+            nodes = []
+            while queue:
+                node = queue.pop(0)
+                if LITERAL in node.roles:
+                    nodes.append(node)
+                for child in node.children:
+                    queue.append(child)
+        else:
+            import bblfsh
+            nodes = bblfsh.filter(uast, roles_filter)
         bag = defaultdict(int)
         for node in nodes:
             for sub in self._token_parser.process_token(node.token):
