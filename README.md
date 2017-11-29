@@ -1,6 +1,6 @@
-# ast2vec [![Build Status](https://travis-ci.org/src-d/ast2vec.svg)](https://travis-ci.org/src-d/ast2vec) [![codecov](https://codecov.io/github/src-d/ast2vec/coverage.svg?branch=develop)](https://codecov.io/gh/src-d/ast2vec) [![PyPI](https://img.shields.io/pypi/v/ast2vec.svg)](https://pypi.python.org/pypi/ast2vec)
+# sourced.ml [![Build Status](https://travis-ci.org/src-d/ml.svg)](https://travis-ci.org/src-d/ml) [![codecov](https://codecov.io/github/src-d/ml/coverage.svg?branch=develop)](https://codecov.io/gh/src-d/ml) [![PyPI](https://img.shields.io/pypi/v/ast2vec.svg)](https://pypi.python.org/pypi/ast2vec)
 
-Machine Learning models on top of Abstract Syntax Trees.
+Machine Learning models on top of Abstract Syntax Trees. Formerly known as **ast2vec**.
 
 Currently, there are implemented:
 
@@ -9,11 +9,11 @@ Currently, there are implemented:
 * nBOW, weighted bag of vectors, as in [src-d/wmd-relax](https://github.com/src-d/wmd-relax)
 * topic modeling
 
-This project can be the foundation for [MLoSC](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and working with models, thus allowing to focus on the higher level tasks.
+This project can be the foundation for [machine learning on source code (MLoSC)](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and working with models, thus allowing to focus on the higher level tasks.
 
-It is written in Python3 and has been tested on Linux and macOS. ast2vec is tightly coupled with [Babelfish](http://doc.bblf.sh) and delegates all the AST parsing to it.
+It is written in Python3 and has been tested on Linux and macOS. sourced.ml is tightly coupled with [Babelfish](http://doc.bblf.sh) and delegates all the AST parsing to it.
 
-Here is the list of projects which are built with ast2vec:
+Here is the list of projects which are built with sourced.ml:
 
 * [vecino](https://github.com/src-d/vecino) - finding similar repositories
 * [tmsc](https://github.com/src-d/tmsc) - topic modeling of repositories
