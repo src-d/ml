@@ -135,6 +135,11 @@ class Collector(Transformer):
         return head.collect()
 
 
+class First(Transformer):
+    def __call__(self, head):
+        return head.first()
+
+
 class Cacher(Transformer):
     def __init__(self, persistence, **kwargs):
         super().__init__(**kwargs)
@@ -155,21 +160,33 @@ class Cacher(Transformer):
         return self.head
 
 
-class UastExtractor(Transformer):
-    def __init__(self, engine, languages: Union[list, tuple], **kwargs):
+class Engine(Transformer):
+    def __init__(self, engine, **kwargs):
         super().__init__(**kwargs)
         self.engine = engine
-        self.languages = languages
 
     def __getstate__(self):
         state = super().__getstate__()
         del state["engine"]
         return state
 
+    def __call__(self, _):
+        return self.engine
+
+
+class HeadFiles(Transformer):
+    def __call__(self, engine):
+        return engine.repositories.references.head_ref.commits.first_reference_commit \
+            .tree_entries.blobs
+
+
+class UastExtractor(Transformer):
+    def __init__(self, languages: Union[list, tuple], **kwargs):
+        super().__init__(**kwargs)
+        self.languages = languages
+
     def __call__(self, files):
-        if files is None:
-            files = self.engine.repositories.references.head_ref.files
-        files = files.dropDuplicates(("file_hash",))
+        files = files.dropDuplicates(("blob_id",))
         classified = files.classify_languages()
         lang_filter = classified.lang == self.languages[0]
         for lang in self.languages[1:]:

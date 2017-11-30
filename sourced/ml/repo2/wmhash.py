@@ -127,7 +127,7 @@ class Repo2WeightedSet(Transformer):
         bag = {}
         for extractor in self.extractors:
             bag.update(extractor.extract(row.uast))
-        return row.file_hash, bag
+        return row.blob_id, bag
 
 
 class Repo2DocFreq(Transformer):
