@@ -186,7 +186,7 @@ class UastExtractor(Transformer):
         self.languages = languages
 
     def __call__(self, files):
-        files = files.dropDuplicates(("blob_id",))
+        files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
         classified = files.classify_languages()
         lang_filter = classified.lang == self.languages[0]
         for lang in self.languages[1:]:
@@ -194,6 +194,33 @@ class UastExtractor(Transformer):
         filtered_by_lang = classified.filter(lang_filter)
         uasts = filtered_by_lang.extract_uasts()
         return uasts
+
+
+class FieldsSelector(Transformer):
+    def __init__(self, fields: Union[list, tuple], **kwargs):
+        super().__init__(**kwargs)
+        self.fields = fields
+
+    def __call__(self, df):
+        return df.select(self.fields)
+
+
+class ParquetSaver(Transformer):
+    def __init__(self, save_loc, **kwargs):
+        super().__init__(**kwargs)
+        self.save_loc = save_loc
+
+    def __call__(self, df):
+        df.write.parquet(self.save_loc)
+
+
+class ParquetLoader(Transformer):
+    def __init__(self, session, **kwargs):
+        super().__init__(**kwargs)
+        self.session = session
+
+    def __call__(self, df):
+        return self.session.read.parquet(self.save_loc)
 
 
 class UastDeserializer(Transformer):
