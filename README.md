@@ -51,9 +51,17 @@ Transformers (keras/sklearn style): [Repo2nBOWTransformer](ast2vec/repo2/nbow.py
 
 ## Docker image
 
+First you need to run [babelfish](https://github.com/bblfsh/bblfshd) image and download drivers:
+```
+docker run -d --privileged -p 9432:9432 --name bblfshd bblfsh/bblfshd:v2.2.0
+docker exec -it bblfshd bblfshctl driver install image docker://bblfsh/python-driver:v1.2.6
+docker exec -it bblfshd bblfshctl driver install image docker://bblfsh/java-driver:v1.2.2
+```
+You can find fill installation guide in the official [getting started](https://doc.bblf.sh/user/getting-started.html#installing-bblfshd-locally) manual.
+
+Then build ast2vec image and run it:
 ```
 docker build -t srcd/ast2vec .
-BBLFSH_DRIVER_IMAGES="python=docker://bblfsh/python-driver:v0.8.2;java=docker://bblfsh/java-driver:v0.6.0" docker run -e BBLFSH_DRIVER_IMAGES -d --privileged -p 9432:9432 --name bblfsh bblfsh/server:v0.7.0 --log-level DEBUG
 docker run -it --rm srcd/ast2vec --help
 ```
 
@@ -65,6 +73,16 @@ Cannot connect to the Docker daemon. Is the docker daemon running on this host?
 
 And you are sure that the daemon is running, then you need to add your user to `docker` group:
 refer to the [documentation](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user).
+
+### Playing around with ast2vec on Jupyther notebook
+You can launch our docker image with a notebook examples just running:
+```
+docker run --name ast2vec-jupyter -p 8888:8888 -it --rm --entrypoint jupyter srcd/ast2vec notebook --allow-root --ip=0.0.0.0
+```
+
+Go to http://localhost:8888/notebooks/how_to_use_ast2vec.ipynb to see the notebook example.
+
+Don't forget to run babelfish image and build srcd/ast2vec image as described in the previous section.
 
 ## Algorithms
 
