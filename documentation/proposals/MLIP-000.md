@@ -1,5 +1,5 @@
 # Source{d} ml proposal-000
-This document contains proposals and questoins to discuss for source{d} ml (https://github.com/src-d/ml).
+This document contains proposals and questions to discuss for [source{d} ml](https://github.com/src-d/ml).
 
 ## Package structure
 Now it is a little bit confusing and flat. 
