@@ -35,12 +35,15 @@ class BagsExtractor(PickleableLogger):
     """
     DEFAULT_DOCFREQ_THRESHOLD = 5
     NAMESPACE = None  # the beginning of each element in the bag
-    OPTS = {}  # cmdline args which are passed into __init__()
+    OPTS = {"scale": None}  # cmdline args which are passed into __init__()
+    DEFAULT_SCALE = 1
 
-    def __init__(self, docfreq_threshold=None, **kwargs):
+    def __init__(self, docfreq_threshold=None, scale=None, **kwargs):
         """
         :param docfreq_threshold: The minimum number of occurrences of an element to be included \
                                   into the bag
+        :param scale: TF-IDF will be multiplied by this scale to change importance of specific \
+                      bag extractor
         """
         super().__init__(**kwargs)
         if docfreq_threshold is None:
@@ -48,6 +51,10 @@ class BagsExtractor(PickleableLogger):
         self.docfreq_threshold = docfreq_threshold
         self.docfreq = {}
         self._ndocs = 0
+        if scale is None:
+            self.scale = self.DEFAULT_SCALE
+        else:
+            self.scale = scale
 
     @property
     def docfreq_threhold(self):
@@ -83,7 +90,7 @@ class BagsExtractor(PickleableLogger):
         for key, val in self.uast_to_bag(uast).items():
             key = self.NAMESPACE + key
             try:
-                yield key, log(1 + val) * log(ndocs / docfreq[key])
+                yield key, log(1 + val) * log(ndocs / docfreq[key]) * self.scale
             except KeyError:
                 # docfreq_threshold
                 continue
@@ -166,11 +173,17 @@ def get_names_from_kwargs(f):
             yield k.replace("_", "-"), v.default
 
 
+def filter_kwargs(kwargs, func):
+    func_param = inspect.signature(func).parameters.keys()
+    return dict([(k, v) for k, v in kwargs.items() if k in func_param])
+
+
 @register_extractor
 class IdentifiersBagExtractor(BagsExtractor):
     NAME = "id"
     NAMESPACE = "i."
     OPTS = {"split-stem": False}
+    OPTS.update(BagsExtractor.OPTS)
 
     class NoopTokenParser:
         def process_token(self, token):
@@ -189,6 +202,7 @@ class IdentifiersBagExtractor(BagsExtractor):
 class LiteralsBagExtractor(BagsExtractor):
     NAME = "lit"
     NAMESPACE = "l."
+    OPTS = BagsExtractor.OPTS.copy()
 
     class HashedTokenParser:
         def process_token(self, token):
@@ -210,11 +224,13 @@ class UastSeqBagExtractor(BagsExtractor):
     NAME = "uast2seq"
     NAMESPACE = "s."
     OPTS = dict(get_names_from_kwargs(UastSeq2Bag.__init__))
+    OPTS.update(BagsExtractor.OPTS)
 
     def __init__(self, docfreq_threshold=None, **kwargs):
         super().__init__(docfreq_threshold)
         self._log.debug("__init__ %s", kwargs)
-        self.uast2bag = UastSeq2Bag(**kwargs)
+        uast2bag_kwargs = filter_kwargs(kwargs, UastSeq2Bag.__init__)
+        self.uast2bag = UastSeq2Bag(**uast2bag_kwargs)
 
     def uast_to_bag(self, uast):
         return self.uast2bag.uast_to_bag(uast)
@@ -225,11 +241,13 @@ class UastRandomWalkBagExtractor(BagsExtractor):
     NAME = "node2vec"
     NAMESPACE = "r."
     OPTS = dict(get_names_from_kwargs(UastRandomWalk2Bag.__init__))
+    OPTS.update(BagsExtractor.OPTS)
 
     def __init__(self, docfreq_threshold=None, **kwargs):
         super().__init__(docfreq_threshold)
         self._log.debug("__init__ %s", kwargs)
-        self.uast2bag = UastRandomWalk2Bag(**kwargs)
+        uast2bag_kwargs = filter_kwargs(kwargs, UastRandomWalk2Bag.__init__)
+        self.uast2bag = UastRandomWalk2Bag(**uast2bag_kwargs)
 
     def uast_to_bag(self, uast):
         return self.uast2bag.uast_to_bag(uast)
