@@ -7,6 +7,7 @@ class IdentifiersBagExtractor(BagsExtractor):
     NAME = "id"
     NAMESPACE = "i."
     OPTS = {"split-stem": False}
+    OPTS.update(BagsExtractor.OPTS)
 
     class NoopTokenParser:
         def process_token(self, token):
