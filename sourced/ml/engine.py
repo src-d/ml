@@ -17,7 +17,7 @@ def create_spark(session_name, kwargs):
     for cfg in kwargs.config:
         builder = builder.config(*cfg.split("=", 1))
     session = builder.getOrCreate()
-    session.sparkContext.setLogLevel(logging._levelToName[log.getEffectiveLevel()])
+    session.sparkContext.setLogLevel(kwargs.spark_log_level)
     return session
 
 
