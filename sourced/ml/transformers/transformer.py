@@ -78,7 +78,7 @@ class Transformer(PickleableLogger):
 
     def execute(self, head=None):
         """
-        Execute the node together will all its dependencies, in order.
+        Execute the node together with all its dependencies, in order.
         :param head: The input to feed to the ultimate parent. Can be None - the default one \
                      will be used if possible.
         :return: The result of the execution.

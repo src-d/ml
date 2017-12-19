@@ -6,8 +6,10 @@ import sys
 from modelforge.logs import setup_logging
 from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
-    run_swivel, postprocess_id2vec, preprocess_id2vec
+    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry
 from sourced.ml.utils import install_bigartm
+from sourced.ml.utils.engine import SparkDefault, EngineDefault
+
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
@@ -31,6 +33,45 @@ def one_arg_parser(*args, **kwargs) -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument(*args, **kwargs)
     return arg_parser
+
+
+def add_spark_args(my_parser):
+    my_parser.add_argument(
+        "-s", "--spark", default=SparkDefault.MASTER_ADDRESS,
+        help="Spark's master address.")
+    my_parser.add_argument(
+        "--config", nargs="+", default=SparkDefault.CONFIG,
+        help="Spark configuration (key=value).")
+    my_parser.add_argument(
+        "-m", "--memory",
+        help="Handy memory config for spark. -m 4,10,2 is equivalent to "
+             "--config spark.executor.memory=4G "
+             "--config spark.driver.memory=10G "
+             "--config spark.driver.maxResultSize=2G."
+             "Numbers are floats separated by commas.")
+    my_parser.add_argument(
+        "--package", nargs="+", default=SparkDefault.PACKAGE,
+        help="Additional Spark package.")
+    my_parser.add_argument(
+        "--spark-local-dir", default=SparkDefault.LOCAL_DIR,
+        help="Spark local directory.")
+    persistences = ("DISK_ONLY", "DISK_ONLY_2", "MEMORY_ONLY", "MEMORY_ONLY_2",
+                    "MEMORY_AND_DISK", "MEMORY_AND_DISK_2", "OFF_HEAP")
+    my_parser.add_argument(
+        "--persist", default=None, choices=persistences,
+        help="Spark persistence type (StorageLevel.*).")
+
+
+def add_engine_args(my_parser):
+    add_spark_args(my_parser)
+    my_parser.add_argument(
+        "--bblfsh", default=EngineDefault.BBLFSH,
+        help="Babelfish server's address.")
+    my_parser.add_argument(
+        "--engine", default=EngineDefault.VERSION,
+        help="source{d} engine version.")
+    my_parser.add_argument("--explain", action="store_true",
+                           help="Print the PySpark execution plans.")
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -66,6 +107,27 @@ def get_parser() -> argparse.ArgumentParser:
     # Create and construct subparsers
 
     subparsers = parser.add_subparsers(help="Commands", dest="command")
+
+    repo2coocc_parser = subparsers.add_parser(
+        "repos2coocc", help="Produce the co-occurrence matrix from a Git repository.",
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    add_engine_args(repo2coocc_parser)
+
+    repo2coocc_parser.add_argument(
+        "-r", "--repositories", required=True,
+        help="The path to the repositories.")
+    repo2coocc_parser.add_argument(
+        "--min-docfreq", default=1, type=int,
+        help="The minimum document frequency of each element.")
+    repo2coocc_parser.add_argument(
+        "-l", "--languages", required=True, nargs="+", choices=("Java", "Python"),
+        help="The programming languages to analyse.")
+    repo2coocc_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Path to the output file.")
+
+    repo2coocc_parser.set_defaults(handler=repos2coocc_entry)
+
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone,
