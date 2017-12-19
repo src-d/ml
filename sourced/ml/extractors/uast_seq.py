@@ -17,4 +17,4 @@ class UastSeqBagExtractor(BagsExtractor):
         self.uast2bag = UastSeq2Bag(**uast2bag_kwargs)
 
     def uast_to_bag(self, uast):
-        return self.uast2bag.uast_to_bag(uast)
+        return self.uast2bag(uast)

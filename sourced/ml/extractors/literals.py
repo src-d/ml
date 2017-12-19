@@ -23,4 +23,4 @@ class LiteralsBagExtractor(BagsExtractor):
     def uast_to_bag(self, uast):
         if os.getenv("PYTHONHASHSEED", "random") == "random":
             raise RuntimeError("PYTHONHASHSEED must be set")
-        return self.id2bag.uast_to_bag(uast, roles_filter="//*[@roleLiteral]")
+        return self.id2bag(uast, roles_filter="//*[@roleLiteral]")
