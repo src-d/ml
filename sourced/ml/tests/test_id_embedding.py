@@ -11,8 +11,9 @@ from scipy.sparse import coo_matrix
 
 from modelforge.model import split_strings, assemble_sparse_matrix
 from sourced.ml.algorithms import swivel
-from sourced.ml.algorithms.id_embedding import preprocess, run_swivel, postprocess, \
-    SwivelTransformer, PostprocessTransformer, PreprocessTransformer
+from sourced.ml.algorithms.id_embedding import preprocess, SwivelTransformer, \
+    PostprocessTransformer, PreprocessTransformer
+from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel
 from sourced.ml.models import DocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
 
@@ -198,7 +199,7 @@ class IdEmbeddingTests(unittest.TestCase):
                 result=tmp.name)
             prepare_postproc_files(args.swivel_output_directory)
 
-            postprocess(args)
+            postprocess_id2vec(args)
 
             check_postproc_results(self, tmp.name)
 

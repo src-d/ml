@@ -1,18 +1,17 @@
 import logging
 import os
 import shutil
-import sys
 from argparse import Namespace
 from collections import defaultdict
 
 import numpy
 import tensorflow as tf
 from scipy.sparse import csr_matrix
-from sourced.ml.algorithms import TokenParser
 
 import sourced.ml.algorithms.swivel as swivel
 from modelforge.progress_bar import progress_bar
-from sourced.ml.models import Cooccurrences, DocumentFrequencies, Id2Vec
+from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel
+from sourced.ml.models import Cooccurrences, DocumentFrequencies
 
 
 class Transformer:
@@ -240,20 +239,6 @@ class SwivelTransformer(Transformer):
         return "id_swivel"
 
 
-def run_swivel(args):
-    """
-    Trains the Swivel model. Wraps swivel.py, adapted from
-    https://github.com/vmarkovtsev/models/blob/master/swivel/swivel.py
-
-    :param args: :class:`argparse.Namespace` identical to \
-                 :class:`tf.app.flags`.
-    :return: None
-    """
-    swivel.FLAGS = args
-    logging.getLogger("tensorflow").handlers.clear()
-    swivel.main(args)
-
-
 class PostprocessTransformer(Transformer):
     def transform(self, swivel_output_directory, result):
         """
@@ -268,44 +253,7 @@ class PostprocessTransformer(Transformer):
         """
         args = Namespace(swivel_output_directory=swivel_output_directory,
                          result=result)
-        postprocess(args)
+        postprocess_id2vec(args)
 
     def _get_log_name(self):
         return "id_postprocess"
-
-
-def postprocess(args):
-    """
-    Merges row and column embeddings produced by Swivel and writes the Id2Vec
-    model.
-
-    :param args: :class:`argparse.Namespace` with "swivel_output_directory" \
-                 and "result". The text files are read from \
-                 `swivel_output_directory` and the model is written to \
-                 `result`.
-    :return: None
-    """
-    log = logging.getLogger("postproc")
-    log.info("Parsing the embeddings at %s...", args.swivel_output_directory)
-    tokens = []
-    embeddings = []
-    swd = args.swivel_output_directory
-    with open(os.path.join(swd, "row_embedding.tsv")) as frow:
-        with open(os.path.join(swd, "col_embedding.tsv")) as fcol:
-            for i, (lrow, lcol) in enumerate(zip(frow, fcol)):
-                if i % 10000 == (10000 - 1):
-                    sys.stdout.write("%d\r" % (i + 1))
-                    sys.stdout.flush()
-                prow, pcol = (l.split("\t", 1) for l in (lrow, lcol))
-                assert prow[0] == pcol[0]
-                tokens.append(prow[0][:TokenParser.MAX_TOKEN_LENGTH])
-                erow, ecol = \
-                    (numpy.fromstring(p[1], dtype=numpy.float32, sep="\t")
-                     for p in (prow, pcol))
-                embeddings.append((erow + ecol) / 2)
-    log.info("Generating numpy arrays...")
-    embeddings = numpy.array(embeddings, dtype=numpy.float32)
-    log.info("Writing %s...", args.result)
-    model = Id2Vec()
-    model.construct(embeddings=embeddings, tokens=tokens)
-    model.save(args.result)

@@ -7,7 +7,7 @@ import unittest
 import sourced
 import sourced.ml.tests.models as paths
 from sourced.ml.models import NBOW, BOW
-from sourced.ml.models.bow import bow2vw_entry
+from sourced.ml.cmd_entries import bow2vw_entry
 
 
 class Bow2vwTests(unittest.TestCase):
