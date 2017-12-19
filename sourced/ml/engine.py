@@ -29,5 +29,8 @@ def create_engine(session_name, repositories, kwargs):
     session = create_spark(session_name, kwargs)
     log = logging.getLogger("engine")
     log.info("Initializing on %s", repositories)
-    engine = Engine(session, repositories)
+    try:
+        engine = Engine(session, repositories, "siva")
+    except:
+        engine = Engine(session, repositories)
     return engine
