@@ -17,6 +17,11 @@ class Uast2StructBagBase(Uast2BagBase):
         return self._node2index
 
 
+class Node2InternalType:
+    def __getitem__(self, item):
+        return item.internal_type
+
+
 class UastSeq2Bag(Uast2StructBagBase):
     """
     DFS traversal + preserves the order of node children.
@@ -67,11 +72,6 @@ class Node:
         return neighbours
 
 
-class Node2InternalType:
-    def __getitem__(self, item):
-        return item.internal_type
-
-
 class Uast2RandomWalks:
     """
     Generation of random walks for UAST.
@@ -80,6 +80,8 @@ class Uast2RandomWalks:
     def __init__(self, p_explore_neighborhood, q_leave_neighborhood, n_walks, n_steps,
                  node2index=None, seed=None):
         """
+        Related article: https://arxiv.org/abs/1607.00653
+
         :param p_explore_neighborhood: return parameter, p. Parameter p controls the likelihood of\
                                        immediately revisiting a node in the walk. Setting it to a\
                                        high value (> max(q, 1)) ensures that we are less likely to\
@@ -139,10 +141,12 @@ class Uast2RandomWalks:
         """
         Compare to node2vec this sampling is a bit simpler because there is no loop in tree ->
         so there are only 2 options with unnormalized probabilities 1/p & 1/q
+        Related article: https://arxiv.org/abs/1607.00653
+
         :param walk: list of visited nodes
         :return: next node to visit
         """
-        last_node = walk[-1]
+        last_node = walk[-1]  # correspond to node v in article
 
         if len(walk) == 1 and len(last_node.children) > 0:
             return random.choice(last_node.children)
@@ -153,7 +157,8 @@ class Uast2RandomWalks:
         threshold /= (threshold + len(last_node.children) / self.q_leave_neighborhood)
 
         if random.random() <= threshold:
-            return walk[-2]
+            # With threshold probability we need to return back to previous node.
+            return walk[-2]  # Node from previous step. Correspond to node t in article.
 
         return random.choice(last_node.neighbours)
 
@@ -170,7 +175,7 @@ class UastRandomWalk2Bag(Uast2StructBagBase):
         bag = defaultdict(int)
         for walk in self.uast2walks(uast):
             for seq_len in self._seq_lens:
-                for i in range(0, len(walk) - seq_len, self._stride):
+                for i in range(0, len(walk) - seq_len + 1, self._stride):
                     # convert to str - requirement from wmhash.BagsExtractor
                     bag["".join(walk[i:i + seq_len])] += 1
         return bag

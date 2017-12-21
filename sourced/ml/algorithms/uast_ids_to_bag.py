@@ -56,7 +56,7 @@ class UastTokens2Bag(Uast2BagBase):
         nodes = bblfsh.filter(uast, self.XPATH)
         bag = defaultdict(int)
         for node in nodes:
-            for sub in self._token_parser(node.token):
+            for sub in self._token_parser.process_token(node.token):
                 try:
                     bag[self._token2index[sub]] += 1
                 except KeyError:
