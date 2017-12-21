@@ -4,7 +4,7 @@ import os
 import sys
 
 from modelforge.logs import setup_logging
-from sourced.ml.algorithms.id_embedding import swivel
+from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec
 from sourced.ml.utils import install_bigartm
