@@ -1,44 +1,4 @@
-from argparse import Namespace
-
 import numpy
-
-import sourced.ml.algorithms.swivel as swivel
-from sourced.ml.cmd_entries import postprocess_id2vec, preprocess_id2vec
-from sourced.ml.cmd_entries.run_swivel import run_swivel
-
-
-class Transformer:
-    pass
-
-
-class PreprocessTransformer(Transformer):
-    vocabulary_size = 1 << 17
-    shard_size = 4096
-
-    def __init__(self, vocabulary_size=None, shard_size=None):
-        super().__init__()
-        if vocabulary_size is not None:
-            self.vocabulary_size = vocabulary_size
-        if shard_size is not None:
-            self.shard_size = shard_size
-
-    def transform(self, X, output, df=None, vocabulary_size=None,
-                  shard_size=None):
-        if vocabulary_size is not None:
-            self.vocabulary_size = vocabulary_size
-        if shard_size is not None:
-            self.shard_size = shard_size
-
-        if isinstance(X, str):
-            X = [X]
-
-        args = Namespace(vocabulary_size=self.vocabulary_size,
-                         input=X, df=df, shard_size=self.shard_size,
-                         output=output)
-        preprocess_id2vec(args)
-
-    def _get_log_name(self):
-        return "id_preprocess"
 
 
 def _extract_coocc_matrix(global_shape, word_indices, model):
@@ -80,38 +40,3 @@ def _extract_coocc_matrix(global_shape, word_indices, model):
     matrix.indptr = numpy.array(new_indptr)
     matrix._shape = global_shape
     return matrix
-
-
-class SwivelTransformer(Transformer):
-    def transform(self, **kwargs):
-        flags = type(swivel.FLAGS)()
-        flags.__dict__ = swivel.FLAGS.__dict__.copy()
-
-        for key, val in kwargs.items():
-            if val is not None:
-                setattr(flags, key, val)
-
-        run_swivel(flags)
-
-    def _get_log_name(self):
-        return "id_swivel"
-
-
-class PostprocessTransformer(Transformer):
-    def transform(self, swivel_output_directory, result):
-        """
-        Merges row and column embeddings produced by Swivel and writes the
-        Id2Vec model.
-
-        :param swivel_output_directory: directory that contains files after swivel training. The \
-                                        files are read from this directory and the model is \
-                                        written to the 'result'.
-        :param result: file to store results
-        :return: None
-        """
-        args = Namespace(swivel_output_directory=swivel_output_directory,
-                         result=result)
-        postprocess_id2vec(args)
-
-    def _get_log_name(self):
-        return "id_postprocess"
