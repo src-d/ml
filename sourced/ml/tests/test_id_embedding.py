@@ -11,9 +11,9 @@ from scipy.sparse import coo_matrix
 
 from modelforge.model import split_strings, assemble_sparse_matrix
 from sourced.ml.algorithms import swivel
-from sourced.ml.algorithms.id_embedding import preprocess, SwivelTransformer, \
+from sourced.ml.algorithms.id_embedding import SwivelTransformer, \
     PostprocessTransformer, PreprocessTransformer
-from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel
+from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel, preprocess_id2vec
 from sourced.ml.models import DocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
 
@@ -79,7 +79,7 @@ class IdEmbeddingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, self.VOCAB)
             args.shard_size = self.VOCAB + 1
-            self.assertRaises(ValueError, lambda: preprocess(args))
+            self.assertRaises(ValueError, lambda: preprocess_id2vec(args))
 
     def test_preproc_transformer_logs(self):
         self.assertTrue(PreprocessTransformer()._get_log_name())
@@ -88,7 +88,7 @@ class IdEmbeddingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, self.VOCAB)
             with captured_output() as (out, err, log):
-                preprocess(args)
+                preprocess_id2vec(args)
             self.assertFalse(out.getvalue())
             self.assertFalse(err.getvalue())
             self.assertIn("Skipped", log.getvalue())
