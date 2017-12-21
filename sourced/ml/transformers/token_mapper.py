@@ -17,7 +17,6 @@ class TokenMapper(Transformer):
         :param uasts: UASTsDataFrame from sourced.engine
         :return: DataFrame with new tokens column
         """
-        # TODO (zurk): reimplement uast_ids_to_bag.py using new engine and use it instead
         return uasts.query_uast('//*[@roleIdentifier and not(@roleIncomplete)]') \
             .extract_tokens() \
             .where(functions.size(functions.col("tokens")) != 0)

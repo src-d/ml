@@ -2,10 +2,12 @@ import itertools
 import operator
 
 from scipy import sparse
-from bblfsh import role_id
+from bblfsh import Node
+from pyspark.rdd import PipelinedRDD
 
 from sourced.ml.models import Cooccurrences
 from sourced.ml.transformers import Transformer
+from sourced.ml.utils import bblfsh_roles
 
 
 class CooccModelSaver(Transformer):
@@ -14,9 +16,16 @@ class CooccModelSaver(Transformer):
         self.tokens_list = tokens_list
         self.output = output
 
-    def __call__(self, sparce_matrix):
-        matrix_count = sparce_matrix.count()
-        rows = sparce_matrix.take(matrix_count)
+    def __call__(self, sparse_matrix: PipelinedRDD):
+        """
+        Saves Cooccurrences asdf model to disk.
+
+        :param sparse_matrix: rdd with 3 columns: matrix row, matrix column,  cell value. Use
+            :class:`.CooccConstructor` to construct RDD from uasts.
+        :return:
+        """
+        matrix_count = sparse_matrix.count()
+        rows = sparse_matrix.take(matrix_count)
 
         mat_row, mat_col, mat_weights = zip(*rows)
         tokens_num = len(self.tokens_list)
@@ -39,13 +48,14 @@ class CooccConstructor(Transformer):
         ids = []
         stack = list(root.children)
         for node in stack:
-            if role_id("IDENTIFIER") in node.roles and role_id("QUALIFIED") not in node.roles:
+            if bblfsh_roles.IDENTIFIER in node.roles and \
+                    bblfsh_roles.QUALIFIED not in node.roles:
                 ids.append(node)
             else:
                 stack.extend(node.children)
         return ids
 
-    def _traverse_uast(self, uast):
+    def _traverse_uast(self, uast: Node):
         """
         Traverses UAST.
         """
@@ -60,10 +70,10 @@ class CooccConstructor(Transformer):
                 for ch in children:
                     tokens.extend(self.token_parser(ch.token))
                 token = node.token.strip()
-                if node.token.strip() != "" and \
-                        role_id("IDENTIFIER") in node.roles and \
-                        role_id("QUALIFIED") not in node.roles:
-                    tokens.extend(self.token_parser(node.token))
+                if token != "" and \
+                        bblfsh_roles.IDENTIFIER in node.roles and \
+                        bblfsh_roles.QUALIFIED not in node.roles:
+                    tokens.extend(self.token_parser(token))
                 for pair in itertools.permutations(tokens, 2):
                     yield pair
 
@@ -73,10 +83,10 @@ class CooccConstructor(Transformer):
             new_stack = []
 
     def __call__(self, uasts):
-        sparce_matrix = uasts.flatMap(self._process_row)\
+        sparse_matrix = uasts.flatMap(self._process_row)\
             .reduceByKey(operator.add)\
             .map(lambda row: (row[0][0], row[0][1], row[1]))
-        return sparce_matrix
+        return sparse_matrix
 
     def _process_row(self, row):
         for token1, token2 in self._traverse_uast(row.uast):

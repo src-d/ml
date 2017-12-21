@@ -13,6 +13,7 @@ class SparkDefault:
     """
     MASTER_ADDRESS = "local[*]"
     LOCAL_DIR = "/tmp/spark"
+    LOG_LEVEL = "WARN"
     CONFIG = []
     PACKAGE = []
 
@@ -22,6 +23,7 @@ def create_spark(session_name,
                  spark_local_dir=SparkDefault.LOCAL_DIR,
                  config=SparkDefault.CONFIG,
                  package=SparkDefault.PACKAGE,
+                 spark_log_level=SparkDefault.LOG_LEVEL,
                  **kwargs):
     log = logging.getLogger("spark")
     log.info("Starting %s on %s", session_name, spark)
@@ -32,7 +34,7 @@ def create_spark(session_name,
     for cfg in config:
         builder = builder.config(*cfg.split("=", 1))
     session = builder.getOrCreate()
-    session.sparkContext.setLogLevel(logging._levelToName[log.getEffectiveLevel()])
+    session.sparkContext.setLogLevel(spark_log_level)
     return session
 
 
@@ -41,7 +43,7 @@ class EngineDefault:
     Default arguments for create_engine function and __main__
     """
     BBLFSH = "localhost"
-    VERSION = "0.2.0"
+    VERSION = "0.3.1"
 
 
 def create_engine(session_name, repositories,
@@ -54,11 +56,14 @@ def create_engine(session_name, repositories,
     kwargs["package"].append("tech.sourced:engine:" + engine)
     if kwargs.get("memory", None) is not None:
         memory = kwargs["memory"].split(",")
-        kwargs["memory"].append("spark.executor.memory=%sG" + memory[0])
-        kwargs["memory"].append("spark.driver.memory=%sG" + memory[1])
-        kwargs["memory"].append("spark.driver.maxResultSize=%sG" + memory[2])
+        kwargs["memory"].append("spark.executor.memory=%s" + memory[0])
+        kwargs["memory"].append("spark.driver.memory=%s" + memory[1])
+        kwargs["memory"].append("spark.driver.maxResultSize=%s" + memory[2])
     session = create_spark(session_name, **kwargs)
     log = logging.getLogger("engine")
     log.info("Initializing on %s", repositories)
-    engine = Engine(session, repositories)
+    try:
+        engine = Engine(session, repositories, "siva")
+    except:
+        engine = Engine(session, repositories)
     return engine
