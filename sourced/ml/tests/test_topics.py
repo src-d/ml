@@ -5,7 +5,7 @@ import unittest
 
 import sourced.ml.tests.models as paths
 from sourced.ml.models import Topics
-from sourced.ml.utils import bigartm2asdf_entry
+from sourced.ml.cmd_entries import bigartm2asdf_entry
 
 
 class TopicsTests(unittest.TestCase):

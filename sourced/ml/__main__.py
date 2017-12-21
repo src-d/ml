@@ -4,12 +4,10 @@ import os
 import sys
 
 from modelforge.logs import setup_logging
-from sourced.ml.algorithms.id_embedding import preprocess as preprocess_id2vec, run_swivel, \
-    postprocess as postprocess_id2vec, swivel
-from sourced.ml.models.bow import bow2vw_entry
-from sourced.ml.utils import install_bigartm, bigartm2asdf_entry
-from sourced.ml.utils import dump_model
-from sourced.ml.utils import projector_entry
+from sourced.ml.algorithms import swivel  # to access FLAGS
+from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
+    run_swivel, postprocess_id2vec, preprocess_id2vec
+from sourced.ml.utils import install_bigartm
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):

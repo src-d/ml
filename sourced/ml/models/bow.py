@@ -1,4 +1,3 @@
-import argparse
 import logging
 from typing import Union
 
@@ -187,16 +186,3 @@ class NBOW(BOWBase):
             raise ValueError("You must specify DocumentFrequencies and Id2Vec dependencies "
                              "to save NBOW.")
         super().save(output, deps)
-
-
-def nbow2bow_entry(args: argparse.Namespace):
-    bow = NBOW.as_bow(args.nbow, args.id2vec)
-    bow.save(args.output)
-
-
-def bow2vw_entry(args: argparse.Namespace):
-    if not args.nbow:
-        bow = BOW().load(source=args.bow)
-    else:
-        bow = NBOW.as_bow(args.nbow, args.id2vec)
-    bow.convert_bow_to_vw(args.output)
