@@ -4,4 +4,5 @@ from sourced.ml.cmd_entries.dump_model import dump_model
 from sourced.ml.cmd_entries.postprocess_id2vec import postprocess_id2vec
 from sourced.ml.cmd_entries.preprocess_id2vec import preprocess_id2vec
 from sourced.ml.cmd_entries.projector_entry import projector_entry
+from sourced.ml.cmd_entries.repos2coocc import repos2coocc_entry
 from sourced.ml.cmd_entries.run_swivel import run_swivel
