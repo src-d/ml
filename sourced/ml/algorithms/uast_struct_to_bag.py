@@ -49,7 +49,7 @@ class UastSeq2Bag(Uast2StructBagBase):
         node_sequence = self._uast2sequence(uast)
 
         # convert to str - requirement from wmhash.BagsExtractor
-        node_sequence = "".join([self.node2index[n] for n in node_sequence])
+        node_sequence = "".join(self.node2index[n] for n in node_sequence)
 
         for seq_len in self._seq_lens:
             for i in range(0, len(node_sequence) - seq_len + 1, self._stride):
