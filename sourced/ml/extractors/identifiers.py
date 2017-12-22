@@ -16,4 +16,4 @@ class IdentifiersBagExtractor(BagsExtractor):
             None, NoopTokenParser() if not split_stem else None)
 
     def uast_to_bag(self, uast):
-        return self.id2bag.uast_to_bag(uast)
+        return self.id2bag(uast)
