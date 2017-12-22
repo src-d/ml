@@ -11,14 +11,15 @@ from sourced.ml.utils import create_engine
 def repos2coocc_entry(args):
     log = logging.getLogger("repos2cooc")
     engine = create_engine("repos2cooc-%s" % uuid4(), **args.__dict__)
+    token_parser = TokenParser()
 
     pipeline = Engine(engine, explain=args.explain) \
         .link(HeadFiles()) \
-        .link(UastExtractor(languages=args.languages))
-    pipeline = Cacher.maybe(pipeline, args.persist)
+        .link(UastExtractor(languages=args.languages)) \
+        .link(Cacher.maybe(args.persist)) \
+        .link(TokenMapper(token_parser))
 
-    token_parser = TokenParser()
-    tokens, tokens2index = pipeline.link(TokenMapper(token_parser)).execute()
+    tokens, tokens2index = pipeline.execute()
 
     pipeline = pipeline \
         .link(UastDeserializer()) \

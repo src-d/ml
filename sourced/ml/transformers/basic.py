@@ -15,6 +15,11 @@ class First(Transformer):
         return head.first()
 
 
+class Identity(Transformer):
+    def __call__(self, head):
+        return head
+
+
 class Cacher(Transformer):
     def __init__(self, persistence, **kwargs):
         super().__init__(**kwargs)
@@ -35,11 +40,11 @@ class Cacher(Transformer):
         return self.head
 
     @staticmethod
-    def maybe(pipeline, persistence):
+    def maybe(persistence):
         if persistence is not None:
-            return pipeline.link(Cacher(persistence))
+            return Cacher(persistence)
         else:
-            return pipeline
+            return Identity()
 
 
 class Engine(Transformer):
