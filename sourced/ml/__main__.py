@@ -79,7 +79,7 @@ def add_engine_args(my_parser):
 
 def add_default_args(my_parser):
     my_parser.add_argument(
-        "-r", "--respositories", required=True,
+        "-r", "--repositories", required=True,
         help="The path to the repositories.")
     my_parser.add_argument(
         "--min-docfreq", default=1, type=int,
