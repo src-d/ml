@@ -23,14 +23,14 @@ setup(
     packages=find_packages(exclude=("sourced.ml.tests",)),
     namespace_packages=["sourced"],
     entry_points={
-        "console_scripts": ["sourcedml=sourced.ml.__main__:main"],
+        "console_scripts": ["srcml=sourced.ml.__main__:main"],
     },
     keywords=["machine learning on source code", "word2vec", "id2vec",
-              "github", "swivel", "nbow", "bblfsh", "babelfish"],
+              "github", "swivel", "bow", "nbow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
                       "bblfsh>-2.2.1,<3.0",
                       "modelforge>=0.5.0-alpha",
-                      "sourced-engine>=0.2.0,<0.3",
+                      "sourced-engine>=0.3.0,<0.4",
                       "parquet>=1.2,<2.0"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],

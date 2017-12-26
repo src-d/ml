@@ -9,8 +9,7 @@ from modelforge.logs import setup_logging
 from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry
-from sourced.ml.utils import install_bigartm
-from sourced.ml.utils.engine import SparkDefault, EngineDefault
+from sourced.ml.utils import install_bigartm, add_spark_args, add_engine_args
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
@@ -24,103 +23,28 @@ class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter
         return super()._get_help_string(action)
 
 
-def one_arg_parser(*args, **kwargs) -> argparse.ArgumentParser:
-    """
-    Create parser for one argument with passed arguments.
-    It is helper function to avoid argument duplication in subcommands.
-
-    :return: Parser for one argument.
-    """
-    arg_parser = argparse.ArgumentParser(add_help=False)
-    arg_parser.add_argument(*args, **kwargs)
-    return arg_parser
-
-
-def add_spark_args(my_parser):
-    my_parser.add_argument(
-        "-s", "--spark", default=SparkDefault.MASTER_ADDRESS,
-        help="Spark's master address.")
-    my_parser.add_argument(
-        "--config", nargs="+", default=SparkDefault.CONFIG,
-        help="Spark configuration (key=value).")
-    my_parser.add_argument(
-        "-m", "--memory",
-        help="Handy memory config for spark. -m 4G,10G,2G is equivalent to "
-             "--config spark.executor.memory=4G "
-             "--config spark.driver.memory=10G "
-             "--config spark.driver.maxResultSize=2G."
-             "Numbers are floats separated by commas.")
-    my_parser.add_argument(
-        "--package", nargs="+", default=SparkDefault.PACKAGE,
-        help="Additional Spark package.")
-    my_parser.add_argument(
-        "--spark-local-dir", default=SparkDefault.LOCAL_DIR,
-        help="Spark local directory.")
-    my_parser.add_argument("--spark-log-level", default=SparkDefault.LOG_LEVEL, choices=(
-        "ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"),
-                           help="Spark log level")
-    persistences = [att for att in pyspark.StorageLevel.__dict__.keys() if "__" not in att]
-    my_parser.add_argument(
-        "--persist", default=None, choices=persistences,
-        help="Spark persistence type (StorageLevel.*).")
-
-
-def add_engine_args(my_parser):
-    add_spark_args(my_parser)
-    my_parser.add_argument(
-        "--bblfsh", default=EngineDefault.BBLFSH,
-        help="Babelfish server's address.")
-    my_parser.add_argument(
-        "--engine", default=EngineDefault.VERSION,
-        help="source{d} engine version.")
-    my_parser.add_argument("--explain", action="store_true",
-                           help="Print the PySpark execution plans.")
-
-
-def add_default_args(my_parser):
-    my_parser.add_argument(
-        "-r", "--repositories", required=True,
-        help="The path to the repositories.")
-    my_parser.add_argument(
-        "--min-docfreq", default=1, type=int,
-        help="The minimum document frequency of each element.")
-    my_parser.add_argument(
-        "-l", "--languages", required=True, nargs="+", choices=("Java", "Python"),
-        help="The programming languages to analyse.")
-
-
 def get_parser() -> argparse.ArgumentParser:
     """
-    Create main parser.
-
-    :return: Parser
+    Creates the cmdline argument parser.
     """
+
+    def add_default_args(my_parser):
+        my_parser.add_argument(
+            "-r", "--repositories", required=True,
+            help="The path to the repositories.")
+        my_parser.add_argument(
+            "--min-docfreq", default=1, type=int,
+            help="The minimum document frequency of each element.")
+        my_parser.add_argument(
+            "-l", "--languages", required=True, nargs="+", choices=("Java", "Python"),
+            help="The programming languages to analyse.")
+
     parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     parser.add_argument("--log-level", default="INFO",
                         choices=logging._nameToLevel,
                         help="Logging verbosity.")
-    # Create all common arguments
-    repos2input_arg = one_arg_parser(
-        "input", nargs="+", help="List of repositories and/or files with list of repositories.")
-    output_dir_arg_default = one_arg_parser(
-        "-o", "--output", required=True, help="Output directory.")
-    gcs_arg = one_arg_parser("--gcs", default=None, dest="gcs_bucket",
-                             help="GCS bucket to use.")
-    tmpdir_arg = one_arg_parser(
-        "--tmpdir", help="Store intermediate files in this directory instead of /tmp.")
-    filter_arg = one_arg_parser(
-        "--filter", default="**/*.asdf", help="File name glob selector.")
-    id2vec_arg = one_arg_parser(
-        "--id2vec", help="URL or path to the identifier embeddings.")
-    df_arg = one_arg_parser(
-        "-d", "--df", dest="docfreq", help="URL or path to the document frequencies.")
-    prune_arg = one_arg_parser(
-        "--prune-df", default=20,
-        help="Minimum document frequency to leave an identifier.")
-    outputdir_arg = one_arg_parser("--output", default=os.getcwd(), help="Output directory.")
 
     # Create and construct subparsers
-
     subparsers = parser.add_subparsers(help="Commands", dest="command")
 
     repo2coocc_parser = subparsers.add_parser(
@@ -137,8 +61,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
-        parents=[output_dir_arg_default])
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     preproc_parser.set_defaults(handler=preprocess_id2vec)
     preproc_parser.add_argument(
         "-v", "--vocabulary-size", default=1 << 17, type=int,
@@ -154,6 +77,7 @@ def get_parser() -> argparse.ArgumentParser:
         "input", nargs="+",
         help="Cooccurrence model produced by repo(s)2coocc. If it is a directory, all files "
              "inside are read.")
+    preproc_parser.add_argument("-o", "--output", required=True, help="Output directory.")
 
     train_parser = subparsers.add_parser(
         "id2vec_train", help="Train identifier embeddings.",
@@ -212,16 +136,20 @@ def get_parser() -> argparse.ArgumentParser:
 
     bigartm_parser = subparsers.add_parser(
         "bigartm", help="Install bigartm/bigartm to the current working directory.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
-        parents=[tmpdir_arg, outputdir_arg])
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     bigartm_parser.set_defaults(handler=install_bigartm)
+    bigartm_parser.add_argument(
+        "--tmpdir", help="Store intermediate files in this directory instead of /tmp.")
+    bigartm_parser.add_argument("--output", default=os.getcwd(), help="Output directory.")
+
     dump_parser = subparsers.add_parser(
         "dump", help="Dump a model to stdout.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone,
-        parents=[gcs_arg])
+        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     dump_parser.set_defaults(handler=dump_model)
     dump_parser.add_argument(
         "input", help="Path to the model file, URL or UUID.")
+    dump_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
+                             help="GCS bucket to use.")
 
     return parser
 
