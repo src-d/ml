@@ -7,12 +7,12 @@ import unittest
 import asdf
 import numpy
 import tensorflow as tf
-from sourced.ml import DocumentFrequencies, swivel, Id2Vec
-from sourced.ml.id_embedding import preprocess, run_swivel, postprocess, SwivelTransformer, \
-    PostprocessTransformer, PreprocessTransformer
 from scipy.sparse import coo_matrix
 
 from modelforge.model import split_strings, assemble_sparse_matrix
+from sourced.ml.algorithms import swivel
+from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel, preprocess_id2vec
+from sourced.ml.models import DocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
 
 
@@ -77,16 +77,13 @@ class IdEmbeddingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, self.VOCAB)
             args.shard_size = self.VOCAB + 1
-            self.assertRaises(ValueError, lambda: preprocess(args))
-
-    def test_preproc_transformer_logs(self):
-        self.assertTrue(PreprocessTransformer()._get_log_name())
+            self.assertRaises(ValueError, lambda: preprocess_id2vec(args))
 
     def test_preprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, self.VOCAB)
             with captured_output() as (out, err, log):
-                preprocess(args)
+                preprocess_id2vec(args)
             self.assertFalse(out.getvalue())
             self.assertFalse(err.getvalue())
             self.assertIn("Skipped", log.getvalue())
@@ -175,21 +172,6 @@ class IdEmbeddingTests(unittest.TestCase):
             run_swivel(args)
             check_swivel_results(self, tmpdir)
 
-    def test_swivel_transformer(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            sw = SwivelTransformer()
-            args = dict()
-            args["input_base_path"] = os.path.join(os.path.dirname(__file__), "swivel")
-            prepare_shard(args["input_base_path"])
-            args["output_base_path"] = tmpdir
-            args["embedding_size"] = 50
-            args["num_epochs"] = 20
-            sw.transform(**args)
-            check_swivel_results(self, tmpdir)
-
-    def test_swivel_transformer_logs(self):
-        self.assertTrue(SwivelTransformer()._get_log_name())
-
     def test_postproc(self):
         with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
             args = argparse.Namespace(
@@ -197,24 +179,9 @@ class IdEmbeddingTests(unittest.TestCase):
                 result=tmp.name)
             prepare_postproc_files(args.swivel_output_directory)
 
-            postprocess(args)
+            postprocess_id2vec(args)
 
             check_postproc_results(self, tmp.name)
-
-    def test_postproc_transformer(self):
-        with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
-            args = dict()
-            args["swivel_output_directory"] = os.path.join(os.path.dirname(__file__), "postproc")
-            args["result"] = tmp.name
-            prepare_postproc_files(args["swivel_output_directory"])
-
-            postproc = PostprocessTransformer()
-            postproc.transform(**args)
-
-            check_postproc_results(self, tmp.name)
-
-    def test_postproc_transformer_logs(self):
-        self.assertTrue(PostprocessTransformer()._get_log_name())
 
 
 if __name__ == "__main__":

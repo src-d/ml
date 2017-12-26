@@ -1,10 +1,11 @@
-import argparse
+import logging
 from typing import Union
 
 from modelforge import Model, split_strings, assemble_sparse_matrix, \
     merge_strings, disassemble_sparse_matrix, register_model
+from modelforge.progress_bar import progress_bar
 
-from sourced.ml.id2vec import Id2Vec
+from sourced.ml.models.id2vec import Id2Vec
 
 
 class BOWBase(Model):
@@ -135,6 +136,24 @@ class BOW(BOWBase):
         txt += "\nFirst 10 tokens: %s" % self.tokens[:10]
         return txt
 
+    def convert_bow_to_vw(self, output: str):
+        log = logging.getLogger("bow2vw")
+        log.info("Writing %s", output)
+        with open(output, "w") as fout:
+            for index in progress_bar(self, log, expected_size=len(self)):
+                record = self[index]
+                fout.write(record[0].replace(":", "").replace(" ", "_") + " ")
+                pairs = []
+                for t, v in zip(*record[1:]):
+                    try:
+                        word = self.tokens[t]
+                    except (KeyError, IndexError):
+                        log.warning("%d not found in the vocabulary", t)
+                        continue
+                    pairs.append("%s:%s" % (word, v))
+                fout.write(" ".join(pairs))
+                fout.write("\n")
+
 
 @register_model
 class NBOW(BOWBase):
@@ -167,8 +186,3 @@ class NBOW(BOWBase):
             raise ValueError("You must specify DocumentFrequencies and Id2Vec dependencies "
                              "to save NBOW.")
         super().save(output, deps)
-
-
-def nbow2bow_entry(args: argparse.Namespace):
-    bow = NBOW.as_bow(args.nbow, args.id2vec)
-    bow.save(args.output)

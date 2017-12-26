@@ -17,6 +17,9 @@ class TokenParser:
         self._stem_threshold = stem_threshold
         self._max_token_length = max_token_length
 
+    def __call__(self, token):
+        return self.process_token(token)
+
     def process_token(self, token):
         for word in self.split(token):
             yield self.stem(word)
@@ -72,10 +75,13 @@ class TokenParser:
         self._stemmer = Stemmer.Stemmer("english")
 
 
-class NoTokenParser:
+class NoopTokenParser:
     """
     One can use this class if he or she does not want to do any parsing.
     """
 
     def process_token(self, token):
-        return [token]
+        yield token
+
+    def __call__(self, token):
+        return self.process_token(token)

@@ -22,7 +22,7 @@ Here is the list of projects which are built using sourced.ml:
 ## Installation
 
 ```
-pip3 install sourcedml
+pip3 install sourced-ml
 ```
 
 You need to have `libxml2` installed. E.g., on Ubuntu `apt install libxml2-dev`.
@@ -32,7 +32,7 @@ You need to have `libxml2` installed. E.g., on Ubuntu `apt install libxml2-dev`.
 This project exposes two interfaces: API and command line. The command line is
 
 ```
-sourcedml --help
+srcml --help
 ```
 
 There is an example of using Python API [here](Doc/how_to_use_sourcedml.ipynb).

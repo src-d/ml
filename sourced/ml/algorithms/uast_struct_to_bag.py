@@ -1,24 +1,37 @@
-from collections import defaultdict, deque
 import random
+from collections import defaultdict, deque
 
-from sourced.ml.uast_ids_to_bag import FakeVocabulary
-
-
-class UastStructure2BagBase:
-    def uast_to_bag(self, uast):
-        raise NotImplemented
+from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary, Uast2BagBase
 
 
-class UastSeq2Bag(UastStructure2BagBase):
+class Uast2StructBagBase(Uast2BagBase):
+    def __init__(self, stride, seq_len, node2index=None):
+        self._node2index = node2index if node2index is not None else FakeVocabulary()
+        self._stride = stride
+        if not isinstance(seq_len, (int, tuple, list)):
+            raise TypeError("Unexpected type of seq_len: %s" % type(seq_len))
+        self._seq_lens = [seq_len] if isinstance(seq_len, int) else seq_len
+
+    @property
+    def node2index(self):
+        return self._node2index
+
+
+class Node2InternalType:
+    def __getitem__(self, item):
+        return item.internal_type
+
+
+class UastSeq2Bag(Uast2StructBagBase):
     """
     DFS traversal + preserves the order of node children.
     """
-    def __init__(self, type2ind=None, stride=1, seq_len=5):
-        self.type2ind = type2ind if type2ind is not None else FakeVocabulary()
-        self.stride = stride
-        self.seq_len = seq_len
+    def __init__(self, stride=1, seq_len=5, node2index=None):
+        _node2index = Node2InternalType() if node2index is None else node2index
+        super().__init__(stride, seq_len, _node2index)
 
-    def _uast2seq(self, root, walk):
+    def _uast2sequence(self, root):
+        sequence = []
         nodes = defaultdict(deque)
         stack = [root]
         nodes[id(root)].extend(root.children)
@@ -28,28 +41,20 @@ class UastSeq2Bag(UastStructure2BagBase):
                 nodes[id(child)].extend(child.children)
                 stack.append(child)
             else:
-                walk.append(stack.pop())
+                sequence.append(stack.pop())
+        return sequence
 
-    def uast_to_bag(self, uast):
+    def __call__(self, uast):
         bag = defaultdict(int)
-        seq = []
-        self._uast2seq(uast, seq)
+        node_sequence = self._uast2sequence(uast)
 
         # convert to str - requirement from wmhash.BagsExtractor
-        seq = "".join([self.node2ind(n) for n in seq])
+        node_sequence = "".join(self.node2index[n] for n in node_sequence)
 
-        if isinstance(self.seq_len, int):
-            seq_lens = [self.seq_len]
-        else:
-            seq_lens = self.seq_len
-
-        for seq_len in seq_lens:
-            for i in range(0, len(seq) - seq_len + 1, self.stride):
-                bag[seq[i:i + seq_len]] += 1
+        for seq_len in self._seq_lens:
+            for i in range(0, len(node_sequence) - seq_len + 1, self._stride):
+                bag[node_sequence[i:i + seq_len]] += 1
         return bag
-
-    def node2ind(self, node):
-        return self.type2ind[node.internal_type]
 
 
 class Node:
@@ -58,6 +63,14 @@ class Node:
         self.internal_type = internal_type
         self.children = []
 
+    @property
+    def neighbours(self):
+        neighbours = []
+        if self.parent is not None:
+            neighbours.append(self.parent)
+        neighbours.extend(self.children)
+        return neighbours
+
 
 class Uast2RandomWalks:
     """
@@ -65,8 +78,10 @@ class Uast2RandomWalks:
     """
 
     def __init__(self, p_explore_neighborhood, q_leave_neighborhood, n_walks, n_steps,
-                 type2ind=None):
+                 node2index=None, seed=None):
         """
+        Related article: https://arxiv.org/abs/1607.00653
+
         :param p_explore_neighborhood: return parameter, p. Parameter p controls the likelihood of\
                                        immediately revisiting a node in the walk. Setting it to a\
                                        high value (> max(q, 1)) ensures that we are less likely to\
@@ -87,15 +102,15 @@ class Uast2RandomWalks:
         self.q_leave_neighborhood = q_leave_neighborhood
         self.n_walks = n_walks
         self.n_steps = n_steps
-        self.type2ind = type2ind if type2ind is not None else FakeVocabulary()
+        self.node2index = node2index if node2index is not None else Node2InternalType()
+        if seed is not None:
+            random.seed(seed)
 
-    def uast2walks(self, uast):
+    def __call__(self, uast):
         starting_nodes = self.prepare_starting_nodes(uast)
-        res = []
         for i in range(self.n_walks):
             for start_node in starting_nodes:
-                res.append(self.random_walk(start_node))
-        return res
+                yield self.random_walk(start_node)
 
     @staticmethod
     def _extract_node(node, parent):
@@ -103,87 +118,64 @@ class Uast2RandomWalks:
 
     def prepare_starting_nodes(self, uast):
         starting_nodes = []
-        self._prepare_starting_nodes(uast, None, starting_nodes)
+        root = self._extract_node(uast, None)
+        stack = [(root, uast)]
+        while stack:
+            parent, parent_uast = stack.pop()
+            children_nodes = [self._extract_node(child, parent) for child in parent_uast.children]
+            parent.children = children_nodes
+            stack.extend(zip(children_nodes, parent_uast.children))
+            starting_nodes.append(parent)
+
         return starting_nodes
-
-    def _prepare_starting_nodes(self, root, parent, starting_nodes):
-        node = self._extract_node(node=root, parent=parent)
-        starting_nodes.append(node)
-
-        for ch in root.children:
-            node.children.append(self._prepare_starting_nodes(
-                ch, parent=node, starting_nodes=starting_nodes))
-
-        return node
 
     def random_walk(self, node):
         walk = [node]
         while len(walk) < self.n_steps:
             walk.append(self.alias_sample(walk))
 
-        walk = [self.node2feat(n) for n in walk]
+        walk = [self.node2index[n] for n in walk]
         return walk
-
-    def node2feat(self, node):
-        return self.type2ind[node.internal_type]
 
     def alias_sample(self, walk):
         """
         Compare to node2vec this sampling is a bit simpler because there is no loop in tree ->
         so there are only 2 options with unnormalized probabilities 1/p & 1/q
+        Related article: https://arxiv.org/abs/1607.00653
+
         :param walk: list of visited nodes
         :return: next node to visit
         """
-        # notation from article - t - node from previous step, v - last node
-        v = walk[-1]
+        last_node = walk[-1]  # correspond to node v in article
 
-        if len(walk) == 1 and len(v.children) > 0:
-            return random.choice(v.children)
-        elif len(v.children) == 0:
-            return v
+        if len(walk) == 1 and len(last_node.children) > 0:
+            return random.choice(last_node.children)
+        elif len(last_node.children) == 0:
+            return last_node
 
-        t = walk[-2]
         threshold = (1 / self.p_explore_neighborhood)
-        threshold /= ((1 / self.p_explore_neighborhood) +
-                      len(v.children) / self.q_leave_neighborhood)
+        threshold /= (threshold + len(last_node.children) / self.q_leave_neighborhood)
 
         if random.random() <= threshold:
-            return t
+            # With threshold probability we need to return back to previous node.
+            return walk[-2]  # Node from previous step. Correspond to node t in article.
 
-        options = []
-        if v.parent is not None:
-            options.append(v.parent)
-        options.extend(v.children)
-        return random.choice(options)
+        return random.choice(last_node.neighbours)
 
 
-class UastRandomWalk2Bag(UastStructure2BagBase):
+class UastRandomWalk2Bag(Uast2StructBagBase):
     def __init__(self, p_explore_neighborhood=0.5, q_leave_neighborhood=0.5, n_walks=5, n_steps=19,
                  stride=1, seq_len=(5, 6), seed=42):
-        self.random_walker = Uast2RandomWalks(p_explore_neighborhood=p_explore_neighborhood,
-                                              q_leave_neighborhood=q_leave_neighborhood,
-                                              n_walks=n_walks, n_steps=n_steps)
-        self.stride = stride
+        super().__init__(stride, seq_len)
+        self.uast2walks = Uast2RandomWalks(p_explore_neighborhood=p_explore_neighborhood,
+                                           q_leave_neighborhood=q_leave_neighborhood,
+                                           n_walks=n_walks, n_steps=n_steps, seed=seed)
 
-        if not isinstance(seq_len, (int, tuple, list)):
-            raise TypeError("Unexpected type of seq_len: %s" % type(seq_len))
-
-        self.seq_len = seq_len
-        self.seed = seed
-
-    def uast_to_bag(self, uast):
-        if self.seed is not None:
-            random.seed(self.seed)
-
+    def __call__(self, uast):
         bag = defaultdict(int)
-        walks = self.random_walker.uast2walks(uast)
-        if isinstance(self.seq_len, int):
-            seq_lens = [self.seq_len]
-        else:
-            seq_lens = self.seq_len
-        for walk in walks:
-            for seq_len in seq_lens:
-                for i in range(0, len(walk) - seq_len, self.stride):
+        for walk in self.uast2walks(uast):
+            for seq_len in self._seq_lens:
+                for i in range(0, len(walk) - seq_len + 1, self._stride):
                     # convert to str - requirement from wmhash.BagsExtractor
                     bag["".join(walk[i:i + seq_len])] += 1
         return bag
