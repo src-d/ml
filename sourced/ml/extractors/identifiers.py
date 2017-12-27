@@ -10,8 +10,8 @@ class IdentifiersBagExtractor(BagsExtractor):
     OPTS = {"split-stem": False}
     OPTS.update(BagsExtractor.OPTS)
 
-    def __init__(self, docfreq_threshold=None, split_stem=False):
-        super().__init__(docfreq_threshold)
+    def __init__(self, docfreq_threshold=None, split_stem=False, **kwargs):
+        super().__init__(docfreq_threshold, **kwargs)
         self.id2bag = UastIds2Bag(
             None, NoopTokenParser() if not split_stem else None)
 

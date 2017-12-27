@@ -16,8 +16,8 @@ class LiteralsBagExtractor(BagsExtractor):
             yield codecs.encode((hash(token) & 0xffffffffffffffff).to_bytes(8, "little"),
                                 "hex_codec").decode()
 
-    def __init__(self, docfreq_threshold=None):
-        super().__init__(docfreq_threshold)
+    def __init__(self, docfreq_threshold=None, **kwargs):
+        super().__init__(docfreq_threshold, **kwargs)
         self.id2bag = UastIds2Bag(None, self.HashedTokenParser())
 
     def uast_to_bag(self, uast):
