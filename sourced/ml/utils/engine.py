@@ -3,7 +3,7 @@ import os
 import sys
 os.environ["PYSPARK_PYTHON"] = sys.executable
 
-import pyspark
+import pyspark  # nopep8
 from pyspark.sql import SparkSession  # nopep8
 from sourced.engine import Engine  # nopep8
 
