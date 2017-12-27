@@ -3,13 +3,12 @@ import logging
 import os
 import sys
 
-import pyspark
-
 from modelforge.logs import setup_logging
+from sourced.ml import extractors
 from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
-    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry
-from sourced.ml.utils import install_bigartm, add_spark_args, add_engine_args
+    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry
+from sourced.ml.utils import install_bigartm, add_engine_args
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
@@ -46,6 +45,23 @@ def get_parser() -> argparse.ArgumentParser:
 
     # Create and construct subparsers
     subparsers = parser.add_subparsers(help="Commands", dest="command")
+
+    repos2df_parser = subparsers.add_parser(
+        "repos2df", help="Convert source code to weighted sets.")
+    repos2df_parser.set_defaults(handler=repos2df_entry)
+    add_default_args(repos2df_parser)
+    add_engine_args(repos2df_parser)
+    repos2df_parser.add_argument(
+        "--docfreq", required=True,
+        help="[OUT] The path to the OrderedDocumentFrequencies model.")
+    repos2df_parser.add_argument(
+        "--vocabulary-size", default=10000000, type=int,
+        help="The maximum vocabulary size.")
+
+    repos2df_parser.add_argument(
+        "-f", "--feature", nargs="+",
+        choices=[ex.NAME for ex in extractors.__extractors__.values()],
+        required=True, help="The feature extraction scheme to apply.")
 
     repo2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a Git repository.",
