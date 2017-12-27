@@ -11,7 +11,7 @@ class UastRandomWalkBagExtractor(BagsExtractor):
     OPTS.update(BagsExtractor.OPTS)
 
     def __init__(self, docfreq_threshold=None, **kwargs):
-        super().__init__(docfreq_threshold)
+        super().__init__(docfreq_threshold, **kwargs)
         self._log.debug("__init__ %s", kwargs)
         uast2bag_kwargs = filter_kwargs(kwargs, UastRandomWalk2Bag.__init__)
         self.uast2bag = UastRandomWalk2Bag(**uast2bag_kwargs)

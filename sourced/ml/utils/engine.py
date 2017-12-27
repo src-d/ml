@@ -105,12 +105,16 @@ def create_engine(session_name, repositories,
     # TODO(vmarkovtsev): figure out why is this option needed
     config.append("spark.tech.sourced.engine.cleanup.skip=true")
     packages.append("tech.sourced:engine:" + engine)
+    memory_conf = []
     if memory:
         memory = memory.split(",")
-        memory.append("spark.executor.memory=" + memory[0])
-        memory.append("spark.driver.memory=" + memory[1])
-        memory.append("spark.driver.maxResultSize=" + memory[2])
-    session = create_spark(session_name, config=config, packages=packages, memory=memory,
+        err = "Expected 3 memory parameters but got {}. " \
+              "Please check --help to see how -m/--memory should be used."
+        assert len(memory) == 3, err.format(len(memory))
+        memory_conf.append("spark.executor.memory=" + memory[0])
+        memory_conf.append("spark.driver.memory=" + memory[1])
+        memory_conf.append("spark.driver.maxResultSize=" + memory[2])
+    session = create_spark(session_name, config=config + memory_conf, packages=packages,
                            **spark_kwargs)
     log = logging.getLogger("engine")
     log.info("Initializing on %s", repositories)
