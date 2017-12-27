@@ -19,7 +19,8 @@ class MainTests(unittest.TestCase):
             "bow2vw": "bow2vw_entry",
             "bigartm": "install_bigartm",
             "dump": "dump_model",
-            "repos2coocc": "repos2coocc_entry"
+            "repos2coocc": "repos2coocc_entry",
+            "repos2df": "repos2df_entry",
         }
         parser = main.get_parser()
         subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])
