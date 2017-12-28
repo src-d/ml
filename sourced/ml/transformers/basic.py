@@ -89,7 +89,10 @@ class FieldsSelector(Transformer):
         self.fields = fields
 
     def __call__(self, df):
-        return df.select(self.fields)
+        res = df.select(self.fields)
+        if self.explained:
+            self._log.info("toDebugString():\n%s", res.rdd.toDebugString().decode())
+        return res
 
 
 class ParquetSaver(Transformer):
@@ -98,6 +101,8 @@ class ParquetSaver(Transformer):
         self.save_loc = save_loc
 
     def __call__(self, df):
+        if self.explained:
+            self._log.info("toDebugString():\n%s", df.rdd.toDebugString().decode())
         df.write.parquet(self.save_loc)
 
 
