@@ -57,7 +57,10 @@ def get_parser() -> argparse.ArgumentParser:
     repos2df_parser.add_argument(
         "--vocabulary-size", default=10000000, type=int,
         help="The maximum vocabulary size.")
-
+    repos2df_parser.add_argument(
+        "--ordered", action="store_true", default=False,
+        help="Flag that specifies ordered or default document frequency model to create."
+             "If you use default document frequency model you should use only one feature.")
     repos2df_parser.add_argument(
         "-f", "--feature", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
