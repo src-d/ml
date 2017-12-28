@@ -66,8 +66,7 @@ class Transformer(PickleableLogger):
                      will be used if possible.
         :return: The results from all the leaves.
         """
-        if self.parent is not None:
-            head = self.execute(head)
+        head = self.execute(head)
         pipeline = [self]
         node = self
         while node.parent is not None:
