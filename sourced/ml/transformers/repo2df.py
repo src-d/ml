@@ -10,8 +10,8 @@ class Repo2DocFreq(Transformer):
 
     def __call__(self, rows):
         for extractor in self.extractors:
-            if extractor.quantization:
-                self._log.info("Perform Quantization...")
+            if extractor.nb_partitions:
+                self._log.info("Perform quantization with %d partitions", extractor.nb_partitions)
                 all_children = rows.flatMap(self.process_row)
                 all_children_reduced = all_children.countByKey()
                 children_freq = extractor.get_children_freq(all_children_reduced)

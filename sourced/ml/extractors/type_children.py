@@ -14,8 +14,8 @@ class TypeChildrenBagExtractor(BagsExtractor):
     OPTS = dict(get_names_from_kwargs(UastNodes2Bag.__init__))
     OPTS = BagsExtractor.OPTS.copy()
 
-    def __init__(self, docfreq_threshold=None, quantization=True, **kwargs):
-        super().__init__(docfreq_threshold, quantization)
+    def __init__(self, docfreq_threshold=None, nb_partitions=10, **kwargs):
+        super().__init__(docfreq_threshold, nb_partitions)
         self._log.debug("__init__ %s", kwargs)
         self.mapping = dict()
         uast2bag_kwargs = filter_kwargs(kwargs, UastNodes2Bag.__init__)
@@ -26,7 +26,7 @@ class TypeChildrenBagExtractor(BagsExtractor):
             bag, all_children = self.uast_to_bag(uast)
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
-        if self.quantization:
+        if self.nb_partitions:
             for nb_children in all_children:
                 yield str(nb_children)
         else:
@@ -66,12 +66,14 @@ class TypeChildrenBagExtractor(BagsExtractor):
         return new_bag
 
     def build_quantization(self, children_freq):
-        partition = self.build_partition(children_freq)
-        for value in set(children_freq):
-            self.mapping[value] = self.process_value(int(value), partition)
-        self.quantization = False
+        try:
+            partition = self.build_partition(children_freq)
+            for value in set(children_freq):
+                self.mapping[value] = self.process_value(int(value), partition)
+        finally:
+            self.nb_partitions = None
 
-    def build_partition(self, children_freq, nb_partitions=15):
+    def build_partition(self, children_freq):
         """
         Builds the partition of the quantization.
         It is a list of increasing integers equally partitioning the distribution of values.
@@ -80,8 +82,8 @@ class TypeChildrenBagExtractor(BagsExtractor):
         :param nb_partitions: number of intervals in the quantization partition.
         :return:
         """
-        partition = numpy.zeros(nb_partitions)
-        max_nodes_per_bin = sum(list(children_freq.values())) / nb_partitions
+        partition = numpy.zeros(self.nb_partitions)
+        max_nodes_per_bin = sum(list(children_freq.values())) / self.nb_partitions
         values = [int(v) for v in list(children_freq)]
         values.sort()
         j = 0
@@ -95,7 +97,7 @@ class TypeChildrenBagExtractor(BagsExtractor):
         max_nodes_per_bin = sum(children_freq_sorted[new_start:]) / nb_bins_left
         id_val = new_start
         try:
-            for i in range(new_start, nb_partitions):
+            for i in range(new_start, self.nb_partitions):
                 nb_nodes_cum = 0
                 while (nb_nodes_cum < max_nodes_per_bin):
                     nb_nodes_cum += values[id_val] * children_freq[str(values[id_val])]
