@@ -79,7 +79,8 @@ class UastExtractor(Transformer):
         for lang in self.languages[1:]:
             lang_filter |= classified.lang == lang
         filtered_by_lang = classified.filter(lang_filter)
-        uasts = filtered_by_lang.extract_uasts()
+        from pyspark.sql import functions
+        uasts = filtered_by_lang.extract_uasts().where(functions.size(functions.col("uast")) > 0)
         return uasts
 
 
