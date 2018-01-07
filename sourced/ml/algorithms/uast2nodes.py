@@ -13,17 +13,17 @@ class UastNodes2Bag(Uast2BagBase):
         :param uast: The UAST root node.
         :generate: The nodes which compose the UAST.
         """
-        queue = [root]
-        while queue:
-            child = queue.pop(0)
-            queue.extend(child.children)
+        stack = [root]
+        while stack:
+            child = stack.pop()
+            stack.extend(child.children)
             yield child
 
-    def node2index(self, node):
+    def node2key(self, node):
         """
         :param node: a node of UAST
         :return: The string joining 2 features of node : \
-        Its internal type and its number of children quantized \
+        Its internal type and its quantized number of children \
         str format is required for wmhash.Bags.Extractor.
         """
         return "%s_%s" % (node.internal_type, len(node.children))
@@ -37,6 +37,6 @@ class UastNodes2Bag(Uast2BagBase):
         bag = defaultdict(int)
         all_children = []
         for node in self.uast2nodes(uast):
-            bag[self.node2index(node)] += 1
+            bag[self.node2key(node)] += 1
             all_children.append(len(node.children))
         return bag, all_children

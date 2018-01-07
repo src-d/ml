@@ -13,7 +13,7 @@ class BagsExtractor(PickleableLogger):
     OPTS = {"scale": None}  # cmdline args which are passed into __init__()
     DEFAULT_SCALE = 1
 
-    def __init__(self, docfreq_threshold=None, nb_partitions=None, scale=None, **kwargs):
+    def __init__(self, docfreq_threshold=None, scale=None, **kwargs):
         """
         :param docfreq_threshold: The minimum number of occurrences of an element to be included \
                                   into the bag
@@ -26,7 +26,6 @@ class BagsExtractor(PickleableLogger):
         self.docfreq_threshold = docfreq_threshold
         self.docfreq = {}
         self._ndocs = 0
-        self.nb_partitions = nb_partitions
         if scale is None:
             self.scale = self.DEFAULT_SCALE
         else:
