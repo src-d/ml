@@ -2,46 +2,74 @@ import numpy
 import re
 from collections import defaultdict
 
-from sourced.ml.algorithms import UastNodes2Bag
+from sourced.ml.algorithms import Uast2NodesBag
 from sourced.ml.extractors import BagsExtractor, register_extractor, get_names_from_kwargs,\
     filter_kwargs
 
 
 @register_extractor
 class ChildrenBagExtractor(BagsExtractor):
+    """
+    Converts a UAST to a bag of features that are composed of the nodes' internal type
+    and their quantized number of children.
+
+    As regards quantization performed in class: Repo2Quant
+    get_children_freq() is first invoked to build the set of the number of children frequencies.
+    Then quantize() is called to fill the quantization mapping thanks to
+    build_partition() and process_value() methods.
+    """
     NAME = "children"
     NAMESPACE = "c."
-    OPTS = dict(get_names_from_kwargs(UastNodes2Bag.__init__))
+    OPTS = dict(get_names_from_kwargs(Uast2NodesBag.__init__))
     OPTS.update(BagsExtractor.OPTS)
 
     def __init__(self, docfreq_threshold=None, **kwargs):
         super().__init__(docfreq_threshold)
         self._log.debug("__init__ %s", kwargs)
         self.mapping = dict()
-        uast2bag_kwargs = filter_kwargs(kwargs, UastNodes2Bag.__init__)
-        self.uast2bag = UastNodes2Bag(**uast2bag_kwargs)
+        uast2bag_kwargs = filter_kwargs(kwargs, Uast2NodesBag.__init__)
+        self.uast2bag = Uast2NodesBag(**uast2bag_kwargs)
 
     def inspect(self, uast):
+        """
+        This method is overridden to update the keys in the bag of features
+        after quantization.
+        """
         try:
             bag, _ = self.uast_to_bag(uast)
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
         for key in bag:
-            yield self.NAMESPACE + self.quantize(key)
+            yield self.NAMESPACE + self.update(key)
 
     def inspect_quant(self, uast):
+        """
+        This method is used to process UASTs to access the numbers of children
+        in class: Repo2Quant.
+        """
         try:
             _, all_children = self.uast_to_bag(uast)
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
         for nb_children in all_children:
-                yield str(nb_children)
+            yield str(nb_children)
 
-    def quantize(self, key):
+    def update(self, key):
+        """
+        Substitutes in the string key the original number of children
+        with its quantized value.
+        """
         children_quant = self.mapping[key.split("_")[-1]]
         return re.sub(r"\d{1,}", str(children_quant), key)
 
     def extract(self, uast):
+        """
+        Converts a UAST to the weighted set.
+        This method is overridden in order to update the bag of features
+        after quantization of the number of children in class: Repo2WeightedSet.
+        Needs merge_children() and update() methods to update the frequencies
+        in the bag with the right keys.
+        """
         ndocs = self.ndocs
         docfreq = self.docfreq
         log = numpy.log
@@ -64,10 +92,10 @@ class ChildrenBagExtractor(BagsExtractor):
     def merge_children(self, bag):
         new_bag = defaultdict(int)
         for key, val in bag.items():
-            new_bag[self.quantize(key)] += val
+            new_bag[self.update(key)] += val
         return new_bag
 
-    def build_quantization(self, children_freq, nb_partitions):
+    def quantize(self, children_freq, nb_partitions):
         try:
             partition = self.build_partition(children_freq, nb_partitions)
             for value in set(children_freq):

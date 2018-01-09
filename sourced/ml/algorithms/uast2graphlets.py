@@ -4,9 +4,9 @@ from sourced.ml.algorithms.uast_ids_to_bag import Uast2BagBase
 from sourced.ml.algorithms.uast_struct_to_bag import Node
 
 
-class UastGraph2Bag(Uast2BagBase):
+class Uast2GraphletBag(Uast2BagBase):
     """
-    Converts a UAST to a bag of grpahlets.
+    Converts a UAST to a bag of graphlets.
     The graphlet of a UAST node is composed by the node itself, its parent and its children.
     """
     @staticmethod
@@ -30,7 +30,7 @@ class UastGraph2Bag(Uast2BagBase):
 
     def node2key(self, node):
         """
-        Builds the string joining internal types of all the nodes \
+        Builds the string joining internal types of all the nodes
         in the node's graphlet in the following order:
         parent_node_child1_child2_child3. The children are sorted by alphabetic order.
         str format is required for BagsExtractor.
@@ -43,7 +43,7 @@ class UastGraph2Bag(Uast2BagBase):
         except AttributeError:
             parent_type = None
         key = [parent_type, node.internal_type]
-        key.extend(sorted([ch.internal_type for ch in node.children]))
+        key.extend(sorted(ch.internal_type for ch in node.children))
         return "_".join(map(str, key))
 
     def __call__(self, uast):

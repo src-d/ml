@@ -39,12 +39,17 @@ class Repo2Quant(Transformer):
 
     def __call__(self, rows):
         for i, extractor in enumerate(self.extractors):
-            if "build_quantization" in dir(extractor):
-                self._log.info("Perform quantization with %d partitions", self.nb_partitions)
-                all_children = rows.flatMap(lambda j: self.process_row(j, extractor))
-                all_children_reduced = all_children.countByKey()
-                children_freq = extractor.get_children_freq(all_children_reduced)
-                extractor.build_quantization(children_freq, self.nb_partitions)
+            try:
+                quantize = extractor.quantize
+            except AttributeError:
+                self._log.info("%s:No quantization performed", extractor.__class__.__name__)
+                continue
+            self._log.info("%s:Perform quantization with %d partitions",
+                           extractor.__class__.__name__, self.nb_partitions)
+            all_children = rows.flatMap(lambda j: self.process_row(j, extractor))
+            all_children_reduced = all_children.countByKey()
+            children_freq = extractor.get_children_freq(all_children_reduced)
+            quantize(children_freq, self.nb_partitions)
 
     def process_row(self, row, extractor):
         for k in extractor.inspect_quant(row.uast):

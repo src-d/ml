@@ -3,7 +3,7 @@ from collections import defaultdict
 from sourced.ml.algorithms.uast_ids_to_bag import Uast2BagBase
 
 
-class UastNodes2Bag(Uast2BagBase):
+class Uast2NodesBag(Uast2BagBase):
     """
     Converts a UAST to a bag of features that are node specific.
     The features are pairs of internal type and number of children)
