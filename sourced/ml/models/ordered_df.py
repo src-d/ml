@@ -2,7 +2,7 @@ from typing import Iterable, Dict
 
 import numpy
 
-from modelforge import register_model, merge_strings
+from modelforge import register_model, merge_strings, split_strings
 from sourced.ml.models import DocumentFrequencies
 
 
@@ -13,11 +13,8 @@ class OrderedDocumentFrequencies(DocumentFrequencies):
     """
     NAME = "ordered_docfreq"
 
-    def construct(self, docs: int, dicts: Iterable[Dict[str, int]]):
-        df = {}
-        for d in dicts:
-            df.update(d)
-        super().construct(docs, df)
+    def construct(self, docs: int, tokfreqs: Iterable[Dict[str, int]]):
+        super().construct(docs, tokfreqs)
         self._log.info("Ordering the keys...")
         keys = list(self._df)
         keys.sort()
@@ -29,20 +26,8 @@ class OrderedDocumentFrequencies(DocumentFrequencies):
         return self._order
 
     def _load_tree(self, tree):
-        tokens = None
-        original_construct = self.construct
-        super_construct = super().construct
-
-        def hacked_construct(docs, tokfreq, **kwargs):
-            super_construct(docs=docs, tokfreq=tokfreq)
-            nonlocal tokens
-            tokens = kwargs["tokens"]
-
-        self.construct = hacked_construct
-        try:
-            super()._load_tree(tree)
-        finally:
-            self.construct = original_construct
+        tokens = split_strings(tree["tokens"])
+        super()._load_tree(tree, tokens)
         self._log.info("Mapping the keys order...")
         self._order = {k: i for i, k in enumerate(tokens)}
 
