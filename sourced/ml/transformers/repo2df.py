@@ -28,3 +28,29 @@ class Repo2DocFreq(Transformer):
         for i, extractor in enumerate(self.extractors):
             for k in extractor.inspect(row.uast):
                 yield (i, k), 1
+
+
+class Repo2Quant(Transformer):
+
+    def __init__(self, extractors, nb_partitions, **kwargs):
+        super().__init__(**kwargs)
+        self.extractors = extractors
+        self.nb_partitions = nb_partitions
+
+    def __call__(self, rows):
+        for i, extractor in enumerate(self.extractors):
+            try:
+                quantize = extractor.quantize
+            except AttributeError:
+                self._log.info("%s:No quantization performed", extractor.__class__.__name__)
+                continue
+            self._log.info("%s:Perform quantization with %d partitions",
+                           extractor.__class__.__name__, self.nb_partitions)
+            all_children = rows.flatMap(lambda j: self.process_row(j, extractor))
+            all_children_reduced = all_children.countByKey()
+            children_freq = extractor.get_children_freq(all_children_reduced)
+            quantize(children_freq, self.nb_partitions)
+
+    def process_row(self, row, extractor):
+        for k in extractor.inspect_quant(row.uast):
+            yield k, 1
