@@ -79,7 +79,8 @@ class UastExtractor(Transformer):
         for lang in self.languages[1:]:
             lang_filter |= classified.lang == lang
         filtered_by_lang = classified.filter(lang_filter)
-        uasts = filtered_by_lang.extract_uasts()
+        from pyspark.sql import functions
+        uasts = filtered_by_lang.extract_uasts().where(functions.size(functions.col("uast")) > 0)
         return uasts
 
 
@@ -89,7 +90,10 @@ class FieldsSelector(Transformer):
         self.fields = fields
 
     def __call__(self, df):
-        return df.select(self.fields)
+        res = df.select(self.fields)
+        if self.explained:
+            self._log.info("toDebugString():\n%s", res.rdd.toDebugString().decode())
+        return res
 
 
 class ParquetSaver(Transformer):
@@ -98,6 +102,8 @@ class ParquetSaver(Transformer):
         self.save_loc = save_loc
 
     def __call__(self, df):
+        if self.explained:
+            self._log.info("toDebugString():\n%s", df.rdd.toDebugString().decode())
         df.write.parquet(self.save_loc)
 
 
