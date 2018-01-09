@@ -12,24 +12,31 @@ class DocumentFrequencies(Model):
     """
     NAME = "docfreq"
 
-    def construct(self, docs, tokfreq: Dict[str, int], **kwargs):
+    def construct(self, docs: int, tokfreqs: Union[Iterable[Dict[str, int]], Dict[str, int]]):
         """
         Initializes this model.
         :param docs: The number of documents.
-        :param tokfreq: The dictionary of token -> frequency.
-        :param kwargs: Not used.
+        :param tokfreqs: The dictionary of token -> frequency or the iterable collection of such
+                         dictionaries.
         :return: self
         """
+        if isinstance(tokfreqs, dict):
+            df = tokfreqs
+        else:
+            df = {}
+            for d in tokfreqs:
+                df.update(d)
         self._docs = docs
-        self._df = tokfreq
+        self._df = df
         return self
 
-    def _load_tree(self, tree):
-        tokens = split_strings(tree["tokens"])
+    def _load_tree(self, tree, tokens=None):
+        if tokens is None:
+            tokens = split_strings(tree["tokens"])
         freqs = tree["freqs"]
         self._log.info("Building the docfreq dictionary...")
         tokfreq = dict(zip(tokens, freqs))
-        self.construct(docs=tree["docs"], tokfreq=tokfreq, tokens=tokens)
+        self.construct(docs=tree["docs"], tokfreqs=tokfreq)
 
     def _generate_tree(self):
         tokens = self.tokens()

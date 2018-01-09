@@ -77,7 +77,7 @@ def preprocess_id2vec(args):
         log.info("Writing the document frequencies to %s...", args.df)
         model = DocumentFrequencies()
         tokfreq = dict(zip(chosen_words, chosen_freqs))
-        model.construct(docs=len(inputs) - skipped, tokfreq=tokfreq)
+        model.construct(docs=len(inputs) - skipped, tokfreqs=tokfreq)
         model.save(args.df)
     del chosen_freqs
 
