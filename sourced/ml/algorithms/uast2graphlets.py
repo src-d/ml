@@ -7,7 +7,8 @@ from sourced.ml.algorithms.uast_struct_to_bag import Node
 class Uast2GraphletBag(Uast2BagBase):
     """
     Converts a UAST to a bag of graphlets.
-    The graphlet of a UAST node is composed by the node itself, its parent and its children.
+    The graphlet of a UAST node is composed from the node itself, its parent and its children.
+    Each node is represented by the internal role string.
     """
     @staticmethod
     def _extract_node(node, parent):

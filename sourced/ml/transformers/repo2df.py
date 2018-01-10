@@ -31,7 +31,6 @@ class Repo2DocFreq(Transformer):
 
 
 class Repo2Quant(Transformer):
-
     def __init__(self, extractors, nb_partitions, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors
@@ -42,13 +41,13 @@ class Repo2Quant(Transformer):
             try:
                 quantize = extractor.quantize
             except AttributeError:
-                self._log.info("%s:No quantization performed", extractor.__class__.__name__)
+                self._log.debug("%s: no quantization performed", extractor.__class__.__name__)
                 continue
-            self._log.info("%s:Perform quantization with %d partitions",
+            self._log.info("%s: performing quantization with %d partitions",
                            extractor.__class__.__name__, self.nb_partitions)
             all_children = rows.flatMap(lambda j: self.process_row(j, extractor))
             all_children_reduced = all_children.countByKey()
-            children_freq = extractor.get_children_freq(all_children_reduced)
+            children_freq = extractor._get_children_freqs(all_children_reduced)
             quantize(children_freq, self.nb_partitions)
 
     def process_row(self, row, extractor):

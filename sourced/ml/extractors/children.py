@@ -1,5 +1,4 @@
 import numpy
-import re
 from collections import defaultdict
 
 from sourced.ml.algorithms import Uast2NodesBag
@@ -13,10 +12,10 @@ class ChildrenBagExtractor(BagsExtractor):
     Converts a UAST to a bag of features that are composed of the nodes' internal type
     and their quantized number of children.
 
-    As regards quantization performed in class: Repo2Quant
-    get_children_freq() is first invoked to build the set of the number of children frequencies.
+    The quantization is performed by :class:`Repo2Quant`.
+    _get_children_freqs() is first invoked to build the set of the number of children frequencies.
     Then quantize() is called to fill the quantization mapping thanks to
-    build_partition() and process_value() methods.
+    _calc_partitions() and _quantize_value() methods.
     """
     NAME = "children"
     NAMESPACE = "c."
@@ -24,10 +23,13 @@ class ChildrenBagExtractor(BagsExtractor):
     OPTS.update(BagsExtractor.OPTS)
 
     def __init__(self, docfreq_threshold=None, **kwargs):
-        super().__init__(docfreq_threshold)
-        self._log.debug("__init__ %s", kwargs)
-        self.mapping = dict()
+        original_kwargs = kwargs
         uast2bag_kwargs = filter_kwargs(kwargs, Uast2NodesBag.__init__)
+        for k in uast2bag_kwargs:
+            kwargs.pop(k)
+        super().__init__(docfreq_threshold, **kwargs)
+        self._log.debug("__init__ %s", original_kwargs)
+        self.quant_map = {}
         self.uast2bag = Uast2NodesBag(**uast2bag_kwargs)
 
     def inspect(self, uast):
@@ -40,7 +42,7 @@ class ChildrenBagExtractor(BagsExtractor):
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
         for key in bag:
-            yield self.NAMESPACE + self.update(key)
+            yield self.NAMESPACE + self._apply_quant(key)
 
     def inspect_quant(self, uast):
         """
@@ -48,62 +50,63 @@ class ChildrenBagExtractor(BagsExtractor):
         in class: Repo2Quant.
         """
         try:
-            _, all_children = self.uast_to_bag(uast)
+            _, children_counts = self.uast_to_bag(uast)
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
-        for nb_children in all_children:
+        for nb_children in children_counts:
             yield str(nb_children)
-
-    def update(self, key):
-        """
-        Substitutes in the string key the original number of children
-        with its quantized value.
-        """
-        children_quant = self.mapping[key.split("_")[-1]]
-        return re.sub(r"\d{1,}", str(children_quant), key)
 
     def extract(self, uast):
         """
         Converts a UAST to the weighted set.
         This method is overridden in order to update the bag of features
         after quantization of the number of children in class: Repo2WeightedSet.
-        Needs merge_children() and update() methods to update the frequencies
+        Needs _quantize_children() and _apply_quant() methods to update the frequencies
         in the bag with the right keys.
         """
         ndocs = self.ndocs
         docfreq = self.docfreq
         log = numpy.log
         bag, _ = self.uast_to_bag(uast)
-        bag = self.merge_children(bag)
+        bag = self._quantize_children(bag)
         for key, val in bag.items():
             key = self.NAMESPACE + key
             try:
-                yield key, log(1 + val) * log(ndocs / docfreq[key]) * self.scale
+                yield key, log(1 + val) * log(ndocs / docfreq[key]) * self.weight
             except KeyError:
                 # docfreq_threshold
                 continue
 
-    def get_children_freq(self, reduced):
+    def quantize(self, children_freq, nb_partitions):
+        partition = self._calc_partitions(children_freq, nb_partitions)
+        for value in set(children_freq):
+            self.quant_map[value] = self._quantize_value(int(value), partition)
+
+    def uast_to_bag(self, uast):
+        return self.uast2bag(uast)
+
+    def _apply_quant(self, key):
+        """
+        Substitutes in the string key the original number of children
+        with its quantized value.
+        """
+        splitted = key.split("_")
+        children_quant = self.quant_map[splitted[-1]]
+        return "%s_%s" % ("_".join(splitted[:-1]), children_quant)
+
+    def _get_children_freqs(self, reduced: dict):
         children_freq = {}
         for key, value in reduced.items():
             children_freq[key] = value
         return children_freq
 
-    def merge_children(self, bag):
+    def _quantize_children(self, bag: dict):
         new_bag = defaultdict(int)
         for key, val in bag.items():
-            new_bag[self.update(key)] += val
+            new_bag[self._apply_quant(key)] += val
         return new_bag
 
-    def quantize(self, children_freq, nb_partitions):
-        try:
-            partition = self.build_partition(children_freq, nb_partitions)
-            for value in set(children_freq):
-                self.mapping[value] = self.process_value(int(value), partition)
-        finally:
-            self.nb_partitions = None
-
-    def build_partition(self, children_freq, nb_partitions):
+    def _calc_partitions(self, children_freq: dict, nb_partitions: int):
         """
         Builds the quantization partition P that is a vector of length nb_partitions \
         whose entries are in strictly ascending order.
@@ -133,22 +136,19 @@ class ChildrenBagExtractor(BagsExtractor):
         id_val = new_start
         for i in range(new_start, nb_partitions):
             nb_nodes_cum = 0
-            while (nb_nodes_cum < max_nodes_per_bin):
+            while nb_nodes_cum < max_nodes_per_bin:
                 nb_nodes_cum += values[id_val] * children_freq[str(values[id_val])]
                 id_val += 1
             partition[i] = values[id_val]
         return partition
 
-    def process_value(self, value, partition):
+    def _quantize_value(self, value, partition):
         """
-        Produce quantization index and quantized output value.
+        Calculates the quantized index.
 
         :param value: value we want to quantize.
         :return: the corresponding quantization index.
         """
         linear_values = range(len(partition))
         idx = numpy.searchsorted(partition, value, side="right")
-        return linear_values[idx-1]
-
-    def uast_to_bag(self, uast):
-        return self.uast2bag(uast)
+        return linear_values[idx - 1]

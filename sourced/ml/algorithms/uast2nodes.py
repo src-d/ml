@@ -32,11 +32,11 @@ class Uast2NodesBag(Uast2BagBase):
         """
         Converts a UAST to a bag of features. The weights are feature frequencies.
         :param uast: The UAST root node.
-        :return: bag of features and the list of the number of children encountered.
+        :return: weighted bag of features and the list of the numbers of children encountered.
         """
         bag = defaultdict(int)
-        all_children = []
+        children_counts = []
         for node in self.uast2nodes(uast):
             bag[self.node2key(node)] += 1
-            all_children.append(len(node.children))
-        return bag, all_children
+            children_counts.append(len(node.children))
+        return bag, children_counts
