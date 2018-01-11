@@ -63,6 +63,14 @@ Cannot connect to the Docker daemon. Is the docker daemon running on this host?
 And you are sure that the daemon is running, then you need to add your user to `docker` group:
 refer to the [documentation](https://docs.docker.com/engine/installation/linux/linux-postinstall/#manage-docker-as-a-non-root-user).
 
+## Contributions
+
+...are welcome! See [CONTRIBUTING](CONTRIBUTING.md) and [code of conduct](CODE_OF_CONDUCT.md).
+
+## License
+
+[Apache 2.0](LICENSE.md)
+
 ## Algorithms
 
 #### Identifier embeddings
@@ -107,17 +115,3 @@ frequencies ("docfreq") and identifier embeddings ("id2vec").
 #### Topic modeling
 
 See [here](topic_modeling.md).
-
-## Contributions
-[![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)
-
-We use [PEP8](https://www.python.org/dev/peps/pep-0008/) with line length 99 and ". All the tests
-must pass:
-
-```
-unittest discover /path/to/sourcedml
-```
-
-## License
-
-Apache 2.0.
