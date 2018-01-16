@@ -1,4 +1,3 @@
-from collections import namedtuple
 import operator
 
 from pyspark import Row
@@ -18,9 +17,7 @@ class Uast2DocFreq(Transformer):
         processed = rows.flatMap(self._process_row)
         if self.explained:
             self._log.info("toDebugString():\n%s", processed.toDebugString().decode())
-
         self.ndocs = rows.map(lambda x: getattr(x, self.document_column)).distinct().count()
-
         return processed \
             .distinct() \
             .map(lambda x: (x[0], 1)) \

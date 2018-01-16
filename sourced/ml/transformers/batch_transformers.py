@@ -7,7 +7,7 @@ import parquet
 from pyspark.sql.types import Row
 from scipy.sparse import csr_matrix
 
-from sourced.ml.models import OrderedDocumentFrequencies
+from sourced.ml.models import OrderedDocumentFrequencies, DocumentFrequencies
 from sourced.ml.transformers import Transformer
 from sourced.ml.utils import PickleableLogger
 
@@ -20,15 +20,17 @@ class BagsBatcher(Transformer):
         super().__init__(**kwargs)
         self.df = df
         self.ndocs = ndocs
-        self.model = None
+        self.docfreq_model = None
+        self.quant_model = None
         self.chunk_size = chunk_size
 
     def __getstate__(self):
         state = super().__getstate__()
-        del state["model"]
+        del state["docfreq_model"]
+        del state["quant_model"]
         del state["df"]
         if self.model is not None:
-            state["keys"] = self.model.order
+            state["keys"] = self.docfreq_model.order
         return state
 
     def __call__(self, processed):
