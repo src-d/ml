@@ -139,6 +139,6 @@ must pass:
 unittest discover /path/to/ast2vec
 ```
 
-## License
-
-Apache 2.0.
+License
+-------
+Apache License Version 2.0, see [LICENSE](LICENSE)
