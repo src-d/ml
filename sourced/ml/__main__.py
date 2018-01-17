@@ -7,7 +7,8 @@ from modelforge.logs import setup_logging
 from sourced.ml import extractors
 from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
-    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry
+    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
+    repos2ids_entry
 from sourced.ml.utils import install_bigartm, add_engine_args
 
 
@@ -65,6 +66,29 @@ def get_parser() -> argparse.ArgumentParser:
         "-f", "--feature", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
         required=True, help="The feature extraction scheme to apply.")
+
+    repos2ids_parser = subparsers.add_parser(
+        "repos2ids", help="Convert source code to a set of identifiers."
+                          "By filtering the identifiers which are splittable"
+                          "on special characters or case changes, we can build"
+                          "a dataset to learn a character based RNN"
+                          "where to split tokens that do not follow any naming convention.")
+    repos2ids_parser.set_defaults(handler=repos2ids_entry)
+    add_engine_args(repos2ids_parser)
+    repos2ids_parser.add_argument(
+        "-r", "--repositories", required=True,
+        help="The path to the repositories.")
+    repos2ids_parser.add_argument(
+        "-o", "--output", required=True,
+        help="[OUT] The path to the output set of identifiers written in an .asdf.")
+    repos2ids_parser.add_argument(
+        "--splittable", action="store_true",
+        help="Flag that specifies if you want to filter specific identifiers."
+             "Default value makes you filter identifiers which are easy splittable:"
+             "that is to say on special characters or case changes")
+    repos2ids_parser.add_argument(
+        "--vocabulary-size", default=10000000, type=int,
+        help="The maximum vocabulary size.")
 
     repo2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a Git repository.",
