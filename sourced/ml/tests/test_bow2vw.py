@@ -6,16 +6,14 @@ import unittest
 
 import sourced
 import sourced.ml.tests.models as paths
-from sourced.ml.models import NBOW, BOW
+from sourced.ml.models import BOW
 from sourced.ml.cmd_entries import bow2vw_entry
 
 
 class Bow2vwTests(unittest.TestCase):
     def test_convert_bow_to_vw(self):
-        bow = NBOW().load(source=os.path.join(os.path.dirname(__file__), paths.NBOW))
-        vocabulary = ["get", "name", "type", "string", "class", "set", "data", "value", "self",
-                      "test"]
-        bow.become_bow(vocabulary)
+        bow = BOW().load(source=os.path.join(os.path.dirname(__file__), paths.BOW))
+        vocabulary = ["i.", "i.*", "i.Activity", "i.AdapterView", "i.ArrayAdapter", "i.Arrays"]
         with tempfile.NamedTemporaryFile(prefix="sourced.ml-vw-") as fout:
             logging.getLogger().level = logging.ERROR
             try:
@@ -28,7 +26,7 @@ class Bow2vwTests(unittest.TestCase):
         for word in vocabulary:
             if " %s:" % word in contents:
                 hits += 1
-        self.assertEqual(hits, 6)
+        self.assertEqual(hits, 4)
 
     def test_repo2bow_entry(self):
         called = [None] * 2
@@ -36,7 +34,7 @@ class Bow2vwTests(unittest.TestCase):
         def fake_convert_bow_to_vw(*args):
             called[:] = args
 
-        args = argparse.Namespace(nbow=os.path.join(os.path.dirname(__file__), paths.NBOW),
+        args = argparse.Namespace(bow=os.path.join(os.path.dirname(__file__), paths.BOW),
                                   id2vec=os.path.join(os.path.dirname(__file__), paths.ID2VEC),
                                   output="out.test")
         backup = sourced.ml.models.BOW.convert_bow_to_vw

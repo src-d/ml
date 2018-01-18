@@ -26,7 +26,7 @@ setup(
         "console_scripts": ["srcml=sourced.ml.__main__:main"],
     },
     keywords=["machine learning on source code", "word2vec", "id2vec",
-              "github", "swivel", "bow", "nbow", "bblfsh", "babelfish"],
+              "github", "swivel", "bow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
                       "bblfsh>-2.2.1,<3.0",
                       "modelforge>=0.5.0-alpha",
