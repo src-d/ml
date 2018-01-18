@@ -7,7 +7,8 @@ from modelforge.logs import setup_logging
 from sourced.ml import extractors
 from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
-    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry
+    run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
+    repos2bow_entry
 from sourced.ml.utils import install_bigartm, add_engine_args
 
 
@@ -46,14 +47,37 @@ def get_parser() -> argparse.ArgumentParser:
     # Create and construct subparsers
     subparsers = parser.add_subparsers(help="Commands", dest="command")
 
+    repos2bow_parser = subparsers.add_parser(
+        "repos2bow", help="Convert source code to the Bag-Of-Words model.")
+    repos2bow_parser.set_defaults(handler=repos2bow_entry)
+    add_default_args(repos2bow_parser)
+    add_engine_args(repos2bow_parser)
+    repos2bow_parser.add_argument(
+        "--docfreq", required=True,
+        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
+    repos2bow_parser.add_argument(
+        "--bow", required=True,
+        help="[OUT] The path to the Bag-Of-Words model.")
+    repos2bow_parser.add_argument(
+        "--vocabulary-size", default=10000000, type=int,
+        help="The maximum vocabulary size.")
+    repos2bow_parser.add_argument(
+        "--ordered", action="store_true",
+        help="Flag that specifies ordered or default document frequency model to create."
+             "If you use default document frequency model you should use only one feature.")
+    repos2bow_parser.add_argument(
+        "-f", "--feature", nargs="+",
+        choices=[ex.NAME for ex in extractors.__extractors__.values()],
+        required=True, help="The feature extraction scheme to apply.")
+
     repos2df_parser = subparsers.add_parser(
-        "repos2df", help="Convert source code to weighted sets.")
+        "repos2df", help="Convert source code to document frequency model.")
     repos2df_parser.set_defaults(handler=repos2df_entry)
     add_default_args(repos2df_parser)
     add_engine_args(repos2df_parser)
     repos2df_parser.add_argument(
         "--docfreq", required=True,
-        help="[OUT] The path to the OrderedDocumentFrequencies model.")
+        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
     repos2df_parser.add_argument(
         "--vocabulary-size", default=10000000, type=int,
         help="The maximum vocabulary size.")

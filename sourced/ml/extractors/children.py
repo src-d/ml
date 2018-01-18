@@ -60,7 +60,7 @@ class ChildrenBagExtractor(BagsExtractor):
         """
         Converts a UAST to the weighted set.
         This method is overridden in order to update the bag of features
-        after quantization of the number of children in class: Repo2WeightedSet.
+        after quantization of the number of children in class: Documents2BOW.
         Needs _quantize_children() and _apply_quant() methods to update the frequencies
         in the bag with the right keys.
         """

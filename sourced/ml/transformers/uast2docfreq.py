@@ -1,36 +1,40 @@
+from collections import namedtuple
+import operator
+
+from pyspark import Row
+
 from sourced.ml.transformers import Transformer
 
 
-class Repo2DocFreq(Transformer):
-    NDOCS_KEY = -1, 0
+class Uast2DocFreq(Transformer):
 
-    def __init__(self, extractors, **kwargs):
+    def __init__(self, extractors, document_column, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors
+        self.document_column = document_column
+        self.ndocs = None
 
     def __call__(self, rows):
-        processed = rows.flatMap(self.process_row)
+        processed = rows.flatMap(self._process_row)
         if self.explained:
             self._log.info("toDebugString():\n%s", processed.toDebugString().decode())
-        reduced = processed.countByKey()
-        ndocs = None
-        for (i, key), value in reduced.items():
-            if (i, key) == self.NDOCS_KEY:
-                ndocs = value
-                continue
-            self.extractors[i].apply_docfreq(key, value)
 
+        self.ndocs = rows.map(lambda x: getattr(x, self.document_column)).distinct().count()
+
+        return processed \
+            .distinct() \
+            .map(lambda x: (x[0], 1)) \
+            .reduceByKey(operator.add) \
+            .map(lambda x: Row(token=x[0], value=x[1]))
+
+    def _process_row(self, row):
+        document = getattr(row, self.document_column)
         for extractor in self.extractors:
-            extractor.ndocs = ndocs
-
-    def process_row(self, row):
-        yield self.NDOCS_KEY, 1
-        for i, extractor in enumerate(self.extractors):
-            for k in extractor.inspect(row.uast):
-                yield (i, k), 1
+            for key, val in extractor.extract(row.uast):
+                yield key, document
 
 
-class Repo2Quant(Transformer):
+class Uast2Quant(Transformer):
     def __init__(self, extractors, nb_partitions, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors

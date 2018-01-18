@@ -50,6 +50,17 @@ def add_spark_args(my_parser, default_packages=None):
         help="Spark persistence type (StorageLevel.*).")
 
 
+class EngineConstants:
+    """
+    Constants for Engine usage.
+    """
+    class Columns:
+        """
+        Column names constants.
+        """
+        RepositoryId = "repository_id"
+
+
 class EngineDefault:
     """
     Default arguments for create_engine function and __main__
