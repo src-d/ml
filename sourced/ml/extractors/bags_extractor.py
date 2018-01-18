@@ -10,6 +10,7 @@ class BagsExtractor(PickleableLogger):
     """
     DEFAULT_DOCFREQ_THRESHOLD = 5
     NAMESPACE = None  # the beginning of each element in the bag
+    NAME = None  # Extractor name. Should be overridden in the derived class.
     OPTS = {"weight": None}  # cmdline args which are passed into __init__()
     DEFAULT_SCALE = 1
 
@@ -59,30 +60,8 @@ class BagsExtractor(PickleableLogger):
         return type(self).__name__
 
     def extract(self, uast):
-        ndocs = self.ndocs
-        docfreq = self.docfreq
-        log = numpy.log
         for key, val in self.uast_to_bag(uast).items():
-            key = self.NAMESPACE + key
-            try:
-                yield key, log(1 + val) * log(ndocs / docfreq[key]) * self.weight
-            except KeyError:
-                # docfreq_threshold
-                continue
-
-    def inspect(self, uast):
-        try:
-            bag = self.uast_to_bag(uast)
-        except RuntimeError as e:
-            raise ValueError(str(uast)) from e
-        for key in bag:
-            yield self.NAMESPACE + key
-
-    def apply_docfreq(self, key, value):
-        if value >= self.docfreq_threshold:
-            if not isinstance(key, str):
-                raise TypeError("key is %s" % type(key))
-            self.docfreq[str(key)] = value
+            yield self.NAMESPACE + key, val * self.weight
 
     @classmethod
     def get_kwargs_fromcmdline(cls, args):
