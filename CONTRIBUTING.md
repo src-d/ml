@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Apollo project is [Apache licensed](LICENSE.md) and accepts
+Sourced ML project is [Apache licensed](LICENSE.md) and accepts
 contributions via GitHub pull requests.  This document outlines some of the
 conventions on development workflow, commit message formatting, contact points,
 and other resources to make it easier to get your contribution accepted.
@@ -32,7 +32,7 @@ issue you're facing, or it's a known issue that we're already aware of.
 
 ## How to Contribute
 
-Pull Requests (PRs) are the main and exclusive way to contribute to the official go-git project.
+Pull Requests (PRs) are the main and exclusive way to contribute to the official Sourced ML project.
 In order for a PR to be accepted it needs to pass a list of requirements:
 
 - Code Coverage does not decrease.
