@@ -42,6 +42,10 @@ class UastTokens2Bag(Uast2BagBase):
         self._token_parser = NoopTokenParser() if token_parser is None else token_parser
 
     @property
+    def token_parser(self):
+        return self._token_parser
+
+    @property
     def token2index(self):
         return self._token2index
 

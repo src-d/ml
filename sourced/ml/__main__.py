@@ -99,6 +99,16 @@ def get_parser() -> argparse.ArgumentParser:
     repo2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="Path to the output file.")
+    repo2coocc_parser.add_argument(
+        "--split_stem", default=False, action="store_true",
+        help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
+    repo2coocc_parser.add_argument(
+        "--docfreq", required=True,
+        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
+    repo2coocc_parser.add_argument(
+        "--ordered", action="store_true",
+        help="Flag that specifies ordered or default document frequency model to create."
+             "If you use default document frequency model you should use only one feature.")
 
     repo2coocc_parser.set_defaults(handler=repos2coocc_entry)
 

@@ -24,14 +24,14 @@ class CooccModelSaver(Transformer):
             :class:`.CooccConstructor` to construct RDD from uasts.
         :return:
         """
-        matrix_count = sparse_matrix.count()
-        rows = sparse_matrix.take(matrix_count)
+        rows = sparse_matrix.collect()
 
         mat_row, mat_col, mat_weights = zip(*rows)
         tokens_num = len(self.tokens_list)
+
+        self._log.info("Building matrix...")
         matrix = sparse.coo_matrix((mat_weights, (mat_row, mat_col)),
                                    shape=(tokens_num, tokens_num))
-
         Cooccurrences().construct(self.tokens_list, matrix).save(self.output)
 
 
@@ -40,10 +40,11 @@ class CooccConstructor(Transformer):
     Co-occurrence matrix calculation transformer.
     You can find an algorithm full description in :ref:`coocc.md`
     """
-    def __init__(self, token2index, token_parser, **kwargs):
+    def __init__(self, token2index, token_parser, namespace="", **kwargs):
         super().__init__(**kwargs)
         self.token2index = token2index
         self.token_parser = token_parser
+        self.namespace = namespace
 
     def _flatten_children(self, root):
         ids = []
@@ -82,7 +83,8 @@ class CooccConstructor(Transformer):
     def _process_row(self, row):
         for token1, token2 in self._traverse_uast(row.uast):
             try:
-                yield (self.token2index.value[token1], self.token2index.value[token2]), 1
+                yield (self.token2index.value[self.namespace + token1],
+                       self.token2index.value[self.namespace + token2]), 1
             except KeyError:
                 # Do not have token1 or token2 in the token2index map
                 pass
