@@ -45,7 +45,7 @@ def repos2bow_entry(args):
     log.info("Writing %s", args.docfreq)
     model_df.save(args.docfreq)
 
-    matrix = sparse.csc_matrix((values, (tokens_id, documents_id)), shape=(ntokens, ndocs))
+    matrix = sparse.csc_matrix((values, (documents_id, tokens_id)), shape=(ntokens, ndocs))
     model_bow = BOW().construct(document_idexer.values, matrix, token_indexer.values)
     log.info("Writing BOW model %s", args.bow)
     model_bow.save(args.bow, deps=(model_df,))

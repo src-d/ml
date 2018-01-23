@@ -159,14 +159,10 @@ def get_parser() -> argparse.ArgumentParser:
         "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     bow2vw_parser.set_defaults(handler=bow2vw_entry)
-    group = bow2vw_parser.add_argument_group("model")
-    group_ex = group.add_mutually_exclusive_group(required=True)
-    group_ex.add_argument(
-        "--bow", help="URL or path to a bag-of-words model. Mutually exclusive with --nbow.")
-    group_ex.add_argument(
-        "--nbow", help="URL or path to an nBOW model. Mutually exclusive with --bow.")
     bow2vw_parser.add_argument(
-        "--id2vec", help="URL or path to the identifier embeddings. Used if --nbow")
+        "--bow", help="URL or path to a bag-of-words model.")
+    bow2vw_parser.add_argument(
+        "--id2vec", help="URL or path to the identifier embeddings.")
     bow2vw_parser.add_argument(
         "-o", "--output", required=True, help="Path to the output file.")
 
