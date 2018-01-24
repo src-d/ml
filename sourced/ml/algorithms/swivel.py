@@ -72,10 +72,10 @@ flags.DEFINE_string("output_base_path", None,
 flags.DEFINE_integer("embedding_size", 300, "Size of the embeddings")
 flags.DEFINE_boolean("trainable_bias", False, "Biases are trainable")
 flags.DEFINE_integer("submatrix_rows", 4096,
-                     "Rows in each training submatrix. This must match"
+                     "Rows in each training submatrix. This must match "
                      "the training data.")
 flags.DEFINE_integer("submatrix_cols", 4096,
-                     "Rows in each training submatrix. This must match"
+                     "Rows in each training submatrix. This must match "
                      "the training data.")
 flags.DEFINE_float("loss_multiplier", 1.0 / 4096,
                    "constant multiplier on loss.")

@@ -138,8 +138,8 @@ def get_parser() -> argparse.ArgumentParser:
         help="Combine row and column embeddings together and write them to an .asdf.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
-    id2vec_postproc_parser.add_argument("swivel_output_directory")
-    id2vec_postproc_parser.add_argument("result")
+    id2vec_postproc_parser.add_argument("--swivel-output-directory")
+    id2vec_postproc_parser.add_argument("--result")
 
     id2vec_projector_parser = subparsers.add_parser(
         "id2vec_projector", help="Present id2vec model in Tensorflow Projector.",

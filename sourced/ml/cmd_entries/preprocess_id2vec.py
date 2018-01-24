@@ -1,11 +1,9 @@
 import logging
 import os
 import shutil
-from collections import defaultdict
 
 import numpy
 import tensorflow as tf
-from scipy.sparse import csr_matrix
 
 from modelforge.progress_bar import progress_bar
 from sourced.ml.algorithms.id_embedding import _extract_coocc_matrix
