@@ -11,10 +11,11 @@ from sourced.ml.utils import bblfsh_roles
 
 
 class CooccModelSaver(Transformer):
-    def __init__(self, output, tokens_list, **kwargs):
+    def __init__(self, output, tokens_list, df_model, **kwargs):
         super().__init__(**kwargs)
         self.tokens_list = tokens_list
         self.output = output
+        self.df_model = df_model
 
     def __call__(self, sparse_matrix: PipelinedRDD):
         """
@@ -32,7 +33,7 @@ class CooccModelSaver(Transformer):
         self._log.info("Building matrix...")
         matrix = sparse.coo_matrix((mat_weights, (mat_row, mat_col)),
                                    shape=(tokens_num, tokens_num))
-        Cooccurrences().construct(self.tokens_list, matrix).save(self.output)
+        Cooccurrences().construct(self.tokens_list, matrix).save(self.output, deps=(self.df_model,))
 
 
 class CooccConstructor(Transformer):

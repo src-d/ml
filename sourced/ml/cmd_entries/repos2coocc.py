@@ -38,5 +38,5 @@ def repos2coocc_entry(args):
         .link(CooccConstructor(token2index=token2index,
                                token_parser=id_extractor.id2bag.token_parser,
                                namespace=id_extractor.NAMESPACE)) \
-        .link(CooccModelSaver(args.output, tokens))
+        .link(CooccModelSaver(args.output, tokens, df_model))
     pipeline.execute()
