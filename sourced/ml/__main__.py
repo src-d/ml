@@ -103,7 +103,7 @@ def get_parser() -> argparse.ArgumentParser:
     repo2coocc_parser.set_defaults(handler=repos2coocc_entry)
 
     preproc_parser = subparsers.add_parser(
-        "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
+        "id2vec_preproc", help="Convert co-occurrence CSR matrix to Swivel dataset.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     preproc_parser.set_defaults(handler=preprocess_id2vec)
     preproc_parser.add_argument(
@@ -113,13 +113,12 @@ def get_parser() -> argparse.ArgumentParser:
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(
-        "--df", default=None,
-        help="Path to the calculated document frequencies in asdf format "
+        "--docfreq", default=None,
+        help="[IN] Path to the pre-calculated document frequencies in asdf format "
              "(DF in TF-IDF).")
     preproc_parser.add_argument(
-        "input", nargs="+",
-        help="Cooccurrence model produced by repo(s)2coocc. If it is a directory, all files "
-             "inside are read.")
+        "-i", "--input",
+        help="Concurrence model produced by repos2coocc.")
     preproc_parser.add_argument("-o", "--output", required=True, help="Output directory.")
 
     train_parser = subparsers.add_parser(
