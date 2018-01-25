@@ -90,17 +90,27 @@ def get_parser() -> argparse.ArgumentParser:
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
         required=True, help="The feature extraction scheme to apply.")
 
-    repo2coocc_parser = subparsers.add_parser(
+    repos2coocc_parser = subparsers.add_parser(
         "repos2coocc", help="Produce the co-occurrence matrix from a Git repository.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
-    add_engine_args(repo2coocc_parser)
+    add_engine_args(repos2coocc_parser)
 
-    add_default_args(repo2coocc_parser)
-    repo2coocc_parser.add_argument(
+    add_default_args(repos2coocc_parser)
+    repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="Path to the output file.")
+    repos2coocc_parser.add_argument(
+        "--split-stem", default=False, action="store_true",
+        help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
+    repos2coocc_parser.add_argument(
+        "--docfreq", required=True,
+        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
+    repos2coocc_parser.add_argument(
+        "--ordered", action="store_true",
+        help="Flag that specifies ordered or default document frequency model to create."
+             "If you use default document frequency model you should use only one feature.")
 
-    repo2coocc_parser.set_defaults(handler=repos2coocc_entry)
+    repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
 
     preproc_parser = subparsers.add_parser(
         "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
