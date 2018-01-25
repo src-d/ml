@@ -33,7 +33,9 @@ class CooccModelSaver(Transformer):
         self._log.info("Building matrix...")
         matrix = sparse.coo_matrix((mat_weights, (mat_row, mat_col)),
                                    shape=(tokens_num, tokens_num))
-        Cooccurrences().construct(self.tokens_list, matrix).save(self.output, deps=(self.df_model,))
+        Cooccurrences() \
+            .construct(self.tokens_list, matrix) \
+            .save(self.output, deps=(self.df_model,))
 
 
 class CooccConstructor(Transformer):
