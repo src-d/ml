@@ -1,4 +1,4 @@
-# source{d} ml [![Build Status](https://travis-ci.org/src-d/ml.svg)](https://travis-ci.org/src-d/ml) [![codecov](https://codecov.io/github/src-d/ml/coverage.svg?branch=develop)](https://codecov.io/gh/src-d/ml) [![PyPI](https://img.shields.io/pypi/v/sourcedml.svg)](https://pypi.python.org/pypi/sourcedml)
+# source{d} ml [![PyPI](https://img.shields.io/pypi/v/sourcedml.svg)](https://pypi.python.org/pypi/sourcedml) [![Build Status](https://travis-ci.org/src-d/ml.svg)](https://travis-ci.org/src-d/ml) [![Docker Build Status](https://img.shields.io/docker/build/srcd/ml.svg)](https://hub.docker.com/r/srcd/ml) [![codecov](https://codecov.io/github/src-d/ml/coverage.svg?branch=develop)](https://codecov.io/gh/src-d/ml)
 
 This project is the foundation for [MLoSC](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and working with models, thus allowing to focus on the higher level tasks.
 
