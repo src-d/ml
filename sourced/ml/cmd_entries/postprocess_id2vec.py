@@ -13,17 +13,17 @@ def postprocess_id2vec(args):
     Merges row and column embeddings produced by Swivel and writes the Id2Vec
     model.
 
-    :param args: :class:`argparse.Namespace` with "swivel_output_directory" \
+    :param args: :class:`argparse.Namespace` with "swivel_data" \
                  and "result". The text files are read from \
-                 `swivel_output_directory` and the model is written to \
+                 `swivel_data` and the model is written to \
                  `result`.
     :return: None
     """
     log = logging.getLogger("postproc")
-    log.info("Parsing the embeddings at %s...", args.swivel_output_directory)
+    log.info("Parsing the embeddings at %s...", args.swivel_data)
     tokens = []
     embeddings = []
-    swd = args.swivel_output_directory
+    swd = args.swivel_data
     with open(os.path.join(swd, "row_embedding.tsv")) as frow:
         with open(os.path.join(swd, "col_embedding.tsv")) as fcol:
             for i, (lrow, lcol) in enumerate(zip(frow, fcol)):
@@ -39,7 +39,7 @@ def postprocess_id2vec(args):
                 embeddings.append((erow + ecol) / 2)
     log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
-    log.info("Writing %s...", args.result)
+    log.info("Writing %s...", args.output)
     model = Id2Vec()
     model.construct(embeddings=embeddings, tokens=tokens)
-    model.save(args.result)
+    model.save(args.output)

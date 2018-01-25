@@ -175,9 +175,9 @@ class IdEmbeddingTests(unittest.TestCase):
     def test_postproc(self):
         with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
             args = argparse.Namespace(
-                swivel_output_directory=os.path.join(os.path.dirname(__file__), "postproc"),
-                result=tmp.name)
-            prepare_postproc_files(args.swivel_output_directory)
+                swivel_data=os.path.join(os.path.dirname(__file__), "postproc"),
+                output=tmp.name)
+            prepare_postproc_files(args.swivel_data)
 
             postprocess_id2vec(args)
 

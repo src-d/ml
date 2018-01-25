@@ -138,8 +138,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Combine row and column embeddings together and write them to an .asdf.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
-    id2vec_postproc_parser.add_argument("--swivel-output-directory")
-    id2vec_postproc_parser.add_argument("--result")
+    id2vec_postproc_parser.add_argument(
+        "-i", "--swivel-data", required=True,
+        help="Folder with swivel batches input data. You can get it using repos2coocc subcommand.")
+    id2vec_postproc_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output directory for embedding data.")
 
     id2vec_projector_parser = subparsers.add_parser(
         "id2vec_projector", help="Present id2vec model in Tensorflow Projector.",
@@ -149,8 +153,8 @@ def get_parser() -> argparse.ArgumentParser:
                                          help="id2vec model to present.")
     id2vec_projector_parser.add_argument("-o", "--output", required=True,
                                          help="Projector output directory.")
-    id2vec_projector_parser.add_argument("--docfreq", help="docfreq model to pick the most significant "
-                                                      "identifiers.")
+    id2vec_projector_parser.add_argument("--docfreq", help="docfreq model to pick the most "
+                                                           "significant identifiers.")
     id2vec_projector_parser.add_argument("--no-browser", action="store_true",
                                          help="Do not open the browser.")
 

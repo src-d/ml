@@ -31,7 +31,19 @@ def preprocess_id2vec(args):
     """
     log = logging.getLogger("preproc")
     df_model = DocumentFrequencies().load(source=args.docfreq)
-    # TODO: Add dependency check if it exists.
+    coocc_model = Cooccurrences().load(args.input)
+    if coocc_model.meta['dependencies']:
+        try:
+            df_meta = coocc_model.get_dep("docfreq")
+            if df_model.meta != df_meta:
+                raise ValueError(("Document frequency model you provided does not match "
+                                  "dependency inside Cooccurrences model:\n"
+                                  "args.docfreq.meta:\n{}\n"
+                                  "coocc_model.get_dep(\"docfreq\")\n{}\n").format(df_model.meta,
+                                                                                   df_meta))
+        except KeyError:
+            pass  # There is no docfreq dependency
+
     all_words = df_model.docfreq
     vs = args.vocabulary_size
     if len(all_words) < vs:
@@ -78,8 +90,8 @@ def preprocess_id2vec(args):
     log.info("Saved col_vocab.txt...")
 
     del chosen_words
-    model = Cooccurrences().load(args.input)
-    ccmatrix = _extract_coocc_matrix((vs, vs), word_indices, model)
+
+    ccmatrix = _extract_coocc_matrix((vs, vs), word_indices, coocc_model)
 
     log.info("Planning the sharding...")
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
