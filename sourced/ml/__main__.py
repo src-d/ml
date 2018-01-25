@@ -149,7 +149,7 @@ def get_parser() -> argparse.ArgumentParser:
                                          help="id2vec model to present.")
     id2vec_projector_parser.add_argument("-o", "--output", required=True,
                                          help="Projector output directory.")
-    id2vec_projector_parser.add_argument("--df", help="docfreq model to pick the most significant "
+    id2vec_projector_parser.add_argument("--docfreq", help="docfreq model to pick the most significant "
                                                       "identifiers.")
     id2vec_projector_parser.add_argument("--no-browser", action="store_true",
                                          help="Do not open the browser.")

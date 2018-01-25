@@ -64,7 +64,7 @@ def default_swivel_args(tmpdir):
 
 def default_preprocess_params(tmpdir, vocab):
     args = argparse.Namespace(
-        output=tmpdir, df=os.path.join(tmpdir, "docfreq.asdf"),
+        output=tmpdir, docfreq=os.path.join(tmpdir, "docfreq.asdf"),
         input=[os.path.join(os.path.dirname(__file__), "coocc")],
         vocabulary_size=vocab, shard_size=vocab)
     return args
