@@ -4,7 +4,7 @@ ID2VEC = "id2vec_1000.asdf"
 DOCFREQ = "docfreq_1000.asdf"
 BOW = "bow.asdf"
 COOCC = "coocc.asdf"
-VOCCOOCC = "voccoocc.asdf"
+COOCC_DF = "coocc_df.asdf"
 UAST = "uast.asdf"
 TOPICS = "topics.asdf"
 

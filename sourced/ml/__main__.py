@@ -113,7 +113,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
 
     preproc_parser = subparsers.add_parser(
-        "id2vec_preproc", help="Convert co-occurrence CSR matrices to Swivel dataset.",
+        "id2vec_preproc", help="Convert co-occurrence CSR matrix to Swivel dataset.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     preproc_parser.set_defaults(handler=preprocess_id2vec)
     preproc_parser.add_argument(
@@ -123,13 +123,12 @@ def get_parser() -> argparse.ArgumentParser:
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(
-        "--df", default=None,
-        help="Path to the calculated document frequencies in asdf format "
+        "--docfreq", default=None,
+        help="[IN] Path to the pre-calculated document frequencies in asdf format "
              "(DF in TF-IDF).")
     preproc_parser.add_argument(
-        "input", nargs="+",
-        help="Cooccurrence model produced by repo(s)2coocc. If it is a directory, all files "
-             "inside are read.")
+        "-i", "--input",
+        help="Concurrence model produced by repos2coocc.")
     preproc_parser.add_argument("-o", "--output", required=True, help="Output directory.")
 
     train_parser = subparsers.add_parser(
@@ -149,8 +148,12 @@ def get_parser() -> argparse.ArgumentParser:
         help="Combine row and column embeddings together and write them to an .asdf.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
-    id2vec_postproc_parser.add_argument("swivel_output_directory")
-    id2vec_postproc_parser.add_argument("result")
+    id2vec_postproc_parser.add_argument(
+        "-i", "--swivel-data", required=True,
+        help="Folder with swivel batches input data. You can get it using repos2coocc subcommand.")
+    id2vec_postproc_parser.add_argument(
+        "-o", "--output", required=True,
+        help="Output directory for embedding data.")
 
     id2vec_projector_parser = subparsers.add_parser(
         "id2vec_projector", help="Present id2vec model in Tensorflow Projector.",
@@ -160,8 +163,8 @@ def get_parser() -> argparse.ArgumentParser:
                                          help="id2vec model to present.")
     id2vec_projector_parser.add_argument("-o", "--output", required=True,
                                          help="Projector output directory.")
-    id2vec_projector_parser.add_argument("--df", help="docfreq model to pick the most significant "
-                                                      "identifiers.")
+    id2vec_projector_parser.add_argument("--docfreq", help="docfreq model to pick the most "
+                                                           "significant identifiers.")
     id2vec_projector_parser.add_argument("--no-browser", action="store_true",
                                          help="Do not open the browser.")
 

@@ -58,7 +58,7 @@ class Id2VecTests(unittest.TestCase):
         projector.wait = fake_wait
         args = argparse.Namespace(
             input=os.path.join(os.path.dirname(__file__), paths.ID2VEC),
-            output="fake", df=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
+            output="fake", docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
             no_browser=False, log_level=logging.DEBUG)
         try:
             projector_entry(args)
@@ -88,7 +88,7 @@ class Id2VecTests(unittest.TestCase):
         projector.wait = fake_wait
         args = argparse.Namespace(
             input=os.path.join(os.path.dirname(__file__), paths.ID2VEC),
-            output="fake", df=None, no_browser=False, log_level=logging.DEBUG)
+            output="fake", docfreq=None, no_browser=False, log_level=logging.DEBUG)
         try:
             projector_entry(args)
         finally:

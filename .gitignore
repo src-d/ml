@@ -1,3 +1,6 @@
+#Modelforge models
+*.asdf
+
 #Mac OS
 *.DS_Store
 

@@ -59,15 +59,20 @@ Shape: (5, 20)
 First 10 documents: ['repo1', 'repo2', 'repo3', 'repo4', 'repo5']
 First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 'i.Arrays', 'i.Bundle', 'i.EditText', 'i.Exception', 'i.False']\n"""  # nopep8
 
-    COOCC_DUMP = """{'created_at': datetime.datetime(2017, 7, 5, 18, 4, 5, 688259),
- 'dependencies': [],
+    COOCC_DUMP = """{'created_at': datetime.datetime(2018, 1, 24, 16, 0, 2, 591553),
+ 'dependencies': [{'created_at': datetime.datetime(2018, 1, 24, 15, 59, 24, 129470),
+                   'dependencies': [],
+                   'model': 'docfreq',
+                   'uuid': '0f94a6c6-7dc3-4b3c-b8d2-917164a50581',
+                   'version': [1, 0, 0]}],
  'model': 'co-occurrences',
- 'uuid': '215aadce-d98c-4391-b93f-90cae582e895',
+ 'uuid': 'e75dcb2d-ec1d-476b-a04b-bc64c7779ae1',
  'version': [1, 0, 0]}
-Number of words: 394
-""" + ("First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']\n" +  # nopep8
-"""Matrix: shape: (394, 394) non-zero: 20832
-""")
+Number of words: 304
+First 10 words: ['i.set', 'i.iter', 'i.error', 'i.logsdir', 'i.read', 'i.captur', 'i.clear',""" + \
+                 """ 'i.android', 'i.tohome', 'i.ljust']
+Matrix: shape: (304, 304) non-zero: 16001
+"""
 
     def test_id2vec(self):
         with captured_output() as (out, _, _):

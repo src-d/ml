@@ -56,6 +56,13 @@ Number of documents: %d""" % (
         """
         return self._docs
 
+    @property
+    def docfreq(self):
+        """
+        Returns document frequency dictionary.
+        """
+        return self._df
+
     def prune(self, threshold: int):
         """
         Removes tokens which occur less than `threshold` times.
