@@ -12,6 +12,12 @@ class Transformer(PickleableLogger):
         self._parent = None
         self._explained = explain
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["_parent"]
+        del state["_children"]
+        return state
+
     @property
     def explained(self):
         if self._explained is None and self.parent is not None:

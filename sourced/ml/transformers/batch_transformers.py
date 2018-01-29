@@ -16,34 +16,34 @@ class BagsBatcher(Transformer):
     DEFAULT_CHUNK_SIZE = 1.5 * 1000 * 1000 * 1000
     BLOCKS = True
 
-    def __init__(self, extractors, chunk_size=DEFAULT_CHUNK_SIZE, **kwargs):
+    def __init__(self, df, ndocs, chunk_size=DEFAULT_CHUNK_SIZE, **kwargs):
         super().__init__(**kwargs)
-        self.extractors = extractors
+        self.df = df
+        self.ndocs = ndocs
         self.model = None
         self.chunk_size = chunk_size
 
     def __getstate__(self):
         state = super().__getstate__()
-        del state["extractors"]
         del state["model"]
+        del state["df"]
         if self.model is not None:
             state["keys"] = self.model.order
         return state
 
     def __call__(self, processed):
+        processed = processed.groupBy(lambda r: r.document)
         lengths = processed.values().map(len)
         if self.explained:
             self._log.info("toDebugString():\n%s", lengths.toDebugString().decode())
         avglen = lengths.mean()
-        ndocs = self.extractors[0].ndocs
         self._log.info("Average bag length: %.1f", avglen)
-        self._log.info("Number of documents: %d", ndocs)
-        self.model = OrderedDocumentFrequencies().construct(
-            self.extractors[0].ndocs, [e.docfreq for e in self.extractors])
+        self._log.info("Number of documents: %d", self.ndocs)
+        self.model = OrderedDocumentFrequencies().construct(self.ndocs, self.df.collectAsMap())
         self._log.info("Vocabulary size: %d", len(self.model))
         chunklen = int(self.chunk_size / (2 * 4 * avglen))
-        nparts = ndocs // chunklen + 1
-        chunklen = int(ndocs / nparts * (2 * 4 * avglen))
+        nparts = self.ndocs // chunklen + 1
+        chunklen = int(self.ndocs / nparts * (2 * 4 * avglen))
         self._log.info("chunk %d\tparts %d", chunklen, nparts)
         return processed.mapValues(self.bag2row).repartition(nparts)
 
@@ -51,7 +51,7 @@ class BagsBatcher(Transformer):
         data = numpy.zeros(len(bag), dtype=numpy.float32)
         indices = numpy.zeros(len(bag), dtype=numpy.int32)
         # self.keys emerges after __getstate__
-        for i, (k, v) in enumerate(sorted((self.keys[k], v) for k, v in bag.items())):
+        for i, (k, v) in enumerate(sorted((self.keys[row.token], row.value) for row in bag.data)):
             data[i] = v
             indices[i] = k
         return data, indices
