@@ -4,6 +4,7 @@ import os
 import sys
 
 from modelforge.logs import setup_logging
+
 from sourced.ml import extractors
 from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
@@ -135,13 +136,18 @@ def get_parser() -> argparse.ArgumentParser:
         "id2vec_train", help="Train identifier embeddings.",
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     train_parser.set_defaults(handler=run_swivel)
-    del train_parser._action_groups[train_parser._action_groups.index(
-        train_parser._optionals)]
-    train_parser._optionals = swivel.flags._global_parser._optionals
-    train_parser._action_groups.append(train_parser._optionals)
-    train_parser._actions = swivel.flags._global_parser._actions
-    train_parser._option_string_actions = \
-        swivel.flags._global_parser._option_string_actions
+
+    types = {"string": str,
+             "int": int,
+             "float": float,
+             "bool": bool}
+
+    for flag in swivel.FLAGS.__dict__['__wrapped'].__dict__['__flags'].values():
+        train_parser.add_argument(
+            "--" + flag.name,
+            default=flag.default,
+            type=types[flag.flag_type()],
+            help=flag.help)
 
     id2vec_postproc_parser = subparsers.add_parser(
         "id2vec_postproc",

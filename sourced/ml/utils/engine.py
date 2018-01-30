@@ -101,6 +101,8 @@ def create_spark(session_name,
         builder = builder.config(*cfg.split("=", 1))
     session = builder.getOrCreate()
     session.sparkContext.setLogLevel(spark_log_level)
+    # Hide py4j verbose logging (It appears in travis mostly)
+    logging.getLogger("py4j").setLevel(logging.WARNING)
     return session
 
 
