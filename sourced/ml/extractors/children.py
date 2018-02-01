@@ -53,8 +53,8 @@ class ChildrenBagExtractor(BagsExtractor):
             _, children_counts = self.uast_to_bag(uast)
         except RuntimeError as e:
             raise ValueError(str(uast)) from e
-        for nb_children in children_counts:
-            yield str(nb_children)
+        for children in children_counts:
+            yield str(children)
 
     def extract(self, uast):
         """
@@ -77,8 +77,8 @@ class ChildrenBagExtractor(BagsExtractor):
                 # docfreq_threshold
                 continue
 
-    def quantize(self, children_freq, nb_partitions):
-        partition = self._calc_partitions(children_freq, nb_partitions)
+    def quantize(self, children_freq, partitions):
+        partition = self._calc_partitions(children_freq, partitions)
         for value in set(children_freq):
             self.quant_map[value] = self._quantize_value(int(value), partition)
 
@@ -106,9 +106,9 @@ class ChildrenBagExtractor(BagsExtractor):
             new_bag[self._apply_quant(key)] += val
         return new_bag
 
-    def _calc_partitions(self, children_freq: dict, nb_partitions: int):
+    def _calc_partitions(self, children_freq: dict, partitions: int):
         """
-        Builds the quantization partition P that is a vector of length nb_partitions \
+        Builds the quantization partition P that is a vector of length partitions \
         whose entries are in strictly ascending order.
         The quantization index corresponding to an input value of x is:
             0 if x <= P[0]
@@ -117,27 +117,27 @@ class ChildrenBagExtractor(BagsExtractor):
 
         :param children_freq: distribution of the nodes's number of children \
         we want to quantize.
-        :param nb_partitions: length of the partition vector.
+        :param partitions: length of the partition vector.
         :return: The vector of endpoints of the partition intervals.
         """
-        partition = numpy.zeros(nb_partitions)
-        max_nodes_per_bin = sum(list(children_freq.values())) / nb_partitions
+        partition = numpy.zeros(partitions)
+        max_nodes_per_bin = sum(list(children_freq.values())) / partitions
         values = [int(v) for v in list(children_freq)]
         values.sort()
         j = 0
         while children_freq[str(values[j])] > max_nodes_per_bin:
             partition[j] = values[j]
             j += 1
-        nb_bins_left = numpy.count_nonzero(numpy.asarray(partition) == 0) - 1
+        bins_left = numpy.count_nonzero(numpy.asarray(partition) == 0) - 1
         new_start = numpy.nonzero(numpy.asarray(partition[1:]) == 0)[0][0] + 1
         children_freq_sorted = list(children_freq.values())
         children_freq_sorted.sort(reverse=True)
-        max_nodes_per_bin = sum(children_freq_sorted[new_start:]) / nb_bins_left
+        max_nodes_per_bin = sum(children_freq_sorted[new_start:]) / bins_left
         id_val = new_start
-        for i in range(new_start, nb_partitions):
-            nb_nodes_cum = 0
-            while nb_nodes_cum < max_nodes_per_bin:
-                nb_nodes_cum += values[id_val] * children_freq[str(values[id_val])]
+        for i in range(new_start, partitions):
+            nodes_count = 0
+            while nodes_count < max_nodes_per_bin:
+                nodes_count += values[id_val] * children_freq[str(values[id_val])]
                 id_val += 1
             partition[i] = values[id_val]
         return partition

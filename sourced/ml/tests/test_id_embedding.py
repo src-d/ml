@@ -14,6 +14,10 @@ from sourced.ml.algorithms import swivel
 from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel, preprocess_id2vec
 from sourced.ml.models import DocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
+from sourced.ml.tests.models import COOCC, COOCC_DF
+
+
+VOCAB = 304
 
 
 def prepare_file(path):
@@ -37,8 +41,8 @@ def prepare_postproc_files(dirname):
 
 def check_postproc_results(obj, id2vec_loc):
     id2vec = Id2Vec().load(source=id2vec_loc)
-    obj.assertEqual(len(id2vec.tokens), obj.VOCAB)
-    obj.assertEqual(id2vec.embeddings.shape, (obj.VOCAB, 50))
+    obj.assertEqual(len(id2vec.tokens), VOCAB)
+    obj.assertEqual(id2vec.embeddings.shape, (VOCAB, 10))
 
 
 def check_swivel_results(obj, dirname):
@@ -46,10 +50,10 @@ def check_swivel_results(obj, dirname):
     obj.assertEqual(files, ["col_embedding.tsv", "row_embedding.tsv"])
     with open(os.path.join(dirname, "col_embedding.tsv")) as fin:
         col_embedding = fin.read().split("\n")
-    obj.assertEqual(len(col_embedding), obj.VOCAB + 1)
+    obj.assertEqual(len(col_embedding), VOCAB + 1)
     with open(os.path.join(dirname, "row_embedding.tsv")) as fin:
         row_embedding = fin.read().split("\n")
-    obj.assertEqual(len(row_embedding), obj.VOCAB + 1)
+    obj.assertEqual(len(row_embedding), VOCAB + 1)
 
 
 def default_swivel_args(tmpdir):
@@ -57,45 +61,42 @@ def default_swivel_args(tmpdir):
     args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
     prepare_shard(args.input_base_path)
     args.output_base_path = tmpdir
-    args.embedding_size = 50
+    args.embedding_size = 10
     args.num_epochs = 20
+    args.submatrix_rows = VOCAB
+    args.submatrix_cols = VOCAB
     return args
 
 
 def default_preprocess_params(tmpdir, vocab):
     args = argparse.Namespace(
-        output=tmpdir, df=os.path.join(tmpdir, "docfreq.asdf"),
-        input=[os.path.join(os.path.dirname(__file__), "coocc")],
+        output=tmpdir, docfreq=os.path.join(os.path.dirname(__file__), COOCC_DF),
+        input=os.path.join(os.path.dirname(__file__), COOCC),
         vocabulary_size=vocab, shard_size=vocab)
     return args
 
 
 class IdEmbeddingTests(unittest.TestCase):
-    VOCAB = 4096
 
     def test_preprocess_bad_params(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            args = default_preprocess_params(tmpdir, self.VOCAB)
-            args.shard_size = self.VOCAB + 1
+            args = default_preprocess_params(tmpdir, VOCAB)
+            args.shard_size = VOCAB + 1
             self.assertRaises(ValueError, lambda: preprocess_id2vec(args))
 
     def test_preprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            args = default_preprocess_params(tmpdir, self.VOCAB)
+            args = default_preprocess_params(tmpdir, VOCAB)
             with captured_output() as (out, err, log):
                 preprocess_id2vec(args)
             self.assertFalse(out.getvalue())
             self.assertFalse(err.getvalue())
-            self.assertIn("Skipped", log.getvalue())
-            self.assertIn("error.asdf", log.getvalue())
-            self.assertIn("empty_coocc.asdf", log.getvalue())
             self.assertEqual(
                 sorted(os.listdir(tmpdir)),
-                ["col_sums.txt", "col_vocab.txt", "docfreq.asdf", "row_sums.txt", "row_vocab.txt",
+                ["col_sums.txt", "col_vocab.txt", "row_sums.txt", "row_vocab.txt",
                  "shard-000-000.pb"])
-            df = DocumentFrequencies().load(source=os.path.join(tmpdir, "docfreq.asdf"))
-            self.assertEqual(len(df), self.VOCAB)
-            self.assertEqual(df.docs, len(os.listdir(args.input[0])) - 1)
+            df = DocumentFrequencies().load(source=args.docfreq)
+            self.assertEqual(len(df), VOCAB)
             with open(os.path.join(tmpdir, "col_sums.txt")) as fin:
                 col_sums = fin.read()
             with open(os.path.join(tmpdir, "row_sums.txt")) as fin:
@@ -113,8 +114,8 @@ class IdEmbeddingTests(unittest.TestCase):
                 features = tf.parse_single_example(
                     fin.read(),
                     features={
-                        "global_row": tf.FixedLenFeature([self.VOCAB], dtype=tf.int64),
-                        "global_col": tf.FixedLenFeature([self.VOCAB], dtype=tf.int64),
+                        "global_row": tf.FixedLenFeature([VOCAB], dtype=tf.int64),
+                        "global_col": tf.FixedLenFeature([VOCAB], dtype=tf.int64),
                         "sparse_local_row": tf.VarLenFeature(dtype=tf.int64),
                         "sparse_local_col": tf.VarLenFeature(dtype=tf.int64),
                         "sparse_value": tf.VarLenFeature(dtype=tf.float32)
@@ -123,47 +124,44 @@ class IdEmbeddingTests(unittest.TestCase):
                 global_row, global_col, local_row, local_col, value = session.run(
                     [features[n] for n in ("global_row", "global_col", "sparse_local_row",
                                            "sparse_local_col", "sparse_value")])
-            self.assertEqual(set(range(self.VOCAB)), set(global_row))
-            self.assertEqual(set(range(self.VOCAB)), set(global_col))
-            nnz = 1421193
+            self.assertEqual(set(range(VOCAB)), set(global_row))
+            self.assertEqual(set(range(VOCAB)), set(global_col))
+            nnz = 16001
             self.assertEqual(value.values.shape, (nnz,))
             self.assertEqual(local_row.values.shape, (nnz,))
             self.assertEqual(local_col.values.shape, (nnz,))
             numpy.random.seed(0)
             all_tokens = row_vocab.split("\n")
-            chosen_indices = numpy.random.choice(list(range(self.VOCAB)), 128, replace=False)
+            chosen_indices = numpy.random.choice(list(range(VOCAB)), 128, replace=False)
             chosen = [all_tokens[i] for i in chosen_indices]
             freqs = numpy.zeros((len(chosen),) * 2, dtype=int)
             index = {w: i for i, w in enumerate(chosen)}
             chosen = set(chosen)
-            for path in os.listdir(args.input[0]):
-                with asdf.open(os.path.join(args.input[0], path)) as model:
-                    if model.tree["meta"]["model"] != "co-occurrences":
-                        continue
-                    matrix = assemble_sparse_matrix(model.tree["matrix"]).tocsr()
-                    tokens = split_strings(model.tree["tokens"])
-                    interesting = {i for i, t in enumerate(tokens) if t in chosen}
-                    for y in interesting:
-                        row = matrix[y]
-                        yi = index[tokens[y]]
-                        for x, v in zip(row.indices, row.data):
-                            if x in interesting:
-                                freqs[yi, index[tokens[x]]] += v
+            with asdf.open(args.input) as model:
+                matrix = assemble_sparse_matrix(model.tree["matrix"]).tocsr()
+                tokens = split_strings(model.tree["tokens"])
+                interesting = {i for i, t in enumerate(tokens) if t in chosen}
+                for y in interesting:
+                    row = matrix[y]
+                    yi = index[tokens[y]]
+                    for x, v in zip(row.indices, row.data):
+                        if x in interesting:
+                            freqs[yi, index[tokens[x]]] += v
             matrix = coo_matrix((
                 value.values, ([global_row[row] for row in local_row.values],
                                [global_col[col] for col in local_col.values])),
-                shape=(self.VOCAB, self.VOCAB))
+                shape=(VOCAB, VOCAB))
             matrix = matrix.tocsr()[chosen_indices][:, chosen_indices].todense().astype(int)
             self.assertTrue((matrix == freqs).all())
 
     def test_swivel_bad_params_submatrix_cols(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_swivel_args(tmpdir)
-            args.submatrix_cols = 4097
+            args.submatrix_cols += 1
             self.assertRaises(ValueError, lambda: run_swivel(args))
 
-            args.submatrix_cols = 4096
-            args.submatrix_rows = 4097
+            args.submatrix_cols -= 1
+            args.submatrix_rows += 1
             self.assertRaises(ValueError, lambda: run_swivel(args))
 
     def test_swivel(self):
@@ -175,9 +173,9 @@ class IdEmbeddingTests(unittest.TestCase):
     def test_postproc(self):
         with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
             args = argparse.Namespace(
-                swivel_output_directory=os.path.join(os.path.dirname(__file__), "postproc"),
-                result=tmp.name)
-            prepare_postproc_files(args.swivel_output_directory)
+                swivel_data=os.path.join(os.path.dirname(__file__), "postproc"),
+                output=tmp.name)
+            prepare_postproc_files(args.swivel_data)
 
             postprocess_id2vec(args)
 

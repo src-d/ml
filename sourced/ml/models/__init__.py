@@ -1,4 +1,4 @@
-from sourced.ml.models.bow import BOW, NBOW
+from sourced.ml.models.bow import BOW
 from sourced.ml.models.coocc import Cooccurrences
 from sourced.ml.models.df import DocumentFrequencies
 from sourced.ml.models.ordered_df import OrderedDocumentFrequencies

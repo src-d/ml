@@ -1,15 +1,23 @@
 import logging
 import os
 import shutil
-from collections import defaultdict
 
 import numpy
 import tensorflow as tf
-from scipy.sparse import csr_matrix
 
 from modelforge.progress_bar import progress_bar
 from sourced.ml.algorithms.id_embedding import _extract_coocc_matrix
 from sourced.ml.models import Cooccurrences, DocumentFrequencies
+
+
+def _int64s(xs):
+    return tf.train.Feature(
+        int64_list=tf.train.Int64List(value=list(xs)))
+
+
+def _floats(xs):
+    return tf.train.Feature(
+        float_list=tf.train.FloatList(value=list(xs)))
 
 
 def preprocess_id2vec(args):
@@ -22,25 +30,21 @@ def preprocess_id2vec(args):
     :return: None
     """
     log = logging.getLogger("preproc")
-    log.info("Scanning the inputs...")
-    inputs = []
-    for i in args.input:
-        if os.path.isdir(i):
-            inputs.extend([os.path.join(i, f) for f in os.listdir(i)])
-        else:
-            inputs.append(i)
-    log.info("Reading word indices from %d files...", len(inputs))
-    all_words = defaultdict(int)
-    skipped = 0
-    for i, path in progress_bar(enumerate(inputs), log, expected_size=len(inputs)):
+    df_model = DocumentFrequencies().load(source=args.docfreq)
+    coocc_model = Cooccurrences().load(args.input)
+    if coocc_model.meta['dependencies']:
         try:
-            model = Cooccurrences().load(source=path)
-        except ValueError:
-            skipped += 1
-            log.warning("Skipped %s", path)
-            continue
-        for w in model.tokens:
-            all_words[w] += 1
+            df_meta = coocc_model.get_dep("docfreq")
+            if df_model.meta != df_meta:
+                raise ValueError(("Document frequency model you provided does not match "
+                                  "dependency inside Cooccurrences model:\n"
+                                  "args.docfreq.meta:\n{}\n"
+                                  "coocc_model.get_dep(\"docfreq\")\n{}\n").format(df_model.meta,
+                                                                                   df_meta))
+        except KeyError:
+            pass  # There is no docfreq dependency
+
+    all_words = df_model.docfreq
     vs = args.vocabulary_size
     if len(all_words) < vs:
         vs = len(all_words)
@@ -55,7 +59,7 @@ def preprocess_id2vec(args):
     log.info("Truncating the vocabulary...")
     words = numpy.array(list(all_words.keys()))
     freqs = numpy.array(list(all_words.values()), dtype=numpy.int64)
-    del all_words
+    del all_words, df_model
     chosen_indices = numpy.argpartition(
         freqs, len(freqs) - vs)[len(freqs) - vs:]
     chosen_freqs = freqs[chosen_indices]
@@ -73,12 +77,6 @@ def preprocess_id2vec(args):
     chosen_freqs = chosen_freqs[sorted_indices]
     chosen_words = chosen_words[sorted_indices]
     word_indices = {w: i for i, w in enumerate(chosen_words)}
-    if args.df is not None:
-        log.info("Writing the document frequencies to %s...", args.df)
-        model = DocumentFrequencies()
-        tokfreq = dict(zip(chosen_words, chosen_freqs))
-        model.construct(docs=len(inputs) - skipped, tokfreqs=tokfreq)
-        model.save(args.df)
     del chosen_freqs
 
     if not os.path.exists(args.output):
@@ -92,20 +90,8 @@ def preprocess_id2vec(args):
     log.info("Saved col_vocab.txt...")
 
     del chosen_words
-    log.info("Combining individual co-occurrence matrices...")
-    ccmatrix = csr_matrix((vs, vs), dtype=numpy.int64)
-    for i, path in progress_bar(enumerate(inputs), log, expected_size=len(inputs)):
-        try:
-            model = Cooccurrences().load(path)
-        except ValueError:
-            log.warning("Skipped %s", path)
-            continue
-        if len(model) == 0:
-            log.warning("Skipped %s", path)
-            continue
-        matrix = _extract_coocc_matrix(ccmatrix.shape, word_indices, model)
-        # Stage 5 - simply add this converted matrix to the global one
-        ccmatrix += matrix
+
+    ccmatrix = _extract_coocc_matrix((vs, vs), word_indices, coocc_model)
 
     log.info("Planning the sharding...")
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
@@ -121,14 +107,6 @@ def preprocess_id2vec(args):
     nshards = vs // args.shard_size
     for row in progress_bar(range(nshards), log, expected_size=nshards):
         for col in range(nshards):
-            def _int64s(xs):
-                return tf.train.Feature(
-                    int64_list=tf.train.Int64List(value=list(xs)))
-
-            def _floats(xs):
-                return tf.train.Feature(
-                    float_list=tf.train.FloatList(value=list(xs)))
-
             indices_row = reorder[row::nshards]
             indices_col = reorder[col::nshards]
             shard = ccmatrix[indices_row][:, indices_col].tocoo()

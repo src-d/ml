@@ -10,9 +10,9 @@ def projector_entry(args):
 
     log = logging.getLogger("id2vec_projector")
     id2vec = Id2Vec(log_level=args.log_level).load(source=args.input)
-    if args.df:
+    if args.docfreq:
         from sourced.ml.models import DocumentFrequencies
-        df = DocumentFrequencies(log_level=args.log_level).load(source=args.df)
+        df = DocumentFrequencies(log_level=args.log_level).load(source=args.docfreq)
     else:
         df = None
     if len(id2vec) < MAX_TOKENS:

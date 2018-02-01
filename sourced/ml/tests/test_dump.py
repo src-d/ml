@@ -45,32 +45,34 @@ Number of words: 982
 """ + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', " \
       "'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\nNumber of documents: 1000\n"
 
-    NBOW_DUMP = """{'created_at': datetime.datetime(2017, 6, 19, 9, 16, 8, 942880),
- 'dependencies': [{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
+    BOW_DUMP = """{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 59, 200818),
+ 'dependencies': [{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 48, 828287),
                    'dependencies': [],
-                   'model': 'id2vec',
-                   'uuid': '92609e70-f79c-46b5-8419-55726e873cfc',
-                   'version': [1, 0, 0]},
-                  {'created_at': datetime.datetime(2017, 6, 19, 9, 59, 14, 766638),
+                   'model': 'ordered_docfreq',
+                   'uuid': '2c4fcae7-93a6-496e-9e3a-d6e15d35b812',
+                   'version': [1, 0, 0]}],
+ 'model': 'bow',
+ 'parent': 'a65afc98-80d4-4b04-8353-9037e61adf2b',
+ 'uuid': 'd221c3c6-55bb-46f9-a807-cc3351e46bbb',
+ 'version': [1, 0, 10]}
+Shape: (5, 20)
+First 10 documents: ['repo1', 'repo2', 'repo3', 'repo4', 'repo5']
+First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 'i.Arrays', 'i.Bundle', 'i.EditText', 'i.Exception', 'i.False']\n"""  # nopep8
+
+    COOCC_DUMP = """{'created_at': datetime.datetime(2018, 1, 24, 16, 0, 2, 591553),
+ 'dependencies': [{'created_at': datetime.datetime(2018, 1, 24, 15, 59, 24, 129470),
                    'dependencies': [],
                    'model': 'docfreq',
-                   'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
+                   'uuid': '0f94a6c6-7dc3-4b3c-b8d2-917164a50581',
                    'version': [1, 0, 0]}],
- 'model': 'nbow',
- 'uuid': '1e3da42a-28b6-4b33-94a2-a5671f4102f4',
- 'version': [1, 0, 0]}
-Shape: (1000, 999424)
-""" + "First 10 repos: ['ikizir/HohhaDynamicXOR', 'ditesh/node-poplib', 'Code52/MarkPadRT', 'wp-shortcake/shortcake', 'capaj/Moonridge', 'HugoGiraudel/hugogiraudel.github.com', 'crosswalk-project/crosswalk-website', 'apache/parquet-mr', 'dciccale/kimbo.js', 'processone/oneteam']\n"  # nopep8
-
-    COOCC_DUMP = """{'created_at': datetime.datetime(2017, 7, 5, 18, 4, 5, 688259),
- 'dependencies': [],
  'model': 'co-occurrences',
- 'uuid': '215aadce-d98c-4391-b93f-90cae582e895',
+ 'uuid': 'e75dcb2d-ec1d-476b-a04b-bc64c7779ae1',
  'version': [1, 0, 0]}
-Number of words: 394
-""" + ("First 10 words: ['generic', 'model', 'dump', 'printer', 'pprint', 'print', 'nbow', 'vec', 'idvec', 'coocc']\n" +  # nopep8
-"""Matrix: shape: (394, 394) non-zero: 20832
-""")
+Number of words: 304
+First 10 words: ['i.set', 'i.iter', 'i.error', 'i.logsdir', 'i.read', 'i.captur', 'i.clear',""" + \
+                 """ 'i.android', 'i.tohome', 'i.ljust']
+Matrix: shape: (304, 304) non-zero: 16001
+"""
 
     def test_id2vec(self):
         with captured_output() as (out, _, _):
@@ -82,10 +84,10 @@ Number of words: 394
             dump_model(self._get_args(input=self._get_path(paths.DOCFREQ)))
         self.assertEqual(out.getvalue(), self.DOCFREQ_DUMP)
 
-    def test_nbow(self):
+    def test_bow(self):
         with captured_output() as (out, _, _):
-            dump_model(self._get_args(input=self._get_path(paths.NBOW)))
-        self.assertEqual(out.getvalue(), self.NBOW_DUMP)
+            dump_model(self._get_args(input=self._get_path(paths.BOW)))
+        self.assertEqual(out.getvalue(), self.BOW_DUMP)
 
     def test_coocc(self):
         with captured_output() as (out, _, _):
