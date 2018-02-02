@@ -63,8 +63,7 @@ class Engine(Transformer):
 
 class HeadFiles(Transformer):
     def __call__(self, engine):
-        return engine.repositories.references.head_ref.commits.first_reference_commit \
-            .tree_entries.blobs
+        return engine.repositories.references.head_ref.commits.tree_entries.blobs
 
 
 class UastExtractor(Transformer):
