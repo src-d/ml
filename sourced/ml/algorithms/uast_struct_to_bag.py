@@ -148,10 +148,13 @@ class Uast2RandomWalks:
         """
         last_node = walk[-1]  # correspond to node v in article
 
-        if len(walk) == 1 and len(last_node.children) > 0:
+        if len(walk) == 1:
+            choice_list = last_node.children
+            if last_node.parent is not None:
+                choice_list.append(last_node.parent)
+            if len(choice_list) == 0:
+                return last_node
             return random.choice(last_node.children)
-        elif len(last_node.children) == 0:
-            return last_node
 
         threshold = (1 / self.p_explore_neighborhood)
         threshold /= (threshold + len(last_node.children) / self.q_leave_neighborhood)
