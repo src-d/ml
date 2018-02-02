@@ -137,12 +137,9 @@ def get_parser() -> argparse.ArgumentParser:
         formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     train_parser.set_defaults(handler=run_swivel)
 
-    types = {"string": str,
-             "int": int,
-             "float": float,
-             "bool": bool}
+    types = {"string": str, "int": int, "float": float, "bool": bool}
 
-    for flag in swivel.FLAGS.__dict__['__wrapped'].__dict__['__flags'].values():
+    for flag in swivel.FLAGS.__dict__["__wrapped"].__dict__["__flags"].values():
         train_parser.add_argument(
             "--" + flag.name,
             default=flag.default,
