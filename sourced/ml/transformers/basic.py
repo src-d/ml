@@ -6,6 +6,9 @@ from sourced.ml.transformers.transformer import Transformer
 
 
 class Sampler(Transformer):
+    """
+    Wraps `sample()` function from pyspark Dataframe.
+    """
     def __init__(self, with_replacement=False, fraction=0.05, seed=42, **kwargs):
         super().__init__(**kwargs)
         self.with_replacement = with_replacement
