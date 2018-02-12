@@ -36,7 +36,7 @@ class Content2Ids(Transformer):
 
         return processed \
             .distinct() \
-            .map(lambda x: (x, " ".join(TokenParser().split(x))))
+            .map(lambda x: (x, " ".join(TokenParser(min_split_length=1).split(x))))
 
     def process_row(self, row):
         try:
@@ -59,7 +59,7 @@ class Content2Ids(Transformer):
         for _type, token in tokens:
             if _type[0] == "Name":
                 if self.split:
-                    if len(list(TokenParser().split(token))) > 1:
+                    if len(list(TokenParser(min_split_length=1).split(token))) > 1:
                         self.names.add(token)
                 else:
                     self.names.add(token)

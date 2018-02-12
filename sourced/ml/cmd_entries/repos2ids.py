@@ -21,4 +21,4 @@ def repos2ids_entry(args):
     log.info("Writing %s", args.output)
     with gzip.open(args.output, "a") as g:
         for pair in ids.collect():
-            g.write(str.encode(";".join(pair) + "\n"))
+            g.write(str.encode(",".join(pair) + "\n"))

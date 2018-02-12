@@ -9,13 +9,16 @@ class TokenParser:
     """
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")  #: Regexp to split source code identifiers.
     STEM_THRESHOLD = 6  #: We do not stem splitted parts shorter than or equal to this size.
-    MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than thi value.
+    MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than this value.
+    MIN_SPLIT_LENGTH = 3  #: We do not split source code identifiers shorter than this value.
 
-    def __init__(self, stem_threshold=STEM_THRESHOLD, max_token_length=MAX_TOKEN_LENGTH):
+    def __init__(self, stem_threshold=STEM_THRESHOLD, max_token_length=MAX_TOKEN_LENGTH,
+                 min_split_length=MIN_SPLIT_LENGTH):
         self._stemmer = Stemmer.Stemmer("english")
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = stem_threshold
         self._max_token_length = max_token_length
+        self.min_split_length = min_split_length
 
     def __call__(self, token):
         return self.process_token(token)
@@ -35,7 +38,7 @@ class TokenParser:
 
         def ret(name):
             r = name.lower()
-            if len(name) >= 3:
+            if len(name) >= self.min_split_length:
                 yield r
                 if prev_p[0]:
                     yield prev_p[0] + r
