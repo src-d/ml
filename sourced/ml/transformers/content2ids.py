@@ -2,13 +2,13 @@ import yaml
 
 import pygments
 from pygments.formatter import Formatter
-from pygments.lexers import get_lexer_by_name
+from pygments.lexers import get_lexer_by_name, ClassNotFound
 
 from sourced.ml.algorithms import TokenParser
 from sourced.ml.transformers import Transformer
 
 
-class Uast2Ids(Transformer):
+class Content2Ids(Transformer):
 
     class FormatterProxy(Formatter):
         name = "Proxy"
@@ -16,15 +16,16 @@ class Uast2Ids(Transformer):
         filenames = []
 
         def __init__(self, **options):
-            super(Uast2Ids.FormatterProxy, self).__init__(**options)
+            super(Content2Ids.FormatterProxy, self).__init__(**options)
             self.callback = options["callback"]
 
         def format(self, tokensource, outfile):
             self.callback(tokensource)
 
-    def __init__(self, **kwargs):
+    def __init__(self, args, **kwargs):
         super().__init__(**kwargs)
         self.linguist2pygments = {}
+        self.split = args.split
         self.names = set()
 
     def __call__(self, rows):
@@ -35,12 +36,15 @@ class Uast2Ids(Transformer):
 
         return processed \
             .distinct() \
-            .map(lambda x: ("".join(TokenParser().split(x)), " ".join(TokenParser().split(x))))
+            .map(lambda x: (x, " ".join(TokenParser().split(x))))
 
     def process_row(self, row):
         try:
             code = row.content
-            lexer = get_lexer_by_name(self.linguist2pygments[row.lang])
+            try:
+                lexer = get_lexer_by_name(self.linguist2pygments[row.lang][0])
+            except ClassNotFound:
+                lexer = get_lexer_by_name(self.linguist2pygments[row.lang][1])
             pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
         except KeyError:
             pass
@@ -53,8 +57,12 @@ class Uast2Ids(Transformer):
         according to :class: 'TokenParser' rules
         """
         for _type, token in tokens:
-            if _type[0] == "Name" and len(list(TokenParser().split(token))) > 1:
-                self.names.add(token)
+            if _type[0] == "Name":
+                if self.split:
+                    if len(list(TokenParser().split(token))) > 1:
+                        self.names.add(token)
+                else:
+                    self.names.add(token)
 
     def build_mapping(self):
         """
@@ -77,4 +85,4 @@ class Uast2Ids(Transformer):
             lang_names = linguist_langs.get(lang, (set(),))[0]
             inter = list(lang_names.intersection(pygments_langs))
             if inter:
-                self.linguist2pygments[lang] = inter[0]
+                self.linguist2pygments[lang] = inter

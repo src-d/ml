@@ -104,9 +104,9 @@ def get_parser() -> argparse.ArgumentParser:
         help="The path to the repositories.")
     repos2ids_parser.add_argument(
         "-o", "--output", required=True,
-        help="[OUT] The path to the output set of identifiers written in an .asdf.")
+        help="[OUT] The path to the output csv file of identifiers, compressed in gz format.")
     repos2ids_parser.add_argument(
-        "--splittable", action="store_true",
+        "--split", action="store_true",
         help="Flag that specifies if you want to filter specific identifiers."
              "Default value makes you filter identifiers which are easy splittable:"
              "that is to say on special characters or case changes")
