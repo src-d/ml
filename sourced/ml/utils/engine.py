@@ -67,7 +67,7 @@ class EngineDefault:
     Default arguments for create_engine function and __main__
     """
     BBLFSH = "localhost"
-    VERSION = "0.4.1"
+    VERSION = "0.5.1"
 
 
 def add_engine_args(my_parser, default_packages=None):
