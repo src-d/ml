@@ -59,6 +59,7 @@ class EngineConstants:
         Column names constants.
         """
         RepositoryId = "repository_id"
+        BlobId = "blob_id"
 
 
 class EngineDefault:

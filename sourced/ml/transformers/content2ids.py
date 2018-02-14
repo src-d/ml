@@ -1,8 +1,11 @@
+import operator
+import os
 import yaml
 
 import pygments
 from pygments.formatter import Formatter
 from pygments.lexers import get_lexer_by_name, ClassNotFound
+from pyspark import Row
 
 from sourced.ml.algorithms import TokenParser
 from sourced.ml.transformers import Transformer
@@ -22,34 +25,74 @@ class Content2Ids(Transformer):
         def format(self, tokensource, outfile):
             self.callback(tokensource)
 
-    def __init__(self, args, **kwargs):
+    def __init__(self, args, documents_column, **kwargs):
         super().__init__(**kwargs)
+        self.documents_column = documents_column
         self.linguist2pygments = {}
         self.split = args.split
-        self.names = set()
+        self.idfreq = args.idfreq
+        self.list_RDDs = []
 
     def __call__(self, rows):
         self.build_mapping()
-        processed = rows.flatMap(self.process_row)
-        if self.explained:
-            self._log.info("toDebugString():\n%s", processed.toDebugString().decode())
+        processed = rows.flatMap(self._process_row).persist()
 
-        return processed \
-            .distinct() \
-            .map(lambda x: (x, " ".join(TokenParser(min_split_length=1).split(x))))
+        if self.idfreq:
+            num_repos_processed = processed \
+                .map(lambda x: (x[0], x[1][0])) \
+                .distinct()
+            num_repos_reduced = self.reduce_rows(num_repos_processed)
+            self.list_RDDs.append(num_repos_reduced)
 
-    def process_row(self, row):
+            num_files_processed = processed \
+                .map(lambda x: (x[0], x[1][1])) \
+                .distinct()
+            num_files_reduced = self.reduce_rows(num_files_processed)
+            self.list_RDDs.append(num_files_reduced)
+
+            num_occ_reduced = self.reduce_rows(processed)
+            self.list_RDDs.append(num_occ_reduced)
+
+            return processed \
+                .map(lambda x: x[0]) \
+                .context.union(self.list_RDDs) \
+                .groupByKey() \
+                .mapValues(list) \
+                .map(lambda x: Row(
+                    token=x[0],
+                    token_split=" ".join(TokenParser(min_split_length=1).split(x[0])),
+                    num_repos=x[1][0],
+                    num_files=x[1][1],
+                    num_occ=x[1][2]))
+        else:
+            return processed \
+                .map(lambda x: x[0]) \
+                .distinct() \
+                .map(lambda x: Row(
+                    token=x,
+                    token_split=" ".join(TokenParser(min_split_length=1).split(x))))
+
+    def reduce_rows(self, rows):
+        return rows \
+            .map(lambda x: (x[0], 1)) \
+            .reduceByKey(operator.add)
+
+    def _process_row(self, row):
+        self.names = []
+        repo_id = getattr(row, self.documents_column[0])
+        file_id = getattr(row, self.documents_column[1])
+        path = os.path.join(repo_id, file_id)
+        code = row.content
         try:
-            code = row.content
-            try:
-                lexer = get_lexer_by_name(self.linguist2pygments[row.lang][0])
-            except ClassNotFound:
-                lexer = get_lexer_by_name(self.linguist2pygments[row.lang][1])
+            lexer = get_lexer_by_name(self.linguist2pygments[row.lang][0])
+            pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
+        except ClassNotFound:
+            lexer = get_lexer_by_name(self.linguist2pygments[row.lang][1])
             pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
         except KeyError:
             pass
         for token in self.names:
-            yield token
+            yield token, (repo_id, path)
 
     def process_tokens(self, tokens):
         """
@@ -60,9 +103,9 @@ class Content2Ids(Transformer):
             if _type[0] == "Name":
                 if self.split:
                     if len(list(TokenParser(min_split_length=1).split(token))) > 1:
-                        self.names.add(token)
+                        self.names.append(token)
                 else:
-                    self.names.add(token)
+                    self.names.append(token)
 
     def build_mapping(self):
         """
