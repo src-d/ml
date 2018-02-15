@@ -93,7 +93,7 @@ def get_parser() -> argparse.ArgumentParser:
         required=True, help="The feature extraction scheme to apply.")
 
     repos2ids_parser = subparsers.add_parser(
-        "repos2ids", help="Convert source code to a bag of identifiers."
+        "repos2ids", help="Convert source code to a bag of identifiers.")
     repos2ids_parser.set_defaults(handler=repos2ids_entry)
     add_engine_args(repos2ids_parser)
     repos2ids_parser.add_argument(

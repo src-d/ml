@@ -19,7 +19,7 @@ def repos2ids_entry(args):
         .link(ContentDeserializer()) \
         .link(Content2Ids(args, documents_column_name))
     ids = pipeline.execute()
-    
+
     log.info("Writing %s", args.output)
     with gzip.open(args.output, "w") as g:
         columns_names = ["token", "token_split"]
