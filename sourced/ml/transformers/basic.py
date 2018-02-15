@@ -5,6 +5,20 @@ from pyspark import StorageLevel, Row
 from sourced.ml.transformers.transformer import Transformer
 
 
+class Sampler(Transformer):
+    """
+    Wraps `sample()` function from pyspark Dataframe.
+    """
+    def __init__(self, with_replacement=False, fraction=0.05, seed=42, **kwargs):
+        super().__init__(**kwargs)
+        self.with_replacement = with_replacement
+        self.fraction = fraction
+        self.seed = seed
+
+    def __call__(self, head):
+        return head.sample(self.with_replacement, self.fraction, self.seed)
+
+
 class Collector(Transformer):
     def __call__(self, head):
         return head.collect()
@@ -63,8 +77,7 @@ class Engine(Transformer):
 
 class HeadFiles(Transformer):
     def __call__(self, engine):
-        return engine.repositories.references.head_ref.commits.first_reference_commit \
-            .tree_entries.blobs
+        return engine.repositories.references.head_ref.commits.tree_entries.blobs
 
 
 class UastExtractor(Transformer):

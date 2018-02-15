@@ -68,7 +68,7 @@ class EngineDefault:
     Default arguments for create_engine function and __main__
     """
     BBLFSH = "localhost"
-    VERSION = "0.3.1"
+    VERSION = "0.5.1"
 
 
 def add_engine_args(my_parser, default_packages=None):
@@ -102,6 +102,8 @@ def create_spark(session_name,
         builder = builder.config(*cfg.split("=", 1))
     session = builder.getOrCreate()
     session.sparkContext.setLogLevel(spark_log_level)
+    # Hide py4j verbose logging (It appears in travis mostly)
+    logging.getLogger("py4j").setLevel(logging.WARNING)
     return session
 
 
