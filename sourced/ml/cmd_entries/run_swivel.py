@@ -1,12 +1,25 @@
+import argparse
 import logging
 
 from sourced.ml.algorithms import swivel as swivel
 
 
-def run_swivel(args):
+def mirror_tf_args(parser: argparse.ArgumentParser):
     """
-    Trains the Swivel model. Wraps swivel.py, adapted from
-    https://github.com/vmarkovtsev/models/blob/master/swivel/swivel.py
+    Copies the command line flags registered in swivel.py to an :class:`argparse.ArgumentParser`.
+    :param parser: object to copy flags to.
+    :return: None
+    """
+    types = {"string": str, "int": int, "float": float, "bool": bool}
+    for flag in swivel.FLAGS.__dict__["__wrapped"].__dict__["__flags"].values():
+        parser.add_argument(
+            "--" + flag.name, default=flag.default, type=types[flag.flag_type()], help=flag.help)
+
+
+def run_swivel(args: argparse.Namespace):
+    """
+    Trains the Swivel model. Wraps swivel.py, taken from
+    https://github.com/src-d/tensorflow-swivel/blob/master/swivel.py
 
     :param args: :class:`argparse.Namespace` identical to \
                  :class:`tf.app.flags`.

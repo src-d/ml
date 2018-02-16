@@ -6,7 +6,6 @@ from sourced.ml.transformers import Transformer
 
 
 class Uast2DocFreq(Transformer):
-
     def __init__(self, extractors, document_column, **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors

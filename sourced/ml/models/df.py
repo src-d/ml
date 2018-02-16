@@ -59,7 +59,7 @@ Number of documents: %d""" % (
     @property
     def docfreq(self):
         """
-        Returns document frequency dictionary.
+        Returns document frequency dictionary. The key is a string and the value is an integer.
         """
         return self._df
 
