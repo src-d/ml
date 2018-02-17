@@ -2,7 +2,7 @@ import typing
 from pyspark.rdd import RDD
 from pyspark import Row
 
-from sourced.ml.transformers import Transformer
+from sourced.ml.transformers.transformer import Transformer
 
 
 class Indexer(Transformer):

@@ -9,10 +9,9 @@ class BagsExtractor(PickleableLogger):
     and the values are floats. The derived classes must implement uast_to_bag().
     """
     DEFAULT_DOCFREQ_THRESHOLD = 5
-    NAME = None
     NAMESPACE = None  # the beginning of each element in the bag
-    NAME = None  # Extractor name. Should be overridden in the derived class.
-    OPTS = {"weight": None}  # cmdline args which are passed into __init__()
+    NAME = None  # Features name. Should be overridden in the derived class.
+    OPTS = {"weight": 1}  # cmdline args which are passed into __init__()
     DEPENDS = tuple()  # some extractors may depend on other extractors
 
     def __init__(self, docfreq_threshold=None, weight=None, **kwargs):

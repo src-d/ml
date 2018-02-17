@@ -4,9 +4,9 @@ from uuid import uuid4
 from scipy import sparse
 
 from sourced.ml.extractors import __extractors__
-from sourced.ml.models import BOW, OrderedDocumentFrequencies, DocumentFrequencies
-from sourced.ml.transformers import Engine, UastExtractor, UastDeserializer, Uast2DocFreq, \
-    Uast2TermFreq, HeadFiles, TFIDF, Cacher, Indexer
+from sourced.ml.models import BOW, OrderedDocumentFrequencies
+from sourced.ml.transformers import Engine, UastExtractor, UastDeserializer, Uast2Quant, \
+    Uast2DocFreq, Uast2TermFreq, HeadFiles, TFIDF, Cacher, Indexer
 from sourced.ml.utils import create_engine, EngineConstants
 
 
@@ -15,7 +15,8 @@ def repos2bow_entry(args):
     engine = create_engine("repos2bow-%s" % uuid4(), **args.__dict__)
     document_column_name = EngineConstants.Columns.RepositoryId
     extractors = [__extractors__[s](
-        args.min_docfreq, **__extractors__[s].get_kwargs_fromcmdline(args))
+        args.min_docfreq, log_level=args.log_level,
+        **__extractors__[s].get_kwargs_fromcmdline(args))
         for s in args.feature]
 
     uast_extractor = Engine(engine, explain=args.explain) \
@@ -23,6 +24,7 @@ def repos2bow_entry(args):
         .link(UastExtractor(languages=args.languages)) \
         .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer())
+    uast_extractor.link(Uast2Quant(extractors)).execute()
     df = uast_extractor.link(Uast2DocFreq(extractors, document_column_name)).execute()
     log.info("Calculating the raw document frequencies...")
     df_collected = df.collectAsMap()

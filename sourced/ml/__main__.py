@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import sys
@@ -75,6 +76,10 @@ def get_parser() -> argparse.ArgumentParser:
         "-f", "--feature", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
         required=True, help="The feature extraction scheme to apply.")
+    for ex in extractors.__extractors__.values():
+        for opt, val in ex.OPTS.items():
+            repos2bow_parser.add_argument("--%s-%s" % (ex.NAME, opt), default=val, type=json.loads,
+                                          help="%s's kwarg" % ex.__name__)
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(
         "repos2df", "Calculate document frequencies of features extracted from source code.")
