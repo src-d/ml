@@ -63,11 +63,11 @@ def get_parser() -> argparse.ArgumentParser:
         "--docfreq", required=True,
         help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
     repos2bow_parser.add_argument(
-        "--bow", required=True,
-        help="[OUT] The path to the Bag-Of-Words model.")
+        "--quant", help="[OUT] The path to the QuantizationLevels model.")
     repos2bow_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int,
-        help="The maximum vocabulary size.")
+        "--bow", required=True, help="[OUT] The path to the Bag-Of-Words model.")
+    repos2bow_parser.add_argument(
+        "--vocabulary-size", default=10000000, type=int, help="The maximum vocabulary size.")
     repos2bow_parser.add_argument(
         "--ordered", action="store_true",
         help="Flag that specifies ordered or default document frequency model to create."
@@ -107,7 +107,7 @@ def get_parser() -> argparse.ArgumentParser:
     add_default_args(repos2coocc_parser)
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Path to the output file.")
+        help="[OUT] Path to the Cooccurrences model.")
     repos2coocc_parser.add_argument(
         "--split-stem", default=False, action="store_true",
         help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")

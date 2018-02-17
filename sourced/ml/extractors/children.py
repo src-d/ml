@@ -28,6 +28,10 @@ class ChildrenBagExtractor(BagsExtractor):
     def npartitions(self):
         return self.uast_to_bag.npartitions
 
+    @property
+    def levels(self):
+        return self.uast_to_bag.levels
+
     def extract(self, uast):
         if not self.uast_to_bag.levels:
             # bypass NAMESPACE
