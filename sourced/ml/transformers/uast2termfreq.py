@@ -1,12 +1,15 @@
 import operator
+from typing import Iterable, Union
 
 from pyspark import Row
 
+from sourced.ml.extractors import BagsExtractor
 from sourced.ml.transformers import Transformer
 
 
 class Uast2TermFreq(Transformer):
-    def __init__(self, extractors, document_column, **kwargs):
+    def __init__(self, extractors: Iterable[BagsExtractor],
+                 document_column: Union[str, int], **kwargs):
         super().__init__(**kwargs)
         self.extractors = extractors
         self.document_column = document_column

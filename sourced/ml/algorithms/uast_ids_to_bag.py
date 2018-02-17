@@ -3,25 +3,12 @@ from collections import defaultdict
 import bblfsh
 
 from sourced.ml.algorithms import TokenParser, NoopTokenParser
+from sourced.ml.algorithms.uast_to_bag import Uast2BagBase
 
 
 class FakeVocabulary:
     def __getitem__(self, item):
         return item
-
-
-class Uast2BagBase:
-    """
-    Base class to convert UAST to bag of anything.
-    """
-    def __call__(self, uast):
-        """
-        Override this function with converting algorithm.
-
-        :param uast: The UAST root node.
-        :return: bag
-        """
-        raise NotImplemented
 
 
 class UastTokens2Bag(Uast2BagBase):

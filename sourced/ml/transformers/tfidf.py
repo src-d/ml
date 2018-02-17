@@ -63,9 +63,9 @@ class TFIDF(Transformer):
         return self.tf \
             .map(lambda x: (x.token, (x.document, x.value))) \
             .join(df_pruned) \
-            .map(lambda x: Row(**{Columns.token: x[0],  # token
-                                  Columns.document: x[1][0][0],  # document identifier
+            .map(lambda x: Row(**{Columns.token: x[0],              # token
+                                  Columns.document: x[1][0][0],     # document identifier
                                   Columns.value: log_tf_log_idf(
-                                                   df=x[1][1],  # document frequency
-                                                   tf=x[1][0][1],  # term frequency
-                                                   ndocs=ndocs)}))
+                                                   df=x[1][1],      # document frequency
+                                                   tf=x[1][0][1],   # term frequency
+                                                   ndocs=ndocs)}))  # number of documents

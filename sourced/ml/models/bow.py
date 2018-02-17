@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable
+from typing import Iterable, List
 
 from scipy import sparse
 
@@ -18,7 +18,13 @@ class BOW(Model):
     """
     NAME = "bow"
 
-    def construct(self, documents: Iterable[str], matrix: sparse.spmatrix, tokens: Iterable[str]):
+    def construct(self, documents: List[str], matrix: sparse.spmatrix, tokens: List[str]):
+        if matrix.shape[0] != len(documents):
+            raise ValueError("matrix shape mismatch, documents %d != %d" % (
+                matrix.shape[0], len(documents)))
+        if matrix.shape[1] != len(tokens):
+            raise ValueError("matrix shape mismatch, tokens %d != %d" % (
+                matrix.shape[1], len(tokens)))
         self._documents = documents
         self._matrix = matrix
         self._tokens = tokens

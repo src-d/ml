@@ -9,7 +9,8 @@ from sourced.ml.models import DocumentFrequencies
 @register_model
 class OrderedDocumentFrequencies(DocumentFrequencies):
     """
-    Compatible with the original DocumentFrequencies.
+    Compatible with the original DocumentFrequencies. This model maintains the determinitic
+    sequence of the tokens.
     """
     NAME = "ordered_docfreq"
 
@@ -38,3 +39,13 @@ class OrderedDocumentFrequencies(DocumentFrequencies):
             tokens[i] = k
             freqs[i] = self._df[k]
         return {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs}
+
+    @staticmethod
+    def maybe(enabled: bool):
+        """
+        Materializes either OrderedDocumentFrequencies or regular DocumentFrequencies
+        depending on the specified boolean flag (true for Ordered).
+        :param enabled: If true, :class:`OrderedDocumentFrequencies` instance is returned, \
+                        otherwise :class:`DocumentFrequencies`.
+        """
+        return OrderedDocumentFrequencies() if enabled else DocumentFrequencies()

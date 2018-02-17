@@ -10,9 +10,9 @@ class BagsExtractor(PickleableLogger):
     """
     DEFAULT_DOCFREQ_THRESHOLD = 5
     NAMESPACE = None  # the beginning of each element in the bag
-    NAME = None  # Extractor name. Should be overridden in the derived class.
-    OPTS = {"weight": None}  # cmdline args which are passed into __init__()
-    DEFAULT_SCALE = 1
+    NAME = None  # Features name. Should be overridden in the derived class.
+    OPTS = {"weight": 1}  # cmdline args which are passed into __init__()
+    DEPENDS = tuple()  # some extractors may depend on other extractors
 
     def __init__(self, docfreq_threshold=None, weight=None, **kwargs):
         """
@@ -28,7 +28,7 @@ class BagsExtractor(PickleableLogger):
         self.docfreq = {}
         self._ndocs = 0
         if weight is None:
-            self.weight = self.DEFAULT_SCALE
+            self.weight = 1
         else:
             self.weight = weight
 
@@ -63,6 +63,12 @@ class BagsExtractor(PickleableLogger):
         for key, val in self.uast_to_bag(uast).items():
             yield self.NAMESPACE + key, val * self.weight
 
+    def finalize(self):
+        """
+        Called after all document frequencies were applied.
+        """
+        pass
+
     @classmethod
     def get_kwargs_fromcmdline(cls, args):
         prefix = cls.NAME + "_"
@@ -73,4 +79,4 @@ class BagsExtractor(PickleableLogger):
         return result
 
     def uast_to_bag(self, uast):
-        raise NotImplementedError()
+        raise NotImplemented
