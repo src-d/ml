@@ -10,9 +10,10 @@ class BagsExtractor(PickleableLogger):
     """
     DEFAULT_DOCFREQ_THRESHOLD = 5
     NAMESPACE = None  # the beginning of each element in the bag
-    NAME = None  # Features name. Should be overridden in the derived class.
+    NAME = None  # feature scheme name, should be overridden in the derived class.
     OPTS = {"weight": 1}  # cmdline args which are passed into __init__()
-    DEPENDS = tuple()  # some extractors may depend on other extractors
+    DEPENDS = tuple()  # some extractors may depend on other extractors. It is intentionally made
+    #                    a tuple so that the derived classes cannot change it
 
     def __init__(self, docfreq_threshold=None, weight=None, **kwargs):
         """

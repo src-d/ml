@@ -13,8 +13,7 @@ from sourced.ml.cmd_entries import projector_entry
 
 class Id2VecTests(unittest.TestCase):
     def setUp(self):
-        self.model = Id2Vec().load(
-            source=os.path.join(os.path.dirname(__file__), paths.ID2VEC))
+        self.model = Id2Vec().load(source=paths.ID2VEC)
 
     def test_embeddings(self):
         embeddings = self.model.embeddings
@@ -57,8 +56,7 @@ class Id2VecTests(unittest.TestCase):
         projector.present_embeddings = fake_present
         projector.wait = fake_wait
         args = argparse.Namespace(
-            input=os.path.join(os.path.dirname(__file__), paths.ID2VEC),
-            output="fake", docfreq=os.path.join(os.path.dirname(__file__), paths.DOCFREQ),
+            input=paths.ID2VEC, output="fake", docfreq=paths.DOCFREQ,
             no_browser=False, log_level=logging.DEBUG)
         try:
             projector_entry(args)
@@ -87,8 +85,8 @@ class Id2VecTests(unittest.TestCase):
         projector.present_embeddings = fake_present
         projector.wait = fake_wait
         args = argparse.Namespace(
-            input=os.path.join(os.path.dirname(__file__), paths.ID2VEC),
-            output="fake", docfreq=None, no_browser=False, log_level=logging.DEBUG)
+            input=paths.ID2VEC, output="fake", docfreq=None,
+            no_browser=False, log_level=logging.DEBUG)
         try:
             projector_entry(args)
         finally:

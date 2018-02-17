@@ -4,7 +4,7 @@ from uuid import uuid4
 from scipy import sparse
 
 from sourced.ml.extractors import __extractors__
-from sourced.ml.models import BOW, OrderedDocumentFrequencies
+from sourced.ml.models import BOW, OrderedDocumentFrequencies, QuantizationLevels
 from sourced.ml.transformers import Engine, UastExtractor, UastDeserializer, Uast2Quant, \
     Uast2DocFreq, Uast2TermFreq, HeadFiles, TFIDF, Cacher, Indexer
 from sourced.ml.utils import create_engine, EngineConstants
@@ -24,7 +24,11 @@ def repos2bow_entry(args):
         .link(UastExtractor(languages=args.languages)) \
         .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer())
-    uast_extractor.link(Uast2Quant(extractors)).execute()
+    quant = Uast2Quant(extractors)
+    uast_extractor.link(quant).execute()
+    if quant.levels:
+        log.info("Writing quantization levels to %s", args.quant)
+        QuantizationLevels().construct(quant.levels).save(args.quant)
     df = uast_extractor.link(Uast2DocFreq(extractors, document_column_name)).execute()
     log.info("Calculating the raw document frequencies...")
     df_collected = df.collectAsMap()
@@ -46,7 +50,7 @@ def repos2bow_entry(args):
         .construct(ndocs, df_collected) \
         .save(args.docfreq)
 
-    log.info("Writing BOW to  %s", args.bow)
+    log.info("Writing BOW to %s", args.bow)
     matrix = sparse.csr_matrix((values, (documents_id, tokens_id)), shape=(ndocs, ntokens))
     BOW() \
         .construct(document_indexer.values, matrix, token_indexer.values) \
