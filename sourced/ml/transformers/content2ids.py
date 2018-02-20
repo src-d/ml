@@ -1,3 +1,4 @@
+import gzip
 import operator
 import os
 import yaml
@@ -31,9 +32,10 @@ class Content2Ids(Transformer):
         self.linguist2pygments = {}
         self.split = args.split
         self.idfreq = args.idfreq
-        self.list_RDDs = []
+        self.output = args.output
 
     def __call__(self, rows):
+        list_RDDs = []
         self.build_mapping()
         processed = rows.flatMap(self._process_row).persist()
 
@@ -42,20 +44,20 @@ class Content2Ids(Transformer):
                 .map(lambda x: (x[0], x[1][0])) \
                 .distinct()
             num_repos_reduced = self.reduce_rows(num_repos_processed)
-            self.list_RDDs.append(num_repos_reduced)
+            list_RDDs.append(num_repos_reduced)
 
             num_files_processed = processed \
                 .map(lambda x: (x[0], x[1][1])) \
                 .distinct()
             num_files_reduced = self.reduce_rows(num_files_processed)
-            self.list_RDDs.append(num_files_reduced)
+            list_RDDs.append(num_files_reduced)
 
             num_occ_reduced = self.reduce_rows(processed)
-            self.list_RDDs.append(num_occ_reduced)
+            list_RDDs.append(num_occ_reduced)
 
             return processed \
                 .map(lambda x: x[0]) \
-                .context.union(self.list_RDDs) \
+                .context.union(list_RDDs) \
                 .groupByKey() \
                 .mapValues(list) \
                 .map(lambda x: Row(
@@ -129,3 +131,16 @@ class Content2Ids(Transformer):
             inter = list(lang_names.intersection(pygments_langs))
             if inter:
                 self.linguist2pygments[lang] = inter
+
+    def save(self, id_rdd):
+        with gzip.open(self.output, "w") as g:
+            columns_names = ["token", "token_split"]
+            if self.idfreq:
+                columns_names.extend(["num_repos", "num_files", "num_occ"])
+            g.write(str.encode(",".join(columns_names).upper() + "\n"))
+            for row in id_rdd.collect():
+                row_dict = row.asDict()
+                row_list = []
+                for col in columns_names:
+                    row_list.append(str(row_dict[col]))
+                g.write(str.encode(",".join(row_list) + "\n"))
