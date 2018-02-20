@@ -4,12 +4,12 @@ import unittest
 import numpy
 
 import sourced.ml.tests.models as paths
-from sourced.ml.models import BOW, DocumentFrequencies
+from sourced.ml.models import BOW
 
 
 class BOWTests(unittest.TestCase):
     def setUp(self):
-        self.model = BOW().load(source=os.path.join(os.path.dirname(__file__), paths.BOW))
+        self.model = BOW().load(source=paths.BOW)
 
     def test_getitem(self):
         repo_name, indices, weights = self.model[0]

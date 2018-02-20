@@ -1,4 +1,3 @@
-import os
 import unittest
 
 from sourced.ml.models import DocumentFrequencies
@@ -7,8 +6,7 @@ import sourced.ml.tests.models as paths
 
 class DocumentFrequenciesTests(unittest.TestCase):
     def setUp(self):
-        self.model = DocumentFrequencies().load(
-            source=os.path.join(os.path.dirname(__file__), paths.DOCFREQ))
+        self.model = DocumentFrequencies().load(source=paths.DOCFREQ)
 
     def test_docs(self):
         docs = self.model.docs

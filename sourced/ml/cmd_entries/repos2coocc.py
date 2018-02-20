@@ -13,28 +13,28 @@ def repos2coocc_entry(args):
     engine = create_engine("repos2coocc-%s" % uuid4(), **args.__dict__)
     id_extractor = IdentifiersBagExtractor(docfreq_threshold=args.min_docfreq,
                                            split_stem=args.split_stem)
-    document_column_name = EngineConstants.Columns.RepositoryId
-    df_transformer = Uast2DocFreq([id_extractor], document_column_name)
+    df_transformer = Uast2DocFreq([id_extractor], EngineConstants.Columns.RepositoryId)
 
-    pipeline = Engine(engine, explain=args.explain) \
+    uast_extractor = Engine(engine, explain=args.explain) \
         .link(HeadFiles()) \
         .link(UastExtractor(languages=args.languages)) \
         .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer()) \
 
-    df_rdd = pipeline \
+    df_rdd = uast_extractor \
         .link(df_transformer) \
-        .execute()\
+        .execute() \
         .filter(lambda x: x.value >= args.min_docfreq)
     df = df_rdd.collectAsMap()
-    df_model = OrderedDocumentFrequencies() if args.ordered else DocumentFrequencies()
-    df_model.construct(df_transformer.ndocs, df)
+
     log.info("Writing document frequency model to %s...", args.docfreq)
-    df_model.save(args.docfreq)
+    df_model = OrderedDocumentFrequencies.maybe(args.ordered) \
+        .construct(df_transformer.ndocs, df) \
+        .save(args.docfreq)
 
     tokens = list(df.keys())
     token2index = df_rdd.context.broadcast({token: i for i, token in enumerate(tokens)})
-    pipeline = pipeline \
+    pipeline = uast_extractor \
         .link(CooccConstructor(token2index=token2index,
                                token_parser=id_extractor.id2bag.token_parser,
                                namespace=id_extractor.NAMESPACE)) \

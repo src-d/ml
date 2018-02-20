@@ -10,7 +10,7 @@ from sourced.ml.cmd_entries import bigartm2asdf_entry
 
 class TopicsTests(unittest.TestCase):
     def setUp(self):
-        self.model = Topics().load(os.path.join(os.path.dirname(__file__), paths.TOPICS))
+        self.model = Topics().load(source=paths.TOPICS)
 
     def test_dump(self):
         res = self.model.dump()

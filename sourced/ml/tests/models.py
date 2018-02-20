@@ -1,16 +1,20 @@
-from os import path
+from os.path import dirname, join
 
-ID2VEC = "id2vec_1000.asdf"
-DOCFREQ = "docfreq_1000.asdf"
-BOW = "bow.asdf"
-COOCC = "coocc.asdf"
-COOCC_DF = "coocc_df.asdf"
-UAST = "uast.asdf"
-TOPICS = "topics.asdf"
+_root = dirname(__file__)
+_models_path = join(_root, "asdf")
 
-DATA_DIR_SOURCE = path.join(path.dirname(__file__), "source")
-SOURCE_FILENAME = "test_example"
-SOURCE = path.join(DATA_DIR_SOURCE, "%s.asdf" % SOURCE_FILENAME)
-SOURCE_PY = path.join(DATA_DIR_SOURCE, "%s.py" % SOURCE_FILENAME)
+ID2VEC = join(_models_path, "id2vec_1000.asdf")
+DOCFREQ = join(_models_path, "docfreq_1000.asdf")
+QUANTLEVELS = join(_models_path, "quant.asdf")
+BOW = join(_models_path, "bow.asdf")
+COOCC = join(_models_path, "coocc.asdf")
+COOCC_DF = join(_models_path, "coocc_df.asdf")
+UAST = join(_models_path, "uast.asdf")
+TOPICS = join(_models_path, "topics.asdf")
+
+DATA_DIR_SOURCE = join(_root, "source")
+SOURCE_FILENAME = "example"
+SOURCE = join(DATA_DIR_SOURCE, "%s.asdf" % SOURCE_FILENAME)
+SOURCE_PY = join(DATA_DIR_SOURCE, "%s.py" % SOURCE_FILENAME)
 
 TOPICS_SRC = "topics_readable.txt"

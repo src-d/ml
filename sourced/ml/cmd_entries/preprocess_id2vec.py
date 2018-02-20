@@ -36,72 +36,80 @@ def preprocess_id2vec(args):
         try:
             df_meta = coocc_model.get_dep("docfreq")
             if df_model.meta != df_meta:
-                raise ValueError(("Document frequency model you provided does not match "
-                                  "dependency inside Cooccurrences model:\n"
-                                  "args.docfreq.meta:\n{}\n"
-                                  "coocc_model.get_dep(\"docfreq\")\n{}\n").format(df_model.meta,
-                                                                                   df_meta))
+                raise ValueError((
+                    "Document frequency model you provided does not match dependency inside "
+                    "Cooccurrences model:\nargs.docfreq.meta:\n%s\ncoocc_model.get_dep"
+                    "(\"docfreq\")\n%s\n") % (df_model.meta, df_meta))
         except KeyError:
             pass  # There is no docfreq dependency
 
-    all_words = df_model.docfreq
+    word_map = df_model.docfreq
+    del df_model
     vs = args.vocabulary_size
-    if len(all_words) < vs:
-        vs = len(all_words)
+    if len(word_map) < vs:
+        vs = len(word_map)
     sz = args.shard_size
     if vs < sz:
         raise ValueError(
-            "vocabulary_size={0} is less than shard_size={1}. "
-            "You should specify smaller shard_size "
-            "(pass shard_size={0} argument).".format(vs, sz))
+            "vocabulary_size=%s is less than shard_size=%s. You should specify a smaller "
+            "shard_size (e.g. shard_size=%s)." % (vs, sz, vs))
     vs -= vs % sz
     log.info("Effective vocabulary size: %d", vs)
     log.info("Truncating the vocabulary...")
-    words = numpy.array(list(all_words.keys()))
-    freqs = numpy.array(list(all_words.values()), dtype=numpy.int64)
-    del all_words, df_model
-    chosen_indices = numpy.argpartition(
-        freqs, len(freqs) - vs)[len(freqs) - vs:]
+    words = list(word_map)
+    word_indices = numpy.arange(len(word_map), dtype=numpy.int32)
+    freqs = numpy.fromiter(word_map.values(), numpy.int64, len(word_map))
+    del word_map
+    chosen_indices = numpy.argpartition(freqs, len(freqs) - vs)[len(freqs) - vs:]
     chosen_freqs = freqs[chosen_indices]
-    chosen_words = words[chosen_indices]
+    chosen_word_indices = word_indices[chosen_indices]
+    # we need to be deterministic at the cutoff frequency
+    # argpartition returns random samples every time
+    # so we take all words with the cutoff frequency, sort them and take the needed amount
+    # finally, we replace the randomly chosen samples (border_mask) with those
     border_freq = chosen_freqs.min()
     border_mask = chosen_freqs == border_freq
     border_num = border_mask.sum()
-    border_words = words[freqs == border_freq]
-    border_words = numpy.sort(border_words)
-    chosen_words[border_mask] = border_words[:border_num]
-    del words
+    border_word_index_map = {words[i]: i for i in word_indices[freqs == border_freq]}
+    border_words = list(border_word_index_map)
+    border_words.sort()
+    chosen_word_indices[border_mask] = numpy.fromiter(
+        (border_word_index_map[w] for w in border_words[:border_num]), numpy.int32, border_num)
+    del word_indices
     del freqs
+    chosen_words = [words[i] for i in chosen_word_indices]
+    del words
+    del chosen_word_indices
     log.info("Sorting the vocabulary...")
     sorted_indices = numpy.argsort(chosen_words)
     chosen_freqs = chosen_freqs[sorted_indices]
-    chosen_words = chosen_words[sorted_indices]
+    chosen_words = [chosen_words[i] for i in sorted_indices]
+    del sorted_indices
     word_indices = {w: i for i, w in enumerate(chosen_words)}
     del chosen_freqs
 
     if not os.path.exists(args.output):
         os.makedirs(args.output)
-
     with open(os.path.join(args.output, "row_vocab.txt"), "w") as out:
         out.write('\n'.join(chosen_words))
-    log.info("Saved row_vocab.txt...")
+    log.info("Saved row_vocab.txt")
     shutil.copyfile(os.path.join(args.output, "row_vocab.txt"),
                     os.path.join(args.output, "col_vocab.txt"))
-    log.info("Saved col_vocab.txt...")
-
+    log.info("Saved col_vocab.txt")
     del chosen_words
 
     ccmatrix = _extract_coocc_matrix((vs, vs), word_indices, coocc_model)
 
     log.info("Planning the sharding...")
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
+    reorder = numpy.argsort(-bool_sums)
     with open(os.path.join(args.output, "row_sums.txt"), "w") as out:
         out.write('\n'.join(map(str, bool_sums.tolist())))
-    log.info("Saved row_sums.txt...")
+    log.info("Saved row_sums.txt")
     shutil.copyfile(os.path.join(args.output, "row_sums.txt"),
                     os.path.join(args.output, "col_sums.txt"))
-    log.info("Saved col_sums.txt...")
-    reorder = numpy.argsort(-bool_sums)
+    log.info("Saved col_sums.txt")
+
     log.info("Writing the shards...")
     os.makedirs(args.output, exist_ok=True)
     nshards = vs // args.shard_size

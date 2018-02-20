@@ -3,8 +3,8 @@ from uuid import uuid4
 
 from sourced.ml.extractors import __extractors__
 from sourced.ml.models import OrderedDocumentFrequencies, DocumentFrequencies
-from sourced.ml.transformers import Engine, UastExtractor, Cacher, UastDeserializer, \
-    BagsBatcher, Uast2DocFreq, Uast2TermFreq, HeadFiles
+from sourced.ml.transformers import Engine, UastExtractor, UastDeserializer, Uast2DocFreq, \
+    HeadFiles
 from sourced.ml.utils import create_engine, EngineConstants
 
 
@@ -17,14 +17,14 @@ def repos2df_entry(args):
     document_column_name = EngineConstants.Columns.RepositoryId
     df_transformer = Uast2DocFreq(extractors, document_column_name)
 
-    pipeline = Engine(engine, explain=args.explain) \
+    df = Engine(engine, explain=args.explain) \
         .link(HeadFiles()) \
         .link(UastExtractor(languages=args.languages)) \
         .link(UastDeserializer()) \
-        .link(df_transformer)
-    df = pipeline.execute()
+        .link(df_transformer) \
+        .execute().collectAsMap()
 
-    model = OrderedDocumentFrequencies() if args.ordered else DocumentFrequencies()
-    model.construct(df_transformer.ndocs, df.collectAsMap())
     log.info("Writing %s", args.docfreq)
-    model.save(args.docfreq)
+    OrderedDocumentFrequencies.maybe(args.ordered) \
+        .construct(df_transformer.ndocs, df) \
+        .save(args.docfreq)

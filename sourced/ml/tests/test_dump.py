@@ -76,22 +76,22 @@ Matrix: shape: (304, 304) non-zero: 16001
 
     def test_id2vec(self):
         with captured_output() as (out, _, _):
-            dump_model(self._get_args(input=self._get_path(paths.ID2VEC)))
+            dump_model(self._get_args(input=paths.ID2VEC))
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
 
     def test_docfreq(self):
         with captured_output() as (out, _, _):
-            dump_model(self._get_args(input=self._get_path(paths.DOCFREQ)))
+            dump_model(self._get_args(input=paths.DOCFREQ))
         self.assertEqual(out.getvalue(), self.DOCFREQ_DUMP)
 
     def test_bow(self):
         with captured_output() as (out, _, _):
-            dump_model(self._get_args(input=self._get_path(paths.BOW)))
+            dump_model(self._get_args(input=paths.BOW))
         self.assertEqual(out.getvalue(), self.BOW_DUMP)
 
     def test_coocc(self):
         with captured_output() as (out, _, _):
-            dump_model(self._get_args(input=self._get_path(paths.COOCC)))
+            dump_model(self._get_args(input=paths.COOCC))
         self.assertEqual(out.getvalue(), self.COOCC_DUMP)
 
     def test_id2vec_id(self):
@@ -101,7 +101,7 @@ Matrix: shape: (304, 304) non-zero: 16001
                        '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
                        '{"url": "https://xxx"}}}}'.encode()
             self.assertEqual("https://xxx", url)
-            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+            with open(paths.ID2VEC, "rb") as fin:
                 return fin.read()
 
         gcs_backend.requests = FakeRequests(route)
@@ -114,7 +114,7 @@ Matrix: shape: (304, 304) non-zero: 16001
     def test_id2vec_url(self):
         def route(url):
             self.assertEqual("https://xxx", url)
-            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+            with open(paths.ID2VEC, "rb") as fin:
                 return fin.read()
 
         gcs_backend.requests = FakeRequests(route)
@@ -130,7 +130,7 @@ Matrix: shape: (304, 304) non-zero: 16001
                        '"92609e70-f79c-46b5-8419-55726e873cfc": ' \
                        '{"url": "https://xxx"}}}}'.encode()
             self.assertEqual("https://xxx", url)
-            with open(self._get_path(paths.ID2VEC), "rb") as fin:
+            with open(paths.ID2VEC, "rb") as fin:
                 return fin.read()
 
         gcs_backend.requests = FakeRequests(route)
@@ -143,11 +143,6 @@ Matrix: shape: (304, 304) non-zero: 16001
     def _get_args(input=None, gcs=None, dependency=tuple()):
         return argparse.Namespace(input=input, gcs_bucket=gcs, dependency=dependency,
                                   log_level="WARNING")
-
-    @staticmethod
-    def _get_path(name):
-        return os.path.join(os.path.dirname(__file__), name)
-
 
 if __name__ == "__main__":
     unittest.main()

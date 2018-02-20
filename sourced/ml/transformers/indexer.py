@@ -2,7 +2,7 @@ import typing
 from pyspark.rdd import RDD
 from pyspark import Row
 
-from sourced.ml.transformers import Transformer
+from sourced.ml.transformers.transformer import Transformer
 
 
 class Indexer(Transformer):
@@ -52,15 +52,16 @@ class Indexer(Transformer):
     def __call__(self, rdd: RDD):
         column_id = self.column
         if isinstance(column_id, str):
-            column = rdd.map(lambda x: (getattr(x, column_id), None))
+            column = rdd.map(lambda x: getattr(x, column_id))
         else:
-            column = rdd.map(lambda x: (x[column_id], None))
+            column = rdd.map(lambda x: x[column_id])
 
+        self._log.info("Collecting the list of distinct sorted values (%s)", column_id)
         self._values = column \
+            .sortBy(lambda x: x) \
             .distinct() \
-            .sortByKey() \
-            .map(lambda x: x[0]) \
             .collect()
+        self._log.info("Done")
 
         column2id = {d: i for i, d in enumerate(self._values)}
         self._value_to_index = column2id
@@ -70,15 +71,14 @@ class Indexer(Transformer):
             Map column_id column to its index value stored in column2id.
             WARNING: due to pyspark documentation
             (http://spark.apache.org/docs/latest/rdd-programming-guide.html#passing-functions-to-spark)
-            do not use self inside this function. It will be suboptimal and probably failed to run.
-            Please note me if you did not read this comment before and have troubles with it:
-            kslavnov@gmail.com
+            do not use self inside this function. It will be suboptimal and probably fail to run.
+            Please contact me if you have troubles: kslavnov@gmail.com
             """
             if isinstance(column_id, str):
+                assert isinstance(row, Row)
                 row_dict = row.asDict()
                 row_dict[column_id] = column2id[row_dict[column_id]]
                 return Row(**row_dict)
-            else:
-                return row[:column_id] + (column2id[row[column_id]],) + row[column_id+1:]
+            return row[:column_id] + (column2id[row[column_id]],) + row[column_id + 1:]
 
         return rdd.map(index_column)

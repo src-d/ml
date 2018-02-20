@@ -7,8 +7,7 @@ from sourced.ml.models import Cooccurrences
 
 class CooccurrencesTests(unittest.TestCase):
     def setUp(self):
-        self.model = Cooccurrences().load(
-            source=os.path.join(os.path.dirname(__file__), paths.COOCC))
+        self.model = Cooccurrences().load(source=paths.COOCC)
 
     def test_tokens(self):
         tokens = self.model.tokens

@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 import sys
@@ -6,11 +7,10 @@ import sys
 from modelforge.logs import setup_logging
 
 from sourced.ml import extractors
-from sourced.ml.algorithms import swivel  # to access FLAGS
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2ids_entry, repos2bow_entry
-
+from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm, add_engine_args
 
 
@@ -38,19 +38,24 @@ def get_parser() -> argparse.ArgumentParser:
             "--min-docfreq", default=1, type=int,
             help="The minimum document frequency of each element.")
         my_parser.add_argument(
-            "-l", "--languages", required=True, nargs="+", choices=("Java", "Python"),
+            "-l", "--languages", required=True, nargs="+", choices=(
+                "Java", "Python", "JavaScript", "Ruby", "Bash"),
             help="The programming languages to analyse.")
 
     parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     parser.add_argument("--log-level", default="INFO",
                         choices=logging._nameToLevel,
                         help="Logging verbosity.")
-
     # Create and construct subparsers
     subparsers = parser.add_subparsers(help="Commands", dest="command")
 
-    repos2bow_parser = subparsers.add_parser(
-        "repos2bow", help="Convert source code to the Bag-Of-Words model.")
+    def add_parser(name, help):
+        return subparsers.add_parser(
+            name, help=help, formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+
+    # ------------------------------------------------------------------------
+    repos2bow_parser = add_parser(
+        "repos2bow", "Convert source code to the bag-of-words model.")
     repos2bow_parser.set_defaults(handler=repos2bow_entry)
     add_default_args(repos2bow_parser)
     add_engine_args(repos2bow_parser)
@@ -58,11 +63,11 @@ def get_parser() -> argparse.ArgumentParser:
         "--docfreq", required=True,
         help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
     repos2bow_parser.add_argument(
-        "--bow", required=True,
-        help="[OUT] The path to the Bag-Of-Words model.")
+        "--quant", help="[OUT] The path to the QuantizationLevels model.")
     repos2bow_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int,
-        help="The maximum vocabulary size.")
+        "--bow", required=True, help="[OUT] The path to the Bag-Of-Words model.")
+    repos2bow_parser.add_argument(
+        "--vocabulary-size", default=10000000, type=int, help="The maximum vocabulary size.")
     repos2bow_parser.add_argument(
         "--ordered", action="store_true",
         help="Flag that specifies ordered or default document frequency model to create."
@@ -71,9 +76,13 @@ def get_parser() -> argparse.ArgumentParser:
         "-f", "--feature", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
         required=True, help="The feature extraction scheme to apply.")
-
-    repos2df_parser = subparsers.add_parser(
-        "repos2df", help="Convert source code to document frequency model.")
+    for ex in extractors.__extractors__.values():
+        for opt, val in ex.OPTS.items():
+            repos2bow_parser.add_argument("--%s-%s" % (ex.NAME, opt), default=val, type=json.loads,
+                                          help="%s's kwarg" % ex.__name__)
+    # ------------------------------------------------------------------------
+    repos2df_parser = add_parser(
+        "repos2df", "Calculate document frequencies of features extracted from source code.")
     repos2df_parser.set_defaults(handler=repos2df_entry)
     add_default_args(repos2df_parser)
     add_engine_args(repos2df_parser)
@@ -92,6 +101,7 @@ def get_parser() -> argparse.ArgumentParser:
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
         required=True, help="The feature extraction scheme to apply.")
 
+    # ------------------------------------------------------------------------
     repos2ids_parser = subparsers.add_parser(
         "repos2ids", help="Convert source code to a bag of identifiers.")
     repos2ids_parser.set_defaults(handler=repos2ids_entry)
@@ -117,15 +127,14 @@ def get_parser() -> argparse.ArgumentParser:
         "--vocabulary-size", default=10000000, type=int,
         help="The maximum vocabulary size.")
 
-    repos2coocc_parser = subparsers.add_parser(
-        "repos2coocc", help="Produce the co-occurrence matrix from a Git repository.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    repos2coocc_parser = add_parser(
+        "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")
     add_engine_args(repos2coocc_parser)
-
     add_default_args(repos2coocc_parser)
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Path to the output file.")
+        help="[OUT] Path to the Cooccurrences model.")
     repos2coocc_parser.add_argument(
         "--split-stem", default=False, action="store_true",
         help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
@@ -136,12 +145,10 @@ def get_parser() -> argparse.ArgumentParser:
         "--ordered", action="store_true",
         help="Flag that specifies ordered or default document frequency model to create."
              "If you use default document frequency model you should use only one feature.")
-
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
-
-    preproc_parser = subparsers.add_parser(
-        "id2vec_preproc", help="Convert co-occurrence CSR matrix to Swivel dataset.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    preproc_parser = add_parser(
+        "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
     preproc_parser.set_defaults(handler=preprocess_id2vec)
     preproc_parser.add_argument(
         "-v", "--vocabulary-size", default=1 << 17, type=int,
@@ -157,25 +164,15 @@ def get_parser() -> argparse.ArgumentParser:
         "-i", "--input",
         help="Concurrence model produced by repos2coocc.")
     preproc_parser.add_argument("-o", "--output", required=True, help="Output directory.")
-
-    train_parser = subparsers.add_parser(
-        "id2vec_train", help="Train identifier embeddings.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    train_parser = add_parser(
+        "id2vec_train", "Train identifier embeddings using Swivel.")
+    mirror_tf_args(train_parser)
     train_parser.set_defaults(handler=run_swivel)
-
-    types = {"string": str, "int": int, "float": float, "bool": bool}
-
-    for flag in swivel.FLAGS.__dict__["__wrapped"].__dict__["__flags"].values():
-        train_parser.add_argument(
-            "--" + flag.name,
-            default=flag.default,
-            type=types[flag.flag_type()],
-            help=flag.help)
-
-    id2vec_postproc_parser = subparsers.add_parser(
+    # ------------------------------------------------------------------------
+    id2vec_postproc_parser = add_parser(
         "id2vec_postproc",
-        help="Combine row and column embeddings together and write them to an .asdf.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+        "Combine row and column embeddings produced by Swivel and write them to an .asdf.")
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
     id2vec_postproc_parser.add_argument(
         "-i", "--swivel-data", required=True,
@@ -183,23 +180,21 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_postproc_parser.add_argument(
         "-o", "--output", required=True,
         help="Output directory for embedding data.")
-
-    id2vec_projector_parser = subparsers.add_parser(
-        "id2vec_projector", help="Present id2vec model in Tensorflow Projector.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
-    id2vec_projector_parser.set_defaults(handler=projector_entry)
-    id2vec_projector_parser.add_argument("-i", "--input", required=True,
-                                         help="id2vec model to present.")
-    id2vec_projector_parser.add_argument("-o", "--output", required=True,
-                                         help="Projector output directory.")
-    id2vec_projector_parser.add_argument("--docfreq", help="docfreq model to pick the most "
-                                                           "significant identifiers.")
-    id2vec_projector_parser.add_argument("--no-browser", action="store_true",
-                                         help="Do not open the browser.")
-
-    bow2vw_parser = subparsers.add_parser(
-        "bow2vw", help="Convert a bag-of-words model to the dataset in Vowpal Wabbit format.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    id2vec_project_parser = add_parser(
+        "id2vec_project", "Present id2vec model in Tensorflow Projector.")
+    id2vec_project_parser.set_defaults(handler=projector_entry)
+    id2vec_project_parser.add_argument("-i", "--input", required=True,
+                                       help="id2vec model to present.")
+    id2vec_project_parser.add_argument("-o", "--output", required=True,
+                                       help="Projector output directory.")
+    id2vec_project_parser.add_argument("--docfreq", help="docfreq model to pick the most "
+                                                         "significant identifiers.")
+    id2vec_project_parser.add_argument("--no-browser", action="store_true",
+                                       help="Do not open the browser.")
+    # ------------------------------------------------------------------------
+    bow2vw_parser = add_parser(
+        "bow2vw", "Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
     bow2vw_parser.set_defaults(handler=bow2vw_entry)
     bow2vw_parser.add_argument(
         "--bow", help="URL or path to a bag-of-words model.")
@@ -207,25 +202,21 @@ def get_parser() -> argparse.ArgumentParser:
         "--id2vec", help="URL or path to the identifier embeddings.")
     bow2vw_parser.add_argument(
         "-o", "--output", required=True, help="Path to the output file.")
-
-    bigartm_postproc_parser = subparsers.add_parser(
-        "bigartm2asdf", help="Convert a readable BigARTM model to Modelforge format.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    bigartm_postproc_parser = add_parser(
+        "bigartm2asdf", "Convert a human-readable BigARTM model to Modelforge format.")
     bigartm_postproc_parser.set_defaults(handler=bigartm2asdf_entry)
     bigartm_postproc_parser.add_argument("input")
     bigartm_postproc_parser.add_argument("output")
-
-    bigartm_parser = subparsers.add_parser(
-        "bigartm", help="Install bigartm/bigartm to the current working directory.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    bigartm_parser = add_parser(
+        "bigartm", "Install bigartm/bigartm to the current working directory.")
     bigartm_parser.set_defaults(handler=install_bigartm)
     bigartm_parser.add_argument(
         "--tmpdir", help="Store intermediate files in this directory instead of /tmp.")
     bigartm_parser.add_argument("--output", default=os.getcwd(), help="Output directory.")
-
-    dump_parser = subparsers.add_parser(
-        "dump", help="Dump a model to stdout.",
-        formatter_class=ArgumentDefaultsHelpFormatterNoNone)
+    # ------------------------------------------------------------------------
+    dump_parser = add_parser("dump", "Dump a model to stdout.")
     dump_parser.set_defaults(handler=dump_model)
     dump_parser.add_argument(
         "input", help="Path to the model file, URL or UUID.")

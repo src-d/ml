@@ -8,7 +8,7 @@ from pyspark.sql.types import Row
 from scipy.sparse import csr_matrix
 
 from sourced.ml.models import OrderedDocumentFrequencies
-from sourced.ml.transformers import Transformer
+from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.utils import PickleableLogger
 
 
@@ -20,15 +20,16 @@ class BagsBatcher(Transformer):
         super().__init__(**kwargs)
         self.df = df
         self.ndocs = ndocs
-        self.model = None
+        self.docfreq_model = None
         self.chunk_size = chunk_size
 
     def __getstate__(self):
         state = super().__getstate__()
-        del state["model"]
+        del state["docfreq_model"]
+        del state["quant_model"]
         del state["df"]
         if self.model is not None:
-            state["keys"] = self.model.order
+            state["keys"] = self.docfreq_model.order
         return state
 
     def __call__(self, processed):
@@ -39,7 +40,8 @@ class BagsBatcher(Transformer):
         avglen = lengths.mean()
         self._log.info("Average bag length: %.1f", avglen)
         self._log.info("Number of documents: %d", self.ndocs)
-        self.model = OrderedDocumentFrequencies().construct(self.ndocs, self.df.collectAsMap())
+        self.docfreq_model = OrderedDocumentFrequencies().construct(
+            self.ndocs, self.df.collectAsMap())
         self._log.info("Vocabulary size: %d", len(self.model))
         chunklen = int(self.chunk_size / (2 * 4 * avglen))
         nparts = self.ndocs // chunklen + 1
