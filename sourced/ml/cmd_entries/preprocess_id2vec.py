@@ -32,22 +32,19 @@ def preprocess_id2vec(args):
     log = logging.getLogger("preproc")
     df_model = DocumentFrequencies().load(source=args.docfreq)
     coocc_model = Cooccurrences().load(args.input)
-    if coocc_model.meta['dependencies']:
-        try:
-            df_meta = coocc_model.get_dep("docfreq")
-            if df_model.meta != df_meta:
-                raise ValueError((
-                    "Document frequency model you provided does not match dependency inside "
-                    "Cooccurrences model:\nargs.docfreq.meta:\n%s\ncoocc_model.get_dep"
-                    "(\"docfreq\")\n%s\n") % (df_model.meta, df_meta))
-        except KeyError:
-            pass  # There is no docfreq dependency
+    try:
+        df_meta = coocc_model.get_dep(DocumentFrequencies.NAME)
+        if df_model.meta != df_meta:
+            raise ValueError((
+                "Document frequency model you provided does not match dependency inside "
+                "Cooccurrences model:\nargs.docfreq.meta:\n%s\ncoocc_model.get_dep"
+                "(\"docfreq\")\n%s\n") % (df_model.meta, df_meta))
+    except KeyError:
+        pass  # There is no docfreq dependency
 
-    word_map = df_model.docfreq
-    del df_model
     vs = args.vocabulary_size
-    if len(word_map) < vs:
-        vs = len(word_map)
+    if len(df_model) < vs:
+        vs = len(df_model)
     sz = args.shard_size
     if vs < sz:
         raise ValueError(
@@ -55,38 +52,10 @@ def preprocess_id2vec(args):
             "shard_size (e.g. shard_size=%s)." % (vs, sz, vs))
     vs -= vs % sz
     log.info("Effective vocabulary size: %d", vs)
-    log.info("Truncating the vocabulary...")
-    words = list(word_map)
-    word_indices = numpy.arange(len(word_map), dtype=numpy.int32)
-    freqs = numpy.fromiter(word_map.values(), numpy.int64, len(word_map))
-    del word_map
-    chosen_indices = numpy.argpartition(freqs, len(freqs) - vs)[len(freqs) - vs:]
-    chosen_freqs = freqs[chosen_indices]
-    chosen_word_indices = word_indices[chosen_indices]
-    # we need to be deterministic at the cutoff frequency
-    # argpartition returns random samples every time
-    # so we take all words with the cutoff frequency, sort them and take the needed amount
-    # finally, we replace the randomly chosen samples (border_mask) with those
-    border_freq = chosen_freqs.min()
-    border_mask = chosen_freqs == border_freq
-    border_num = border_mask.sum()
-    border_word_index_map = {words[i]: i for i in word_indices[freqs == border_freq]}
-    border_words = list(border_word_index_map)
-    border_words.sort()
-    chosen_word_indices[border_mask] = numpy.fromiter(
-        (border_word_index_map[w] for w in border_words[:border_num]), numpy.int32, border_num)
-    del word_indices
-    del freqs
-    chosen_words = [words[i] for i in chosen_word_indices]
-    del words
-    del chosen_word_indices
+    df_model = df_model.greatest(vs)
     log.info("Sorting the vocabulary...")
-    sorted_indices = numpy.argsort(chosen_words)
-    chosen_freqs = chosen_freqs[sorted_indices]
-    chosen_words = [chosen_words[i] for i in sorted_indices]
-    del sorted_indices
+    chosen_words = sorted(df_model.tokens())
     word_indices = {w: i for i, w in enumerate(chosen_words)}
-    del chosen_freqs
 
     if not os.path.exists(args.output):
         os.makedirs(args.output)

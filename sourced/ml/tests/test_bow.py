@@ -1,4 +1,4 @@
-import os
+from io import BytesIO
 import unittest
 
 import numpy
@@ -27,12 +27,17 @@ class BOWTests(unittest.TestCase):
     def test_len(self):
         self.assertEqual(len(self.model), 5)
 
-    def test_repository_index_by_name(self):
-        self.assertEqual(
-            self.model.documents_index_by_name("repo1"), 0)
-
     def test_tokens(self):
         self.assertEqual(self.model.tokens[0], "i.")
+
+    def test_write(self):
+        buffer = BytesIO()
+        self.model.save(buffer)
+        buffer.seek(0)
+        new_model = BOW().load(buffer)
+        self.assertEqual((self.model.matrix != new_model.matrix).nnz, 0)
+        self.assertEqual(self.model.documents, new_model.documents)
+        self.assertEqual(self.model.tokens, new_model.tokens)
 
 
 if __name__ == "__main__":

@@ -5,15 +5,15 @@ from scipy import sparse
 from bblfsh import Node
 from pyspark.rdd import PipelinedRDD
 
-from sourced.ml.models import Cooccurrences
+from sourced.ml.models import Cooccurrences, OrderedDocumentFrequencies
 from sourced.ml.transformers import Transformer
 from sourced.ml.utils import bblfsh_roles
 
 
 class CooccModelSaver(Transformer):
-    def __init__(self, output, tokens_list, df_model, **kwargs):
+    def __init__(self, output, df_model: OrderedDocumentFrequencies, **kwargs):
         super().__init__(**kwargs)
-        self.tokens_list = tokens_list
+        self.tokens_list = df_model.tokens()
         self.output = output
         self.df_model = df_model
 

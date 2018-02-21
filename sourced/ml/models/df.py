@@ -1,7 +1,9 @@
-from typing import Iterable, Union, Dict
+from itertools import islice
+from typing import Iterable, Union, Dict, List
+
+import numpy
 
 from modelforge import Model, split_strings, merge_strings, register_model
-import numpy
 
 
 @register_model
@@ -30,7 +32,7 @@ class DocumentFrequencies(Model):
         self._df = df
         return self
 
-    def _load_tree(self, tree, tokens=None):
+    def _load_tree(self, tree: dict, tokens=None):
         if tokens is None:
             tokens = split_strings(tree["tokens"])
         freqs = tree["freqs"]
@@ -45,9 +47,9 @@ class DocumentFrequencies(Model):
 
     def dump(self):
         return """Number of words: %d
-First 10 words: %s
+Random 10 words: %s
 Number of documents: %d""" % (
-            len(self._df), self.tokens()[:10], self.docs)
+            len(self._df), islice(self._df, 10), self.docs)
 
     @property
     def docs(self):
@@ -56,24 +58,66 @@ Number of documents: %d""" % (
         """
         return self._docs
 
-    @property
-    def docfreq(self):
-        """
-        Returns document frequency dictionary. The key is a string and the value is an integer.
-        """
-        return self._df
-
-    def prune(self, threshold: int):
+    def prune(self, threshold: int) -> "DocumentFrequencies":
         """
         Removes tokens which occur less than `threshold` times.
         The operation happens *not* in-place - a new model is returned.
         :param threshold: Minimum number of occurrences.
-        :return: the pruned model.
+        :return: The new model if the current one had to be changed, otherwise self.
         """
+        if threshold < 1:
+            raise ValueError("Invalid threshold: %d" % threshold)
+        if threshold == 1:
+            return self
         self._log.info("Pruning to min %d occurrences", threshold)
-        pruned = DocumentFrequencies()
+        pruned = type(self)()
         pruned._docs = self.docs
         pruned._df = {k: v for k, v in self._df.items() if v >= threshold}
+        self._log.info("Size: %d -> %d", len(self), len(pruned))
+        pruned._meta = self.meta
+        return pruned
+
+    def greatest(self, max_size: int) -> "DocumentFrequencies":
+        """
+        Truncates the model to most frequent `max_size` tokens.
+        The operation happens *not* in-place - a new model is returned.
+        :param max_size: The maximum vocabulary size.
+        :return: The new model if the current one had to be changed, otherwise self.
+        """
+        if max_size < 1:
+            raise ValueError("Invalid max_size: %d" % max_size)
+        if len(self) <= max_size:
+            return self
+        self._log.info("Pruning to max %d size", max_size)
+        pruned = type(self)()
+        pruned._docs = self.docs
+        freqs = numpy.fromiter(self._df.values(), numpy.int32, len(self))
+        chosen = numpy.argpartition(freqs, len(freqs) - max_size)[len(freqs) - max_size:]
+        # we need to be deterministic at the cutoff frequency
+        # argpartition returns random samples every time
+        # so we treat words with the cutoff frequency separately
+        chosen.sort()
+        border_freq = freqs[chosen].min()
+        df = {}
+        border_keys = []
+        chosen_pos = 0
+        chosen_val = chosen[0]
+        for i, key in enumerate(self._df):
+            if i != chosen_val:
+                continue
+            if chosen_val > border_freq:
+                df[key] = chosen_val
+            else:
+                border_keys.append(key)
+            chosen_pos += 1
+            if chosen_pos >= len(chosen):
+                break
+            chosen_val = chosen[chosen_pos]
+        border_keys.sort()
+        for k in border_keys[:max_size - len(df)]:
+            df[k] = border_freq
+        pruned._df = df
+        self._log.info("Size: %d -> %d", len(self), len(pruned))
         pruned._meta = self.meta
         return pruned
 
@@ -89,18 +133,18 @@ Number of documents: %d""" % (
         """
         return len(self._df)
 
-    def get(self, item, default):
+    def get(self, item, default=None) -> Union[int, None]:
         """
         Return the document frequency for a given token.
 
         :param item: The token to query.
         :param default: Returned value in case the token is missing.
-        :return: int
+        :return: int or `default`
         """
         return self._df.get(item, default)
 
-    def tokens(self):
+    def tokens(self) -> List[str]:
         """
-        Returns the sorted list of tokens.
+        Returns the list of tokens.
         """
-        return sorted(self._df)
+        return list(self._df)

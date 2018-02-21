@@ -8,13 +8,7 @@ from sourced.ml.utils import create_spark
 
 class IndexerTests(unittest.TestCase):
     def setUp(self):
-        data = [Row(to_index='to_index1', value=1),
-                Row(to_index='to_index1', value=2),
-                Row(to_index='to_index2', value=3),
-                Row(to_index='to_index3', value=4),
-                Row(to_index='to_index4', value=4),
-                Row(to_index='to_index5', value=5),
-                ]
+        data = [Row(to_index="to_index%d" % i, value=i) for i in range(10)]
         self.data = data
         self.sc = create_spark("test")
         self.data_rdd = self.sc.sparkContext \
@@ -24,8 +18,9 @@ class IndexerTests(unittest.TestCase):
     def test_call(self):
         indexer = Indexer("to_index")
         res = indexer(self.data_rdd)
+        values = indexer.values()
         data_reverse = res \
-            .map(lambda x: Row(to_index=indexer.values[x.to_index], value=x.value)) \
+            .map(lambda x: Row(to_index=values[x.to_index], value=x.value)) \
             .collect()
         self.assertEqual(self.data, data_reverse)
 

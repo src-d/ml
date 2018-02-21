@@ -1,11 +1,12 @@
 import logging
-from typing import Iterable, List
+from typing import Iterable, List, Dict
 
 from scipy import sparse
 
 from modelforge import Model, split_strings, assemble_sparse_matrix, \
     merge_strings, disassemble_sparse_matrix, register_model
 from modelforge.progress_bar import progress_bar
+from sourced.ml.models.df import DocumentFrequencies
 
 
 @register_model
@@ -18,7 +19,7 @@ class BOW(Model):
     """
     NAME = "bow"
 
-    def construct(self, documents: List[str], matrix: sparse.spmatrix, tokens: List[str]):
+    def construct(self, documents: List[str], tokens: List[str], matrix: sparse.spmatrix):
         if matrix.shape[0] != len(documents):
             raise ValueError("matrix shape mismatch, documents %d != %d" % (
                 matrix.shape[0], len(documents)))
@@ -37,7 +38,7 @@ class BOW(Model):
                (self._matrix.shape, self._documents[:10], self.tokens[:10])
 
     @property
-    def matrix(self):
+    def matrix(self) -> sparse.spmatrix:
         """
         Returns the bags as a sparse matrix. Rows are documents and columns are tokens weight.
         """
@@ -80,15 +81,13 @@ class BOW(Model):
         """
         return len(self._documents)
 
-    def documents_index_by_name(self, name: str):
-        """
-        Looks up document index by it's name.
-        """
-        return self._documents_map[name]
-
     def save(self, output: str, deps: Iterable=tuple()):
         if not deps:
-            raise ValueError("You must specify DocumentFrequencies dependency to save BOW.")
+            try:
+                deps = [self.get_dep(DocumentFrequencies.NAME)]
+            except KeyError:
+                raise ValueError(
+                    "You must specify DocumentFrequencies dependency to save BOW.") from None
         super().save(output, deps)
 
     def convert_bow_to_vw(self, output: str):
@@ -109,15 +108,8 @@ class BOW(Model):
                 fout.write(" ".join(pairs))
                 fout.write("\n")
 
-    @property
-    def _documents(self):
-        return self.__documents
-
-    @_documents.setter
-    def _documents(self, value: Iterable[str]):
-        self.__documents = value
-        self._log.info("Building the document names mapping...")
-        self._documents_map = {r: i for i, r in enumerate(self._documents)}
+    def documents_index(self) -> Dict[str, int]:
+        return {r: i for i, r in enumerate(self._documents)}
 
     def _generate_tree(self):
         return {"documents": merge_strings(self._documents),
