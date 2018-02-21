@@ -6,14 +6,18 @@ from sourced.ml.models import OrderedDocumentFrequencies
 from sourced.ml.transformers import Ignition, HeadFiles, UastExtractor, Cacher, UastDeserializer, \
     CooccConstructor, CooccModelSaver, BagFeatures2DocFreq, Uast2BagFeatures, Counter
 from sourced.ml.utils import create_engine, EngineConstants
+from sourced.ml.utils.engine import pipeline_graph, pause
 
 
+@pause
 def repos2coocc_entry(args):
     log = logging.getLogger("repos2coocc")
     engine = create_engine("repos2coocc-%s" % uuid4(), **args.__dict__)
     id_extractor = IdentifiersBagExtractor(docfreq_threshold=args.min_docfreq,
                                            split_stem=args.split_stem)
-    uast_extractor = Ignition(engine, explain=args.explain) \
+
+    ignition = Ignition(engine, explain=args.explain)
+    uast_extractor = ignition \
         .link(HeadFiles()) \
         .link(UastExtractor(languages=args.languages)) \
         .link(Cacher.maybe(args.persist))
@@ -35,9 +39,10 @@ def repos2coocc_entry(args):
         .save(args.docfreq)
 
     token2index = engine.session.sparkContext.broadcast(df_model.order)
-    pipeline = uast_extractor \
+    uast_extractor \
         .link(CooccConstructor(token2index=token2index,
                                token_parser=id_extractor.id2bag.token_parser,
                                namespace=id_extractor.NAMESPACE)) \
-        .link(CooccModelSaver(args.output, df_model))
-    pipeline.execute()
+        .link(CooccModelSaver(args.output, df_model)) \
+        .execute()
+    pipeline_graph(args, log, ignition)
