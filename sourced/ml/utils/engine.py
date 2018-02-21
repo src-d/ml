@@ -1,6 +1,8 @@
+import functools
 import logging
 import os
 import sys
+
 os.environ["PYSPARK_PYTHON"] = sys.executable
 
 import pyspark  # nopep8
@@ -135,3 +137,22 @@ def create_engine(session_name, repositories,
     log.info("Initializing on %s", repositories)
     engine = Engine(session, repositories, repository_format)
     return engine
+
+
+def pause(func):
+    @functools.wraps(func)
+    def wrapped_pause(cmdline_args, *args, **kwargs):
+        try:
+            return func(cmdline_args, *args, **kwargs)
+        finally:
+            if cmdline_args.pause:
+                input("Press Enter to exit...")
+
+    return wrapped_pause
+
+
+def pipeline_graph(args, log, root):
+    if args.graph:
+        log.info("Dumping the graph to %s", args.graph)
+        with open(args.graph, "w") as f:
+            root.graph(stream=f)

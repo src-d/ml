@@ -1,15 +1,15 @@
 import argparse
-import json
 import logging
 import os
 import sys
 
 from modelforge.logs import setup_logging
 
-from sourced.ml import extractors
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2ids_entry, repos2bow_entry
+from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, add_vocabulary_size_arg
+from sourced.ml.cmd_entries.repos2bow import add_bow_args
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm, add_engine_args
 
@@ -30,18 +30,6 @@ def get_parser() -> argparse.ArgumentParser:
     Creates the cmdline argument parser.
     """
 
-    def add_default_args(my_parser):
-        my_parser.add_argument(
-            "-r", "--repositories", required=True,
-            help="The path to the repositories.")
-        my_parser.add_argument(
-            "--min-docfreq", default=1, type=int,
-            help="The minimum document frequency of each element.")
-        my_parser.add_argument(
-            "-l", "--languages", required=True, nargs="+", choices=(
-                "Java", "Python", "JavaScript", "Ruby", "Bash"),
-            help="The programming languages to analyse.")
-
     parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     parser.add_argument("--log-level", default="INFO",
                         choices=logging._nameToLevel,
@@ -57,50 +45,17 @@ def get_parser() -> argparse.ArgumentParser:
     repos2bow_parser = add_parser(
         "repos2bow", "Convert source code to the bag-of-words model.")
     repos2bow_parser.set_defaults(handler=repos2bow_entry)
-    add_default_args(repos2bow_parser)
+    add_repo2_args(repos2bow_parser)
     add_engine_args(repos2bow_parser)
-    repos2bow_parser.add_argument(
-        "--docfreq", required=True,
-        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
-    repos2bow_parser.add_argument(
-        "--quant", help="[OUT] The path to the QuantizationLevels model.")
-    repos2bow_parser.add_argument(
-        "--bow", required=True, help="[OUT] The path to the Bag-Of-Words model.")
-    repos2bow_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int, help="The maximum vocabulary size.")
-    repos2bow_parser.add_argument(
-        "--ordered", action="store_true",
-        help="Flag that specifies ordered or default document frequency model to create."
-             "If you use default document frequency model you should use only one feature.")
-    repos2bow_parser.add_argument(
-        "-f", "--feature", nargs="+",
-        choices=[ex.NAME for ex in extractors.__extractors__.values()],
-        required=True, help="The feature extraction scheme to apply.")
-    for ex in extractors.__extractors__.values():
-        for opt, val in ex.OPTS.items():
-            repos2bow_parser.add_argument("--%s-%s" % (ex.NAME, opt), default=val, type=json.loads,
-                                          help="%s's kwarg" % ex.__name__)
+    add_bow_args(repos2bow_parser)
+    add_feature_args(repos2bow_parser)
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(
         "repos2df", "Calculate document frequencies of features extracted from source code.")
     repos2df_parser.set_defaults(handler=repos2df_entry)
-    add_default_args(repos2df_parser)
+    add_repo2_args(repos2df_parser)
     add_engine_args(repos2df_parser)
-    repos2df_parser.add_argument(
-        "--docfreq", required=True,
-        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
-    repos2df_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int,
-        help="The maximum vocabulary size.")
-    repos2df_parser.add_argument(
-        "--ordered", action="store_true",
-        help="Flag that specifies ordered or default document frequency model to create."
-             "If you use default document frequency model you should use only one feature.")
-    repos2df_parser.add_argument(
-        "-f", "--feature", nargs="+",
-        choices=[ex.NAME for ex in extractors.__extractors__.values()],
-        required=True, help="The feature extraction scheme to apply.")
-
+    add_feature_args(repos2df_parser)
     # ------------------------------------------------------------------------
     repos2ids_parser = subparsers.add_parser(
         "repos2ids", help="Convert source code to a bag of identifiers.")
@@ -123,37 +78,23 @@ def get_parser() -> argparse.ArgumentParser:
              "num_repos is the number of repositories where the identifier appears in."
              "num_files is the number of files where the identifier appears in."
              "num_occ is the total number of occurences of the identifier.")
-    repos2ids_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int,
-        help="The maximum vocabulary size.")
-
     # ------------------------------------------------------------------------
     repos2coocc_parser = add_parser(
         "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")
     add_engine_args(repos2coocc_parser)
-    add_default_args(repos2coocc_parser)
+    add_repo2_args(repos2coocc_parser, quant=False)
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the Cooccurrences model.")
     repos2coocc_parser.add_argument(
         "--split-stem", default=False, action="store_true",
         help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
-    repos2coocc_parser.add_argument(
-        "--docfreq", required=True,
-        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
-    repos2coocc_parser.add_argument(
-        "--ordered", action="store_true",
-        help="Flag that specifies ordered or default document frequency model to create."
-             "If you use default document frequency model you should use only one feature.")
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
         "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
     preproc_parser.set_defaults(handler=preprocess_id2vec)
-    preproc_parser.add_argument(
-        "-v", "--vocabulary-size", default=1 << 17, type=int,
-        help="The final vocabulary size. Only the most frequent words will be"
-             "left.")
+    add_vocabulary_size_arg(preproc_parser)
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(

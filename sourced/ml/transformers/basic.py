@@ -1,6 +1,6 @@
 from typing import Union
 
-from pyspark import StorageLevel, Row
+from pyspark import StorageLevel, Row, RDD
 
 from sourced.ml.transformers.transformer import Transformer
 
@@ -20,17 +20,17 @@ class Sampler(Transformer):
 
 
 class Collector(Transformer):
-    def __call__(self, head):
+    def __call__(self, head: RDD):
         return head.collect()
 
 
 class First(Transformer):
-    def __call__(self, head):
+    def __call__(self, head: RDD):
         return head.first()
 
 
 class Identity(Transformer):
-    def __call__(self, head):
+    def __call__(self, head: RDD):
         return head
 
 
@@ -47,7 +47,7 @@ class Cacher(Transformer):
         state["trace"] = None
         return state
 
-    def __call__(self, head):
+    def __call__(self, head: RDD):
         if self.head is None or self.trace != self.path():
             self.head = head.persist(self.persistence)
             self.trace = self.path()
@@ -61,7 +61,7 @@ class Cacher(Transformer):
             return Identity()
 
 
-class Engine(Transformer):
+class Ignition(Transformer):
     def __init__(self, engine, **kwargs):
         super().__init__(**kwargs)
         self.engine = engine
@@ -78,6 +78,22 @@ class Engine(Transformer):
 class HeadFiles(Transformer):
     def __call__(self, engine):
         return engine.repositories.references.head_ref.commits.tree_entries.blobs
+
+
+class Counter(Transformer):
+    def __init__(self, distinct=False, approximate=False, **kwargs):
+        super().__init__(**kwargs)
+        self.distinct = distinct
+        self.approximate = approximate
+
+    def __call__(self, head: RDD):
+        if self.distinct and not self.approximate:
+            head = head.distinct()
+        if self.explained:
+            self._log.info("toDebugString():\n%s", head.toDebugString().decode())
+        if not self.approximate or not self.distinct:
+            return head.count()
+        return head.countApproxDistinct()
 
 
 class UastExtractor(Transformer):

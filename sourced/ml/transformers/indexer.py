@@ -1,4 +1,4 @@
-import typing
+from typing import Union, Dict
 from pyspark.rdd import RDD
 from pyspark import Row
 
@@ -11,17 +11,17 @@ class Indexer(Transformer):
     index. The mapping is created by collecting all the unique values, sorting them and finally
     enumerating. Use value_to_index or [] to get index value.
     """
-    def __init__(self, column: typing.Union[int, str], **kwargs):
+    def __init__(self, column: Union[int, str], column2id: Union[Dict[str, int], None]=None,
+                 **kwargs):
         """
         :param column: column index or its name in pyspark.RDD for indexing.
         :param kwargs:
         """
         super().__init__(**kwargs)
         self.column = column
-        self._value_to_index = None
-        self._values = None
+        self._value_to_index = column2id
 
-    def __getitem__(self, key: typing.Union[int, str]):
+    def __getitem__(self, key: Union[int, str]):
         """
         Get index for given value or value for given index.
         If key type is string, __getitem__ gives you index value for key.
@@ -37,34 +37,42 @@ class Indexer(Transformer):
                             "`value_to_index` property to get index value.")
         return self.value_to_index[key] if isinstance(key, str) else self.values[key]
 
+    def __len__(self):
+        return len(self._value_to_index)
+
     @property
     def value_to_index(self):
         if self._value_to_index is None:
             raise AttributeError("column2id value not available. Run Indexer first.")
         return self._value_to_index
 
-    @property
     def values(self):
-        if self._values is None:
-            raise AttributeError("column_values value not available. Run Indexer first.")
-        return self._values
+        arr = [None] * len(self)
+        for k, v in self.value_to_index.items():
+            arr[v] = k
+        return arr
 
     def __call__(self, rdd: RDD):
         column_id = self.column
-        if isinstance(column_id, str):
-            column = rdd.map(lambda x: getattr(x, column_id))
-        else:
-            column = rdd.map(lambda x: x[column_id])
+        if self._value_to_index is None:
+            if isinstance(column_id, str):
+                column = rdd.map(lambda x: getattr(x, column_id))
+            else:
+                column = rdd.map(lambda x: x[column_id])
 
-        self._log.info("Collecting the list of distinct sorted values (%s)", column_id)
-        self._values = column \
-            .sortBy(lambda x: x) \
-            .distinct() \
-            .collect()
-        self._log.info("Done")
+            self._log.info("Collecting the list of distinct sorted values (%s)", column_id)
+            values = column.distinct()
+            if self.explained:
+                self._log.info("toDebugString():\n%s", values.toDebugString().decode())
+            values = values.collect()
+            values.sort()  # We do not expect an extraordinary number of distinct values
+            self._log.info("%d distinct values", len(values))
+            if len(values) == 0:
+                raise RuntimeError("Number of distinct values is zero.")
 
-        column2id = {d: i for i, d in enumerate(self._values)}
-        self._value_to_index = column2id
+            self._value_to_index = {d: i for i, d in enumerate(values)}
+
+        column2id = self._value_to_index
 
         def index_column(row):
             """

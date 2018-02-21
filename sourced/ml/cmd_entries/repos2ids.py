@@ -1,7 +1,7 @@
 import logging
 from uuid import uuid4
 
-from sourced.ml.transformers import Engine, ContentExtractor, ContentDeserializer, \
+from sourced.ml.transformers import Ignition, ContentExtractor, ContentDeserializer, \
     Content2Ids, HeadFiles, Cacher
 from sourced.ml.utils import create_engine, EngineConstants
 
@@ -13,7 +13,7 @@ def repos2ids_entry(args):
                              EngineConstants.Columns.PathId]
     ids_transformer = Content2Ids(args, documents_column_name)
 
-    pipeline = Engine(engine) \
+    pipeline = Ignition(engine) \
         .link(HeadFiles()) \
         .link(ContentExtractor()) \
         .link(ContentDeserializer()) \
