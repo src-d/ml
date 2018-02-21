@@ -31,4 +31,4 @@ class Uast2Quant(Transformer):
             # (x[0][0], (x[0][1], x[1]))) <=> (class, (instance, frequency))
             quantize(items)
             self._levels[extractor.NAME] = extractor.levels
-            self._log.info("Done")
+            self._log.info("Done, %d items", len(extractor.levels))

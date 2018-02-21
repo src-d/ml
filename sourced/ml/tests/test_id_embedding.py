@@ -1,4 +1,5 @@
 import argparse
+from io import BytesIO
 import os
 import subprocess
 import tempfile
@@ -12,7 +13,7 @@ from scipy.sparse import coo_matrix
 from modelforge.model import split_strings, assemble_sparse_matrix
 from sourced.ml.algorithms import swivel
 from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel, preprocess_id2vec
-from sourced.ml.models import DocumentFrequencies, Id2Vec
+from sourced.ml.models import OrderedDocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
 from sourced.ml.tests.models import COOCC, COOCC_DF
 
@@ -26,8 +27,8 @@ def prepare_file(path):
     :param path: path to file
     :return: None
     """
-    if not os.path.exists(path):
-        subprocess.check_call(["gzip", "-dk", path + ".gz"])
+    if not os.path.exists(path) or os.path.getmtime(path) < os.path.getmtime(path + ".gz"):
+        subprocess.check_call(["gzip", "-fdk", path + ".gz"])
 
 
 def prepare_shard(dirname):
@@ -76,7 +77,6 @@ def default_preprocess_params(tmpdir, vocab):
 
 
 class IdEmbeddingTests(unittest.TestCase):
-
     def test_preprocess_bad_params(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, VOCAB)
@@ -94,7 +94,7 @@ class IdEmbeddingTests(unittest.TestCase):
                 sorted(os.listdir(tmpdir)),
                 ["col_sums.txt", "col_vocab.txt", "row_sums.txt", "row_vocab.txt",
                  "shard-000-000.pb"])
-            df = DocumentFrequencies().load(source=args.docfreq)
+            df = OrderedDocumentFrequencies().load(source=args.docfreq)
             self.assertEqual(len(df), VOCAB)
             with open(os.path.join(tmpdir, "col_sums.txt")) as fin:
                 col_sums = fin.read()
@@ -169,16 +169,17 @@ class IdEmbeddingTests(unittest.TestCase):
             run_swivel(args)
             check_swivel_results(self, tmpdir)
 
-    def test_postproc(self):
-        with tempfile.NamedTemporaryFile(suffix=".asdf") as tmp:
-            args = argparse.Namespace(
-                swivel_data=os.path.join(os.path.dirname(__file__), "postproc"),
-                output=tmp.name)
-            prepare_postproc_files(args.swivel_data)
+    def test_postprocess(self):
+        buffer = BytesIO()
+        args = argparse.Namespace(
+            swivel_data=os.path.join(os.path.dirname(__file__), "postproc"),
+            output=buffer)
+        prepare_postproc_files(args.swivel_data)
 
-            postprocess_id2vec(args)
+        postprocess_id2vec(args)
 
-            check_postproc_results(self, tmp.name)
+        buffer.seek(0)
+        check_postproc_results(self, buffer)
 
 
 if __name__ == "__main__":

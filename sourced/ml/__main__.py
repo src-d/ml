@@ -11,6 +11,7 @@ from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_ent
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2bow_entry
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
+from sourced.ml.transformers import BOWWriter
 from sourced.ml.utils import install_bigartm, add_engine_args
 
 
@@ -29,18 +30,34 @@ def get_parser() -> argparse.ArgumentParser:
     """
     Creates the cmdline argument parser.
     """
+    def add_vocabulary_size_arg(my_parser: argparse.ArgumentParser):
+        my_parser.add_argument(
+            "-v", "--vocabulary-size", default=10000000, type=int,
+            help="The maximum vocabulary size.")
 
-    def add_default_args(my_parser):
+    def add_default_args(my_parser: argparse.ArgumentParser):
         my_parser.add_argument(
             "-r", "--repositories", required=True,
             help="The path to the repositories.")
         my_parser.add_argument(
             "--min-docfreq", default=1, type=int,
-            help="The minimum document frequency of each element.")
+            help="The minimum document frequency of each feature.")
+        add_vocabulary_size_arg(my_parser)
         my_parser.add_argument(
             "-l", "--languages", required=True, nargs="+", choices=(
                 "Java", "Python", "JavaScript", "Ruby", "Bash"),
             help="The programming languages to analyse.")
+
+    def add_feature_args(my_parser: argparse.ArgumentParser):
+        my_parser.add_argument(
+            "-f", "--feature", nargs="+",
+            choices=[ex.NAME for ex in extractors.__extractors__.values()],
+            required=True, help="The feature extraction scheme to apply.")
+        for ex in extractors.__extractors__.values():
+            for opt, val in ex.OPTS.items():
+                my_parser.add_argument(
+                    "--%s-%s" % (ex.NAME, opt), default=val, type=json.loads,
+                    help="%s's kwarg" % ex.__name__)
 
     parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     parser.add_argument("--log-level", default="INFO",
@@ -67,19 +84,9 @@ def get_parser() -> argparse.ArgumentParser:
     repos2bow_parser.add_argument(
         "--bow", required=True, help="[OUT] The path to the Bag-Of-Words model.")
     repos2bow_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int, help="The maximum vocabulary size.")
-    repos2bow_parser.add_argument(
-        "--ordered", action="store_true",
-        help="Flag that specifies ordered or default document frequency model to create."
-             "If you use default document frequency model you should use only one feature.")
-    repos2bow_parser.add_argument(
-        "-f", "--feature", nargs="+",
-        choices=[ex.NAME for ex in extractors.__extractors__.values()],
-        required=True, help="The feature extraction scheme to apply.")
-    for ex in extractors.__extractors__.values():
-        for opt, val in ex.OPTS.items():
-            repos2bow_parser.add_argument("--%s-%s" % (ex.NAME, opt), default=val, type=json.loads,
-                                          help="%s's kwarg" % ex.__name__)
+        "--batch", default=BOWWriter.DEFAULT_CHUNK_SIZE, type=int,
+        help="The maximum size of a single BOW file in bytes.")
+    add_feature_args(repos2bow_parser)
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(
         "repos2df", "Calculate document frequencies of features extracted from source code.")
@@ -88,18 +95,8 @@ def get_parser() -> argparse.ArgumentParser:
     add_engine_args(repos2df_parser)
     repos2df_parser.add_argument(
         "--docfreq", required=True,
-        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
-    repos2df_parser.add_argument(
-        "--vocabulary-size", default=10000000, type=int,
-        help="The maximum vocabulary size.")
-    repos2df_parser.add_argument(
-        "--ordered", action="store_true",
-        help="Flag that specifies ordered or default document frequency model to create."
-             "If you use default document frequency model you should use only one feature.")
-    repos2df_parser.add_argument(
-        "-f", "--feature", nargs="+",
-        choices=[ex.NAME for ex in extractors.__extractors__.values()],
-        required=True, help="The feature extraction scheme to apply.")
+        help="[OUT] The path to the OrderedDocumentFrequencies model.")
+    add_feature_args(repos2df_parser)
     # ------------------------------------------------------------------------
     repos2coocc_parser = add_parser(
         "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")
@@ -113,20 +110,13 @@ def get_parser() -> argparse.ArgumentParser:
         help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
     repos2coocc_parser.add_argument(
         "--docfreq", required=True,
-        help="[OUT] The path to the (Ordered)DocumentFrequencies model.")
-    repos2coocc_parser.add_argument(
-        "--ordered", action="store_true",
-        help="Flag that specifies ordered or default document frequency model to create."
-             "If you use default document frequency model you should use only one feature.")
+        help="[OUT] The path to the OrderedDocumentFrequencies model.")
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
         "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
     preproc_parser.set_defaults(handler=preprocess_id2vec)
-    preproc_parser.add_argument(
-        "-v", "--vocabulary-size", default=1 << 17, type=int,
-        help="The final vocabulary size. Only the most frequent words will be"
-             "left.")
+    add_vocabulary_size_arg(preproc_parser)
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
     preproc_parser.add_argument(

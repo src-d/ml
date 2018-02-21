@@ -42,19 +42,18 @@ First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value
  'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
  'version': [0, 1, 0]}
 Number of words: 982
-""" + "First 10 words: ['aaa', 'aaaa', 'aaaaa', 'aaaaaa', 'aaaaaaa', 'aaaaaaaa', 'aaaaaaaaa', " \
-      "'aaaaaaaaaa', 'aaaaaaaaaaa', 'aaaaaaaaaaaa']\nNumber of documents: 1000\n"
+""" + "Random 10 words: "
 
     BOW_DUMP = """{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 59, 200818),
  'dependencies': [{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 48, 828287),
                    'dependencies': [],
-                   'model': 'ordered_docfreq',
+                   'model': 'docfreq',
                    'uuid': '2c4fcae7-93a6-496e-9e3a-d6e15d35b812',
                    'version': [1, 0, 0]}],
  'model': 'bow',
- 'parent': 'a65afc98-80d4-4b04-8353-9037e61adf2b',
- 'uuid': 'd221c3c6-55bb-46f9-a807-cc3351e46bbb',
- 'version': [1, 0, 10]}
+ 'parent': '51b4165d-b2c6-442a-93be-0eb35f4cc19a',
+ 'uuid': '0d95f342-2c69-459f-9ee7-a1fc7da88d64',
+ 'version': [1, 0, 15]}
 Shape: (5, 20)
 First 10 documents: ['repo1', 'repo2', 'repo3', 'repo4', 'repo5']
 First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 'i.Arrays', 'i.Bundle', 'i.EditText', 'i.Exception', 'i.False']\n"""  # nopep8
@@ -82,7 +81,9 @@ Matrix: shape: (304, 304) non-zero: 16001
     def test_docfreq(self):
         with captured_output() as (out, _, _):
             dump_model(self._get_args(input=paths.DOCFREQ))
-        self.assertEqual(out.getvalue(), self.DOCFREQ_DUMP)
+        self.assertEqual(out.getvalue()[:len(self.DOCFREQ_DUMP)], self.DOCFREQ_DUMP)
+        ending = "\nNumber of documents: 1000\n"
+        self.assertEqual(out.getvalue()[-len(ending):], ending)
 
     def test_bow(self):
         with captured_output() as (out, _, _):

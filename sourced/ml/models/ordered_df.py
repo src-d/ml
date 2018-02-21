@@ -1,4 +1,4 @@
-from typing import Iterable, Dict
+from typing import Iterable, Dict, List
 
 import numpy
 
@@ -12,19 +12,24 @@ class OrderedDocumentFrequencies(DocumentFrequencies):
     Compatible with the original DocumentFrequencies. This model maintains the determinitic
     sequence of the tokens.
     """
-    NAME = "ordered_docfreq"
+    # NAME is the same
 
     def construct(self, docs: int, tokfreqs: Iterable[Dict[str, int]]):
         super().construct(docs, tokfreqs)
         self._log.info("Ordering the keys...")
-        keys = list(self._df)
-        keys.sort()
+        keys = sorted(self._df)
         self._order = {k: i for i, k in enumerate(keys)}
         return self
 
     @property
-    def order(self):
+    def order(self) -> Dict[str, int]:
         return self._order
+
+    def tokens(self) -> List[str]:
+        arr = [None for _ in range(len(self))]
+        for k, v in self.order.items():
+            arr[v] = k
+        return arr
 
     def _load_tree(self, tree):
         tokens = split_strings(tree["tokens"])
@@ -40,12 +45,16 @@ class OrderedDocumentFrequencies(DocumentFrequencies):
             freqs[i] = self._df[k]
         return {"docs": self.docs, "tokens": merge_strings(tokens), "freqs": freqs}
 
-    @staticmethod
-    def maybe(enabled: bool):
-        """
-        Materializes either OrderedDocumentFrequencies or regular DocumentFrequencies
-        depending on the specified boolean flag (true for Ordered).
-        :param enabled: If true, :class:`OrderedDocumentFrequencies` instance is returned, \
-                        otherwise :class:`DocumentFrequencies`.
-        """
-        return OrderedDocumentFrequencies() if enabled else DocumentFrequencies()
+    def prune(self, threshold: int) -> "OrderedDocumentFrequencies":
+        pruned = super().prune(threshold)
+        if pruned is not self:
+            self._log.info("Recovering the order...")
+            pruned._order = {k: i for i, k in enumerate(sorted(pruned._df))}
+        return pruned
+
+    def greatest(self, max_size: int) -> "OrderedDocumentFrequencies":
+        pruned = super().greatest(max_size)
+        if pruned is not self:
+            self._log.info("Recovering the order...")
+            pruned._order = {k: i for i, k in enumerate(sorted(pruned._df))}
+        return pruned
