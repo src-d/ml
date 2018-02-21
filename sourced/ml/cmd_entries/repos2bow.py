@@ -7,17 +7,22 @@ from sourced.ml.transformers import Ignition, UastExtractor, UastDeserializer, U
     BagFeatures2DocFreq, BagFeatures2TermFreq, Uast2BagFeatures, HeadFiles, TFIDF, Cacher, \
     Indexer, Counter, BOWWriter
 from sourced.ml.utils import create_engine, EngineConstants
+from sourced.ml.utils.engine import pipeline_graph, pause
 
 
-def repos2bow_entry(args):
+@pause
+def repos2bow_entry_template(args, select=HeadFiles, before_deserialize=None):
     log = logging.getLogger("repos2bow")
     engine = create_engine("repos2bow-%s" % uuid4(), **args.__dict__)
     extractors = create_extractors_from_args(args)
 
-    uast_extractor = Ignition(engine, explain=args.explain) \
-        .link(HeadFiles()) \
+    ignition = Ignition(engine, explain=args.explain)
+    uast_extractor = ignition \
+        .link(select()) \
         .link(UastExtractor(languages=args.languages)) \
         .link(Cacher.maybe(args.persist))
+    if before_deserialize is not None:
+        uast_extractor.link(before_deserialize()).execute()
     log.info("Extracting UASTs...")
     ndocs = uast_extractor.link(Counter()).execute()
     log.info("Number of documents: %d", ndocs)
@@ -46,3 +51,8 @@ def repos2bow_entry(args):
         .link(Indexer(TFIDF.Columns.token, df_model.order)) \
         .link(BOWWriter(document_indexer, df_model, args.bow, args.batch)) \
         .execute()
+    pipeline_graph(args, log, ignition)
+
+
+def repos2bow_entry(args):
+    return repos2bow_entry_template(args)

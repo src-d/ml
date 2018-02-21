@@ -1,3 +1,4 @@
+from glob import glob
 import operator
 import os
 
@@ -83,3 +84,17 @@ class BOWWriter(Transformer):
         parent, full_name = os.path.split(base)
         name, ext = os.path.splitext(full_name)
         return os.path.join(parent, "%s_%03d%s" % (name, index + 1, ext))
+
+
+class BOWLoader:
+    def __init__(self, glob_path):
+        self.files = glob(glob_path)
+
+    def __len__(self):
+        return len(self.files)
+
+    def __bool__(self):
+        return bool(self.files)
+
+    def __iter__(self):
+        return (BOW().load(path) for path in self.files)
