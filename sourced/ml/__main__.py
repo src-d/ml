@@ -9,8 +9,8 @@ from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_ent
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2bow_entry
 from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, add_vocabulary_size_arg
+from sourced.ml.cmd_entries.repos2bow import add_bow_args
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
-from sourced.ml.transformers import BOWWriter
 from sourced.ml.utils import install_bigartm, add_engine_args
 
 
@@ -47,11 +47,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2bow_parser.set_defaults(handler=repos2bow_entry)
     add_repo2_args(repos2bow_parser)
     add_engine_args(repos2bow_parser)
-    repos2bow_parser.add_argument(
-        "--bow", required=True, help="[OUT] The path to the Bag-Of-Words model.")
-    repos2bow_parser.add_argument(
-        "--batch", default=BOWWriter.DEFAULT_CHUNK_SIZE, type=int,
-        help="The maximum size of a single BOW file in bytes.")
+    add_bow_args(repos2bow_parser)
     add_feature_args(repos2bow_parser)
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(

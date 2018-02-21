@@ -1,3 +1,4 @@
+import argparse
 import logging
 from uuid import uuid4
 
@@ -8,6 +9,14 @@ from sourced.ml.transformers import Ignition, UastExtractor, UastDeserializer, U
     Indexer, Counter, BOWWriter
 from sourced.ml.utils import create_engine, EngineConstants
 from sourced.ml.utils.engine import pipeline_graph, pause
+
+
+def add_bow_args(my_parser: argparse.ArgumentParser):
+    my_parser.add_argument(
+        "--bow", required=True, help="[OUT] The path to the Bag-Of-Words model.")
+    my_parser.add_argument(
+        "--batch", default=BOWWriter.DEFAULT_CHUNK_SIZE, type=int,
+        help="The maximum size of a single BOW file in bytes.")
 
 
 @pause
