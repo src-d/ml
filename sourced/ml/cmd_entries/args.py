@@ -36,6 +36,8 @@ def add_repo2_args(my_parser: argparse.ArgumentParser, quant=True):
 
 
 def add_feature_args(my_parser: argparse.ArgumentParser, required=True):
+    my_parser.add_argument("-x", "--mode", choices=("file", "func"),
+                           default="file", help="What to select for analysis.")
     my_parser.add_argument(
         "-f", "--feature", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],

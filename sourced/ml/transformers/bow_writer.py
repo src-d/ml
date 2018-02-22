@@ -8,7 +8,7 @@ from pyspark import RDD
 from scipy.sparse import csr_matrix
 
 from sourced.ml.models import OrderedDocumentFrequencies, BOW
-from sourced.ml.transformers import Indexer, TFIDF
+from sourced.ml.transformers import Indexer, Uast2BagFeatures
 from sourced.ml.transformers.transformer import Transformer
 
 
@@ -31,7 +31,7 @@ class BOWWriter(Transformer):
         return state
 
     def __call__(self, head: RDD):
-        c = TFIDF.Columns
+        c = Uast2BagFeatures.Columns
         self._log.info("Estimating the average bag size...")
         avglen = head \
             .map(lambda x: (x[c.document], 1)) \
@@ -57,6 +57,8 @@ class BOWWriter(Transformer):
             .toLocalIterator()
         if self.explained:
             self._log.info("toDebugString():\n%s", it.toDebugString().decode())
+        ndocs = 0
+        self._log.info("Writing files to %s", self.filename)
         for i, part in enumerate(it):
             docs = [doc_index_to_name[p[0]] for p in part]
             size = sum(len(p[1]) for p in part)
@@ -79,6 +81,8 @@ class BOWWriter(Transformer):
             self._log.info("%d -> %s with %d documents, %d nnz (%s)",
                            i + 1, filename, len(docs), size,
                            humanize.naturalsize(os.path.getsize(filename)))
+            ndocs += len(docs)
+        self._log.info("Final number of documents: %d", ndocs)
 
     def get_bow_file_name(self, base: str, index: int):
         parent, full_name = os.path.split(base)
