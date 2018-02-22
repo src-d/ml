@@ -1,24 +1,25 @@
 import logging
+from typing import NamedTuple
 from uuid import uuid4
 
-from sourced.ml.transformers import Ignition, ContentExtractor, ContentDeserializer, \
-    Content2Ids, HeadFiles, Cacher
+from sourced.ml.transformers import Ignition, \
+    Content2Ids, ContentExtractor, HeadFiles, Cacher
 from sourced.ml.utils import create_engine, EngineConstants
 
 
 def repos2ids_entry(args):
     log = logging.getLogger("repos2ids")
     engine = create_engine("repos2ids-%s" % uuid4(), **args.__dict__)
-    documents_column_name = [EngineConstants.Columns.RepositoryId,
-                             EngineConstants.Columns.PathId]
-    ids_transformer = Content2Ids(args, documents_column_name)
+    Column = NamedTuple("Column", [("repo_id", str), ("file_id", str)])
+    language_mapping = Content2Ids.build_mapping()
+    column_names = Column(repo_id=EngineConstants.Columns.RepositoryId,
+                          file_id=EngineConstants.Columns.Path)
 
-    pipeline = Ignition(engine) \
+    ids = Ignition(engine) \
         .link(HeadFiles()) \
         .link(ContentExtractor()) \
-        .link(ContentDeserializer()) \
-        .link(ids_transformer)
-    ids = pipeline.execute()
+        .link(Content2Ids(language_mapping, column_names, args.split, args.idfreq)) \
+        .execute()
 
     log.info("Writing %s", args.output)
-    ids_transformer.save(ids)
+    ids.toDF().toPandas().to_csv(args.output)

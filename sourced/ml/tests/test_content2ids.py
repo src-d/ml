@@ -1,6 +1,7 @@
 import argparse
 import gzip
 import tempfile
+from typing import NamedTuple
 import unittest
 
 from pyspark import Row
@@ -14,11 +15,13 @@ from sourced.ml.utils import create_spark
 class Content2IdsTests(unittest.TestCase):
     def setUp(self):
         self.sc = create_spark("test")
-        self.documents_column = ["document", "file"]
+        Column = NamedTuple("Column", [("repo_id", str), ("file_id", str)])
+        self.column_names = Column(repo_id="document", file_id="file")
+        self.language_mapping = Content2Ids.build_mapping()
 
     def test_call(self):
-        args = argparse.Namespace(split=False, idfreq=False, output=None)
-        content2ids = Content2Ids(args, self.documents_column)
+        content2ids = Content2Ids(self.language_mapping, self.column_names,
+                                  split=False, idfreq=False)
         for data, result in zip(tfidf_data.datasets, tfidf_data.ids_result):
             rdd = self.sc.sparkContext \
                 .parallelize(range(len(data["content"]))) \
@@ -27,8 +30,8 @@ class Content2IdsTests(unittest.TestCase):
             self.assertEqual(result, set(content2ids(rdd).collect()))
 
     def test_call_split(self):
-        args = argparse.Namespace(split=True, idfreq=False, output=None)
-        content2ids = Content2Ids(args, self.documents_column)
+        content2ids = Content2Ids(self.language_mapping, self.column_names,
+                                  split=True, idfreq=False)
         for data, result in zip(tfidf_data.datasets, tfidf_data.ids_split_result):
             rdd = self.sc.sparkContext \
                 .parallelize(range(len(data["content"]))) \
@@ -37,8 +40,8 @@ class Content2IdsTests(unittest.TestCase):
             self.assertEqual(result, set(content2ids(rdd).collect()))
 
     def test_call_split_idfreq(self):
-        args = argparse.Namespace(split=True, idfreq=True, output=None)
-        content2ids = Content2Ids(args, self.documents_column)
+        content2ids = Content2Ids(self.language_mapping, self.column_names,
+                                  split=True, idfreq=True)
         for data, result in zip(tfidf_data.datasets, tfidf_data.ids_split_idfreq_result):
             rdd = self.sc.sparkContext \
                 .parallelize(range(len(data["content"]))) \
@@ -47,9 +50,8 @@ class Content2IdsTests(unittest.TestCase):
             self.assertEqual(result, set(content2ids(rdd).collect()))
 
     def test_process_row_split(self):
-        args = argparse.Namespace(split=True, idfreq=False, output=None)
-        content2ids = Content2Ids(args, self.documents_column)
-        content2ids.build_mapping()
+        content2ids = Content2Ids(self.language_mapping, self.column_names,
+                                  split=True, idfreq=False)
         row = Row(content="from foo import FooBar; print('foobar')",
                   file="foobar.py",
                   document="src-d/ml",
@@ -68,9 +70,8 @@ class Content2IdsTests(unittest.TestCase):
         self.assertEqual(len(list(content2ids._process_row(row_batch))), 0)
 
     def test_process_row(self):
-        args = argparse.Namespace(split=False, idfreq=False, output=None)
-        content2ids = Content2Ids(args, self.documents_column)
-        content2ids.build_mapping()
+        content2ids = Content2Ids(self.language_mapping, self.column_names,
+                                  split=False, idfreq=False)
         row = Row(content="from foo import FooBar; print('foobar')",
                   file="foobar.py",
                   document="src-d/ml",
@@ -78,20 +79,6 @@ class Content2IdsTests(unittest.TestCase):
         self.assertEqual(list(content2ids._process_row(row)),
                          [("foo", ("src-d/ml", "src-d/ml/foobar.py")),
                           ("FooBar", ("src-d/ml", "src-d/ml/foobar.py"))])
-
-    def test_save(self):
-        with tempfile.NamedTemporaryFile(prefix="repos2ids-test-save", suffix=".csv.gz") as tmpf:
-            args = argparse.Namespace(split=True, idfreq=True, output=tmpf.name)
-            content2ids = Content2Ids(args, self.documents_column)
-            rdd = self.sc.sparkContext \
-                .parallelize(range(1)) \
-                .map(lambda x: Row(token="FooBar", token_split="foo bar",
-                                   num_repos=1, num_files=2, num_occ=3))
-            content2ids.save(rdd)
-            with gzip.open(tmpf, "r") as g:
-                lines = g.readlines()
-        self.assertEqual(len(lines), 2)
-        self.assertEqual(len(lines[0].decode().split(",")), 5)
 
 
 if __name__ == "__main__":

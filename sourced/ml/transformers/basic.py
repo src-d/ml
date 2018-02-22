@@ -113,18 +113,6 @@ class UastExtractor(Transformer):
         return uasts
 
 
-class ContentExtractor(Transformer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def __call__(self, files):
-        files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
-        classified = files.classify_languages().filter("lang is not null")
-        from pyspark.sql import functions
-        contents = classified.where(functions.length(functions.col("content")) > 0)
-        return contents
-
-
 class FieldsSelector(Transformer):
     def __init__(self, fields: Union[list, tuple], **kwargs):
         super().__init__(**kwargs)
@@ -171,18 +159,4 @@ class UastDeserializer(Transformer):
             return
         row_dict = row.asDict()
         row_dict["uast"] = self.parse_uast(row.uast[0])
-        yield Row(**row_dict)
-
-
-class ContentDeserializer(Transformer):
-    def __setstate__(self, state):
-        super().__setstate__(state)
-
-    def __call__(self, rows):
-        return rows.rdd.flatMap(self.deserialize_content)
-
-    def deserialize_content(self, row):
-        if not row.content:
-            return
-        row_dict = row.asDict()
         yield Row(**row_dict)

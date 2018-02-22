@@ -31,13 +31,15 @@ setup(
                       "bblfsh>=2.2.1,<3.0",
                       "modelforge>=0.5.4-alpha",
                       "sourced-engine>=0.5.1,<0.6",
+                      "pygments>=2.2.0,<3.0",
                       "humanize>=0.5.0",
                       "parquet>=1.2,<2.0"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
     },
-    package_data={"": ["LICENSE", "README.md"]},
+    package_data={"": ["LICENSE", "README.md"],
+                  "sourced": ["ml/transformers/languages.yml"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",

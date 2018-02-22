@@ -66,15 +66,14 @@ def get_parser() -> argparse.ArgumentParser:
         help="The path to the repositories.")
     repos2ids_parser.add_argument(
         "-o", "--output", required=True,
-        help="[OUT] The path to the output csv file of identifiers, compressed in gz format.")
+        help="[OUT] output CSV file with identifiers.")
     repos2ids_parser.add_argument(
         "--split", action="store_true",
-        help="Flag that specifies if you want to filter specific identifiers."
-             "Default value makes you filter identifiers which are easy splittable:"
-             "that is to say on special characters or case changes")
+        help="Enables filtering identifiers that are splittable"
+             "based on special characters or case changes.")
     repos2ids_parser.add_argument(
         "--idfreq", action="store_true",
-        help="Flaf that adds identifier frequencies to the output CSV file."
+        help="Adds identifier frequencies to the output CSV file."
              "num_repos is the number of repositories where the identifier appears in."
              "num_files is the number of files where the identifier appears in."
              "num_occ is the total number of occurences of the identifier.")

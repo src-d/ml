@@ -1,12 +1,14 @@
 import gzip
 import operator
 import os
+from typing import NamedTuple, Dict, Generator
 import yaml
 
 import pygments
 from pygments.formatter import Formatter
 from pygments.lexers import get_lexer_by_name, ClassNotFound
-from pyspark import Row
+from pyspark import RDD, Row
+from pyspark.sql import functions
 
 from sourced.ml.algorithms import TokenParser
 from sourced.ml.transformers import Transformer
@@ -26,77 +28,65 @@ class Content2Ids(Transformer):
         def format(self, tokensource, outfile):
             self.callback(tokensource)
 
-    def __init__(self, args, documents_column, **kwargs):
+    def __init__(self, language_mapping: Dict, column_names: NamedTuple,
+                 split: bool, idfreq: bool, **kwargs):
         super().__init__(**kwargs)
-        self.documents_column = documents_column
-        self.linguist2pygments = {}
-        self.split = args.split
-        self.idfreq = args.idfreq
-        self.output = args.output
+        self.column_names = column_names
+        self.linguist2pygments = language_mapping
+        self.split = split
+        self.idfreq = idfreq
 
-    def __call__(self, rows):
+    def __call__(self, rows: RDD):
         list_RDDs = []
-        self.build_mapping()
-        processed = rows.flatMap(self._process_row).persist()
-
+        processed = rows.flatMap(self._process_row)
         if self.idfreq:
-            num_repos_processed = processed \
-                .map(lambda x: (x[0], x[1][0])) \
-                .distinct()
-            num_repos_reduced = self.reduce_rows(num_repos_processed)
-            list_RDDs.append(num_repos_reduced)
-
-            num_files_processed = processed \
-                .map(lambda x: (x[0], x[1][1])) \
-                .distinct()
-            num_files_reduced = self.reduce_rows(num_files_processed)
-            list_RDDs.append(num_files_reduced)
-
-            num_occ_reduced = self.reduce_rows(processed)
-            list_RDDs.append(num_occ_reduced)
-
+            for i in (0, 1):
+                # initial structure of x: (identifier, (repositoryId, filepath))
+                freq_processed = processed \
+                               .map(lambda x: (x[0], x[1][i])) \
+                               .distinct()
+                list_RDDs.append(self.reduce_rows(freq_processed))
+            list_RDDs.append(self.reduce_rows(processed))
             return processed \
-                .map(lambda x: x[0]) \
                 .context.union(list_RDDs) \
                 .groupByKey() \
                 .mapValues(list) \
                 .map(lambda x: Row(
-                    token=x[0],
-                    token_split=" ".join(TokenParser(min_split_length=1).split(x[0])),
-                    num_repos=x[1][0],
-                    num_files=x[1][1],
-                    num_occ=x[1][2]))
+                        token=x[0],
+                        token_split=" ".join(TokenParser(min_split_length=1).split(x[0])),
+                        num_repos=x[1][0],
+                        num_files=x[1][1],
+                        num_occ=x[1][2]))
         else:
             return processed \
                 .map(lambda x: x[0]) \
                 .distinct() \
                 .map(lambda x: Row(
-                    token=x,
-                    token_split=" ".join(TokenParser(min_split_length=1).split(x))))
+                        token=x,
+                        token_split=" ".join(TokenParser(min_split_length=1).split(x))))
 
-    def reduce_rows(self, rows):
+    def reduce_rows(self, rows: RDD):
         return rows \
             .map(lambda x: (x[0], 1)) \
             .reduceByKey(operator.add)
 
-    def _process_row(self, row):
+    def _process_row(self, row: Row):
         self.names = []
-        repo_id = getattr(row, self.documents_column[0])
-        file_id = getattr(row, self.documents_column[1])
+        repo_id = getattr(row, self.column_names.repo_id)
+        file_id = getattr(row, self.column_names.file_id)
         path = os.path.join(repo_id, file_id)
         code = row.content
-        try:
-            lexer = get_lexer_by_name(self.linguist2pygments[row.lang][0])
-            pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
-        except ClassNotFound:
-            lexer = get_lexer_by_name(self.linguist2pygments[row.lang][1])
-            pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
-        except KeyError:
-            pass
+        for i in (0, 1):
+            try:
+                lexer = get_lexer_by_name(self.linguist2pygments[row.lang][i])
+                pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
+                break
+            except (KeyError, ClassNotFound) as e:
+                continue
         for token in self.names:
             yield token, (repo_id, path)
 
-    def process_tokens(self, tokens):
+    def process_tokens(self, tokens: Generator):
         """
         Filter tokens of type "Name" and which are splittable
         according to :class: 'TokenParser' rules
@@ -104,16 +94,18 @@ class Content2Ids(Transformer):
         for _type, token in tokens:
             if _type[0] == "Name":
                 if self.split:
-                    if len(list(TokenParser(min_split_length=1).split(token))) > 1:
+                    if sum(1 for _ in TokenParser(min_split_length=1).split(token)) > 1:
                         self.names.append(token)
                 else:
                     self.names.append(token)
 
-    def build_mapping(self):
+    @staticmethod
+    def build_mapping():
         """
         Builds the mapping between linguist languages and pygments names for lexers.
         """
-        with open("doc/languages.yml") as f:
+        linguist2pygments = {}
+        with open(os.path.join(os.path.dirname(__file__), "languages.yml")) as f:
             all_languages = yaml.load(f)
 
         linguist_langs = {}
@@ -130,17 +122,19 @@ class Content2Ids(Transformer):
             lang_names = linguist_langs.get(lang, (set(),))[0]
             inter = list(lang_names.intersection(pygments_langs))
             if inter:
-                self.linguist2pygments[lang] = inter
+                linguist2pygments[lang] = inter
+        return linguist2pygments
 
-    def save(self, id_rdd):
-        with gzip.open(self.output, "w") as g:
-            columns_names = ["token", "token_split"]
-            if self.idfreq:
-                columns_names.extend(["num_repos", "num_files", "num_occ"])
-            g.write(str.encode(",".join(columns_names).upper() + "\n"))
-            for row in id_rdd.collect():
-                row_dict = row.asDict()
-                row_list = []
-                for col in columns_names:
-                    row_list.append(str(row_dict[col]))
-                g.write(str.encode(",".join(row_list) + "\n"))
+
+class ContentExtractor(Transformer):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __call__(self, files: RDD):
+        return files \
+            .dropDuplicates(("blob_id",)) \
+            .filter("is_binary = 'false'") \
+            .classify_languages() \
+            .filter("lang is not null") \
+            .where(functions.length(functions.col("content")) > 0) \
+            .rdd
