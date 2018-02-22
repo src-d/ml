@@ -5,6 +5,8 @@ from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary, Uast2BagBase
 
 
 class Uast2StructBagBase(Uast2BagBase):
+    SEP = ">"
+
     def __init__(self, stride, seq_len, node2index=None):
         self._node2index = node2index if node2index is not None else FakeVocabulary()
         self._stride = stride
@@ -26,10 +28,10 @@ class UastSeq2Bag(Uast2StructBagBase):
     """
     DFS traversal + preserves the order of node children.
     """
-    def __init__(self, stride=1, seq_len=5, node2index=None, sep="|"):
+
+    def __init__(self, stride=1, seq_len=5, node2index=None):
         _node2index = Node2InternalType() if node2index is None else node2index
         super().__init__(stride, seq_len, _node2index)
-        self.sep = sep
 
     def _uast2sequence(self, root):
         sequence = []
@@ -54,7 +56,7 @@ class UastSeq2Bag(Uast2StructBagBase):
 
         for seq_len in self._seq_lens:
             for i in range(0, len(node_sequence) - seq_len + 1, self._stride):
-                key = self.sep.join(node_sequence[i:i + seq_len])
+                key = self.SEP.join(node_sequence[i:i + seq_len])
                 bag[key] += 1
         return bag
 
@@ -170,12 +172,11 @@ class Uast2RandomWalks:
 
 class UastRandomWalk2Bag(Uast2StructBagBase):
     def __init__(self, p_explore_neighborhood=0.5, q_leave_neighborhood=0.5, n_walks=5, n_steps=19,
-                 stride=1, seq_len=(5, 6), seed=42, sep="|"):
+                 stride=1, seq_len=(5, 6), seed=42):
         super().__init__(stride, seq_len)
         self.uast2walks = Uast2RandomWalks(p_explore_neighborhood=p_explore_neighborhood,
                                            q_leave_neighborhood=q_leave_neighborhood,
                                            n_walks=n_walks, n_steps=n_steps, seed=seed)
-        self.sep = sep
 
     def __call__(self, uast):
         bag = defaultdict(int)
@@ -183,5 +184,5 @@ class UastRandomWalk2Bag(Uast2StructBagBase):
             for seq_len in self._seq_lens:
                 for i in range(0, len(walk) - seq_len + 1, self._stride):
                     # convert to str - requirement from wmhash.BagsExtractor
-                    bag[self.sep.join(walk[i:i + seq_len])] += 1
+                    bag[self.SEP.join(walk[i:i + seq_len])] += 1
         return bag

@@ -150,9 +150,9 @@ class ParquetLoader(Transformer):
         return state
 
     def __call__(self, _):
-        if issubclass(type(self.paths), (list, tuple)):
+        if isinstance(self.paths, (list, tuple)):
             return self.session.read.parquet(*self.paths)
-        if issubclass(type(self.paths), str):
+        if isinstance(self.paths, str):
             return self.session.read.parquet(self.paths)
         raise ValueError
 

@@ -9,6 +9,9 @@ from sourced.ml.utils import EngineConstants
 
 
 class UastRow2Document(Transformer):
+    REPO_PATH_SEP = "//"
+    PATH_BLOB_SEP = "@"
+
     def __call__(self, rows: Union[RDD, DataFrame]):
         if isinstance(rows, DataFrame):
             rows = rows.rdd
@@ -16,7 +19,8 @@ class UastRow2Document(Transformer):
 
     def documentize(self, r: Row) -> Row:
         ec = EngineConstants.Columns
-        doc = "%s/%s@%s" % (r[ec.RepositoryId], r[ec.Path], r[ec.BlobId])
+        doc = ("%s" + self.REPO_PATH_SEP + "%s" + self.PATH_BLOB_SEP + "%s")
+        doc = doc % (r[ec.RepositoryId], r[ec.Path], r[ec.BlobId])
         bfc = Uast2BagFeatures.Columns
         return Row(**{bfc.document: doc, ec.Uast: r[ec.Uast]})
 
