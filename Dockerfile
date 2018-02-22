@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM srcd/spark:2.2.0_v2
 
 ADD requirements.txt setup.py package/
 
@@ -9,7 +9,7 @@ RUN rm -rf package/sourced/ml/tests && \
     curl https://bootstrap.pypa.io/get-pip.py | python3 && \
     pip3 install --no-cache-dir -r package/requirements.txt && \
     apt-get remove -y python3-dev libxml2-dev make gcc g++ curl && \
-    apt-get remove -y *-doc *-man >/dev/null && \
+    apt-get remove -y .*-doc .*-man >/dev/null && \
     apt-get autoremove -y && \
     apt-get install -y --no-install-suggests --no-install-recommends git && \
     apt-get clean && \
@@ -29,5 +29,7 @@ RUN pip3 install --no-cache-dir ./package && rm -rf package
 EXPOSE 8000
 ENV BROWSER /browser
 ENV LC_ALL en_US.UTF-8
+ENV PYSPARK_PYTHON python3
+ENV PYSPARK_PYTHON_DRIVER python3
 
 ENTRYPOINT ["srcml"]
