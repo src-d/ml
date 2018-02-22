@@ -4,8 +4,8 @@ from uuid import uuid4
 from sourced.ml.extractors import create_extractors_from_args
 from sourced.ml.models import OrderedDocumentFrequencies, QuantizationLevels
 from sourced.ml.transformers import Ignition, UastExtractor, UastDeserializer, \
-    BagFeatures2DocFreq, HeadFiles, Uast2BagFeatures, Counter, Cacher, Uast2Quant
-from sourced.ml.utils import create_engine, EngineConstants
+    BagFeatures2DocFreq, HeadFiles, Uast2BagFeatures, Counter, Cacher, Uast2Quant, UastRow2Document
+from sourced.ml.utils import create_engine
 from sourced.ml.utils.engine import pipeline_graph, pause
 
 
@@ -19,6 +19,7 @@ def repos2df_entry(args):
     uast_extractor = ignition \
         .link(HeadFiles()) \
         .link(UastExtractor(languages=args.languages)) \
+        .link(UastRow2Document()) \
         .link(Cacher.maybe(args.persist))
     log.info("Extracting UASTs...")
     ndocs = uast_extractor.link(Counter()).execute()
@@ -30,7 +31,7 @@ def repos2df_entry(args):
         log.info("Writing quantization levels to %s", args.quant)
         QuantizationLevels().construct(quant.levels).save(args.quant)
     df = uast_extractor \
-        .link(Uast2BagFeatures(extractors, EngineConstants.Columns.RepositoryId)) \
+        .link(Uast2BagFeatures(extractors)) \
         .link(BagFeatures2DocFreq()) \
         .execute()
     log.info("Writing %s", args.docfreq)

@@ -52,26 +52,27 @@ class Indexer(Transformer):
             arr[v] = k
         return arr
 
+    def calculate_value_to_index(self, rdd: RDD):
+        column_name = self.column
+        if isinstance(column_name, str):
+            column = rdd.map(lambda x: getattr(x, column_name))
+        else:
+            column = rdd.map(lambda x: x[column_name])
+        self._log.info("Collecting the list of distinct sorted values (%s)", column_name)
+        values = column.distinct()
+        if self.explained:
+            self._log.info("toDebugString():\n%s", values.toDebugString().decode())
+        values = values.collect()
+        values.sort()  # We do not expect an extraordinary number of distinct values
+        self._log.info("%d distinct values", len(values))
+        if len(values) == 0:
+            raise RuntimeError("Number of distinct values is zero.")
+        self._value_to_index = {d: i for i, d in enumerate(values)}
+
     def __call__(self, rdd: RDD):
-        column_id = self.column
+        column_name = self.column
         if self._value_to_index is None:
-            if isinstance(column_id, str):
-                column = rdd.map(lambda x: getattr(x, column_id))
-            else:
-                column = rdd.map(lambda x: x[column_id])
-
-            self._log.info("Collecting the list of distinct sorted values (%s)", column_id)
-            values = column.distinct()
-            if self.explained:
-                self._log.info("toDebugString():\n%s", values.toDebugString().decode())
-            values = values.collect()
-            values.sort()  # We do not expect an extraordinary number of distinct values
-            self._log.info("%d distinct values", len(values))
-            if len(values) == 0:
-                raise RuntimeError("Number of distinct values is zero.")
-
-            self._value_to_index = {d: i for i, d in enumerate(values)}
-
+            self.calculate_value_to_index(rdd)
         column2id = self._value_to_index
 
         def index_column(row):
@@ -82,11 +83,11 @@ class Indexer(Transformer):
             do not use self inside this function. It will be suboptimal and probably fail to run.
             Please contact me if you have troubles: kslavnov@gmail.com
             """
-            if isinstance(column_id, str):
+            if isinstance(column_name, str):
                 assert isinstance(row, Row)
                 row_dict = row.asDict()
-                row_dict[column_id] = column2id[row_dict[column_id]]
+                row_dict[column_name] = column2id[row_dict[column_name]]
                 return Row(**row_dict)
-            return row[:column_id] + (column2id[row[column_id]],) + row[column_id + 1:]
+            return row[:column_name] + (column2id[row[column_name]],) + row[column_name + 1:]
 
         return rdd.map(index_column)

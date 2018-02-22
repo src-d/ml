@@ -2,7 +2,7 @@ from pyspark import Row, RDD
 
 from sourced.ml.algorithms import log_tf_log_idf
 from sourced.ml.models import DocumentFrequencies
-from sourced.ml.transformers.bag_features2termfreq import BagFeatures2TermFreq
+from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.transformers.transformer import Transformer
 
 
@@ -10,7 +10,7 @@ class TFIDF(Transformer):
     """
     Calculates TF-IDF (log-log) weight for every feature.
     """
-    Columns = BagFeatures2TermFreq.Columns
+    Columns = Uast2BagFeatures.Columns
 
     def __init__(self, df: DocumentFrequencies, **kwargs):
         """
