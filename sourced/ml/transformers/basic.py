@@ -139,12 +139,22 @@ class ParquetSaver(Transformer):
 
 
 class ParquetLoader(Transformer):
-    def __init__(self, session, **kwargs):
+    def __init__(self, session, paths, **kwargs):
         super().__init__(**kwargs)
         self.session = session
+        self.paths = paths
 
-    def __call__(self, df):
-        return self.session.read.parquet(self.save_loc)
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["session"]
+        return state
+
+    def __call__(self, _):
+        if isinstance(self.paths, (list, tuple)):
+            return self.session.read.parquet(*self.paths)
+        if isinstance(self.paths, str):
+            return self.session.read.parquet(self.paths)
+        raise ValueError
 
 
 class UastDeserializer(Transformer):
