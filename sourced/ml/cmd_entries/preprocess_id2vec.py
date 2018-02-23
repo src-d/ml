@@ -3,7 +3,10 @@ import os
 import shutil
 
 import numpy
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ImportError as e:
+    logging.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 
 from modelforge.progress_bar import progress_bar
 from sourced.ml.algorithms.id_embedding import _extract_coocc_matrix
