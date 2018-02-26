@@ -1,4 +1,8 @@
-import modelforge.configuration
+try:
+    import modelforge.configuration
 
-__version__ = 0, 4, 0
-modelforge.configuration.refresh()
+    modelforge.configuration.refresh()
+except ImportError:
+    pass
+
+__version__ = 0, 4, 3

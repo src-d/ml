@@ -11,9 +11,9 @@ else:
 
 setup(
     name="sourced-ml",
-    description="Part of source{d}'s stack for machine learning on source "
-                "code. Provides API and tools to train and use models based "
-                "on source code identifiers extracted from Babelfish's UASTs.",
+    description="Framework for machine learning on source code. "
+                "Provides API and tools to train and use models based "
+                "on source code features extracted from Babelfish's UASTs.",
     version=".".join(map(str, sourcedml.__version__)),
     license="Apache 2.0",
     author="source{d}",
@@ -31,6 +31,7 @@ setup(
                       "bblfsh>=2.2.1,<3.0",
                       "modelforge>=0.5.4-alpha",
                       "sourced-engine>=0.5.1,<0.6",
+                      "pyspark==2.2.0.post0",
                       "humanize>=0.5.0",
                       "parquet>=1.2,<2.0"] + typing,
     extras_require={

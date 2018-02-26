@@ -1,5 +1,6 @@
 import argparse
 import logging
+import warnings
 
 try:
     from sourced.ml.algorithms import swivel as swivel
@@ -17,7 +18,7 @@ try:
                 "--" + flag.name, default=flag.default, type=types[flag.flag_type()],
                 help=flag.help)
 except ImportError as e:
-    logging.warning("Tensorflow is not installed, dependent functionality is unavailable.")
+    warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 
     def mirror_tf_args(parser: argparse.ArgumentParser):
         """Dummy handler to avoid errors in main."""

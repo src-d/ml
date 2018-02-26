@@ -3,11 +3,12 @@ import operator
 
 from scipy import sparse
 from bblfsh import Node
+from pyspark import Row
 from pyspark.rdd import PipelinedRDD
 
 from sourced.ml.models import Cooccurrences, OrderedDocumentFrequencies
 from sourced.ml.transformers import Transformer
-from sourced.ml.utils import bblfsh_roles
+from sourced.ml.utils import bblfsh_roles, EngineConstants
 
 
 class CooccModelSaver(Transformer):
@@ -41,7 +42,7 @@ class CooccModelSaver(Transformer):
 class CooccConstructor(Transformer):
     """
     Co-occurrence matrix calculation transformer.
-    You can find an algorithm full description in :ref:`coocc.md`
+    You can find an algorithm full description in blog.sourced.tech/posts/id2vec.
     """
     def __init__(self, token2index, token_parser, namespace="", **kwargs):
         super().__init__(**kwargs)
@@ -83,11 +84,12 @@ class CooccConstructor(Transformer):
             .map(lambda row: (row[0][0], row[0][1], row[1]))
         return sparse_matrix
 
-    def _process_row(self, row):
-        for token1, token2 in self._traverse_uast(row.uast):
-            try:
-                yield (self.token2index.value[self.namespace + token1],
-                       self.token2index.value[self.namespace + token2]), 1
-            except KeyError:
-                # Do not have token1 or token2 in the token2index map
-                pass
+    def _process_row(self, row: Row):
+        for uast in row[EngineConstants.Columns.Uast]:
+            for token1, token2 in self._traverse_uast(uast):
+                try:
+                    yield (self.token2index.value[self.namespace + token1],
+                           self.token2index.value[self.namespace + token2]), 1
+                except KeyError:
+                    # Do not have token1 or token2 in the token2index map
+                    pass
