@@ -1,3 +1,5 @@
+from itertools import chain
+
 from pyspark import Row, RDD
 from pyspark.sql import DataFrame
 
@@ -10,10 +12,11 @@ class Moder(Transformer):
     Select the items to extract from UASTs.
     """
     class Options:
+        repo = "repo"
         file = "file"
         function = "func"
 
-        __all__ = (file, function)
+        __all__ = (file, function, repo)
 
     # Copied from https://github.com/src-d/hercules/blob/master/shotness.go#L40
     # If you change here, please PR it to Hercules as well
@@ -43,6 +46,15 @@ class Moder(Transformer):
         if value not in self.Options.__all__:
             raise ValueError("Unsupported mode: " + value)
         self._mode = value
+
+    def call_repo(self, rows: RDD):
+        ridcol = EngineConstants.Columns.RepositoryId
+        uastcol = EngineConstants.Columns.Uast
+        return rows \
+            .groupBy(lambda r: r[ridcol]) \
+            .map(lambda x: Row(**{ridcol: x[0], EngineConstants.Columns.Path: "",
+                                  EngineConstants.Columns.BlobId: "",
+                                  uastcol: list(chain.from_iterable(i[uastcol] for i in x[1]))}))
 
     def call_file(self, rows: RDD):
         return rows
