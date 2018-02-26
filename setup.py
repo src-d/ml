@@ -11,9 +11,9 @@ else:
 
 setup(
     name="sourced-ml",
-    description="Part of source{d}'s stack for machine learning on source "
-                "code. Provides API and tools to train and use models based "
-                "on source code identifiers extracted from Babelfish's UASTs.",
+    description="Framework for machine learning on source code. "
+                "Provides API and tools to train and use models based "
+                "on source code features extracted from Babelfish's UASTs.",
     version=".".join(map(str, sourcedml.__version__)),
     license="Apache 2.0",
     author="source{d}",
@@ -40,7 +40,7 @@ setup(
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
     },
     package_data={"": ["LICENSE.md", "README.md"],
-                  "sourced": ["ml/transformers/languages.yml"],},
+                  "sourced": ["ml/transformers/languages.yml"], },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",

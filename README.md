@@ -1,23 +1,24 @@
-# source{d} ml [![PyPI](https://img.shields.io/pypi/v/sourcedml.svg)](https://pypi.python.org/pypi/sourcedml) [![Build Status](https://travis-ci.org/src-d/ml.svg)](https://travis-ci.org/src-d/ml) [![Docker Build Status](https://img.shields.io/docker/build/srcd/ml.svg)](https://hub.docker.com/r/srcd/ml) [![codecov](https://codecov.io/github/src-d/ml/coverage.svg?branch=develop)](https://codecov.io/gh/src-d/ml)
+# source{d} ml [![PyPI](https://img.shields.io/pypi/v/sourced-ml.svg)](https://pypi.python.org/pypi/sourced-ml) [![Build Status](https://travis-ci.org/src-d/ml.svg)](https://travis-ci.org/src-d/ml) [![Docker Build Status](https://img.shields.io/docker/build/srcd/ml.svg)](https://hub.docker.com/r/srcd/ml) [![codecov](https://codecov.io/github/src-d/ml/coverage.svg?branch=develop)](https://codecov.io/gh/src-d/ml)
 
-This project is the foundation for [MLoSC](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and working with models, thus allowing to focus on the higher level tasks.
+This project is the foundation for [MLoSC](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and training models, thus allowing to focus on the higher level tasks.
 
 Currently, the following models are implemented:
 
-* id2vec, source code identifier embeddings
-* docfreq, source code identifier document frequencies (part of TF-IDF)
-* nBOW, weighted bag of vectors, as in [src-d/wmd-relax](https://github.com/src-d/wmd-relax)
-* topic modeling
-* wmhlsh, locality sensitive hashing on top of weighted minhash
+* BOW - weighted bag of x, where x is many different extracted feature types.
+* id2vec, source code identifier embeddings.
+* docfreq, feature document frequencies (part of TF-IDF).
+* topic modeling over source code identifiers.
 
-It is written in Python3 and has been tested on Linux and macOS. source{d} ml is tightly coupled with [source{d} engine](https://engine.sourced.tech) and delegates all the feature extraction to it.
+It is written in Python3 and has been tested on Linux and macOS.
+source{d} ml is tightly coupled with [source{d} engine](https://engine.sourced.tech) and delegates
+all the feature extraction parallelization to it.
 
-Here is the list of projects which are built using sourced.ml:
+Here is the list of proof-of-concept projects which are built using sourced.ml:
 
-* [vecino](https://github.com/src-d/vecino) - finding similar repositories
-* [tmsc](https://github.com/src-d/tmsc) - topic modeling of repositories
-* [role2vec](https://github.com/src-d/rol2vec) - AST node embedding and correction
-* [snippet-ranger](https://github.com/src-d/snippet-ranger) - topic modeling of source code snippets
+* [vecino](https://github.com/src-d/vecino) - finding similar repositories.
+* [tmsc](https://github.com/src-d/tmsc) - listing topics of a repository.
+* [snippet-ranger](https://github.com/src-d/snippet-ranger) - topic modeling of source code snippets.
+* [apollo](https://github.com/src-d/apollo) - source code deduplication at scale.
 
 ## Installation
 
@@ -25,7 +26,8 @@ Here is the list of projects which are built using sourced.ml:
 pip3 install sourced-ml
 ```
 
-You need to have `libxml2` installed. E.g., on Ubuntu `apt install libxml2-dev`.
+You need to have some native libraries installed. E.g., on Ubuntu `apt install libxml2-dev libsnappy-dev`.
+Some parts require [Tensorflow](https://tensorflow.org).
 
 ## Usage
 
@@ -34,19 +36,6 @@ This project exposes two interfaces: API and command line. The command line is
 ```
 srcml --help
 ```
-
-There is an example of using Python API [here](Doc/how_to_use_sourcedml.ipynb).
-
-It exposes several tools to generate the models and setup the environment.
-
-API is divided into two domains: models and training. The first is about using while the second
-is about creating. Models: [Id2Vec](sourced/ml/id2vec.py),
-[DocumentFrequencies](sourced/ml/df.py), [NBOW](sourced/ml/nbow.py), [Cooccurrences](sourced/ml/coocc.py).
-Transformers (keras/sklearn style): [Repo2nBOWTransformer](sourced/ml/repo2/nbow.py#L72),
-[Repo2CooccTransformer](sourced/ml/repo2/coocc.py#L101),
-[PreprocessTransformer](sourced/ml/id_embedding.py#L22),
-[SwivelTransformer](sourced/ml/id_embedding.py#L218) and
-[PostprocessTransformer](sourced/ml/id_embedding.py#L241).
 
 ## Docker image
 
@@ -65,7 +54,7 @@ refer to the [documentation](https://docs.docker.com/engine/installation/linux/l
 
 ## Contributions
 
-...are welcome! See [CONTRIBUTING](CONTRIBUTING.md) and [code of conduct](CODE_OF_CONDUCT.md).
+...are welcome! See [CONTRIBUTING](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -77,25 +66,21 @@ refer to the [documentation](https://docs.docker.com/engine/installation/linux/l
 
 We build the source code identifier co-occurrence matrix for every repository.
 
-1. Clone or read the repository from disk.
+1. Read Git repositories.
 2. Classify files using [enry](https://github.com/src-d/enry).
 3. Extract [UAST](https://doc.bblf.sh/uast/specification.html) from each supported file.
-4. [Split and stem](sourced/ml/repo2/base.py#L160) all the identifiers in each tree.
-5. [Traverse UAST](sourced/ml/repo2/coocc.py#L86), collapse all non-identifier paths and record all
+4. [Split and stem](sourced/ml/algorithms/token_parser.py) all the identifiers in each tree.
+5. [Traverse UAST](sourced/ml/transformers/coocc.py), collapse all non-identifier paths and record all
 identifiers on the same level as co-occurring. Besides, connect them with their immediate parents.
-6. Write the individual co-occurrence matrices.
-7. [Merge](sourced/ml/id_embedding.py#L50) co-occurrence matrices from all repositories. Write the
-document frequencies model.
-8. Train the embeddings using [Swivel](sourced/ml/swivel.py) running on Tensorflow. Interactively view
+6. Write the global co-occurrence matrix.
+7. Train the embeddings using [Swivel](sourced/ml/algorithms/swivel.py) (requires Tensorflow). Interactively view
 the intermediate results in Tensorboard using `--logs`.
-9. Write the identifier embeddings model.
-10. Publish generated models to the Google Cloud Storage.
+8. Write the identifier embeddings model.
 
-1-6 is performed with `repo2coocc` tool / `Repo2CooccTransformer` class,
-7 with `id2vec_preproc` / `id_embedding.PreprocessTransformer`, 8 with `id2vec_train` / `id_embedding.SwivelTransformer`,
-9 with `id2vec_postproc` / `id_embedding.PostprocessTransformer` and 10 with `publish`.
+1-5 is performed with `repos2coocc` command, 6 with `id2vec_preproc`, 7 with `id2vec_train`,
+8 with `id2vec_postproc`.
 
-#### Weighted Bag of Vectors
+#### Weighted Bag of X
 
 We represent every repository as a weighted bag-of-vectors, provided by we've got document
 frequencies ("docfreq") and identifier embeddings ("id2vec").
@@ -103,15 +88,13 @@ frequencies ("docfreq") and identifier embeddings ("id2vec").
 1. Clone or read the repository from disk.
 2. Classify files using [enry](https://github.com/src-d/enry).
 3. Extract [UAST](https://doc.bblf.sh/uast/specification.html) from each supported file.
-4. [Split and stem](sourced/ml/repo2/base.py#L160) all the identifiers in each tree.
-5. Leave only those identifiers which are present in "docfreq" and "id2vec".
-6. Set the weight of each such identifier as TF-IDF.
-7. Set the value of each such identifier as the corresponding embedding vector.
-8. Write the nBOW model.
-9. Publish it to the Google Cloud Storage.
+4. Extract various features from each tree, e.g. identifiers, literals or node2vec-like structural fingerprints.
+5. Group by repository, file or function.
+6. Set the weight of each such feature according to TF-IDF.
+7. Write the BOW model.
 
-1-8 is performed with `repo2nbow` tool / `Repo2nBOWTransformer` class and 9 with `publish`.
+1-7 are performed with `repos2bow` command.
 
 #### Topic modeling
 
-See [here](topic_modeling.md).
+See [here](doc/topic_modeling.md).

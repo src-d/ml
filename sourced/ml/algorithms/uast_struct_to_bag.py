@@ -5,6 +5,8 @@ from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary, Uast2BagBase
 
 
 class Uast2StructBagBase(Uast2BagBase):
+    SEP = ">"
+
     def __init__(self, stride, seq_len, node2index=None):
         self._node2index = node2index if node2index is not None else FakeVocabulary()
         self._stride = stride
@@ -26,6 +28,7 @@ class UastSeq2Bag(Uast2StructBagBase):
     """
     DFS traversal + preserves the order of node children.
     """
+
     def __init__(self, stride=1, seq_len=5, node2index=None):
         _node2index = Node2InternalType() if node2index is None else node2index
         super().__init__(stride, seq_len, _node2index)
@@ -49,11 +52,12 @@ class UastSeq2Bag(Uast2StructBagBase):
         node_sequence = self._uast2sequence(uast)
 
         # convert to str - requirement from wmhash.BagsExtractor
-        node_sequence = "".join(self.node2index[n] for n in node_sequence)
+        node_sequence = [self.node2index[n] for n in node_sequence]
 
         for seq_len in self._seq_lens:
             for i in range(0, len(node_sequence) - seq_len + 1, self._stride):
-                bag[node_sequence[i:i + seq_len]] += 1
+                key = self.SEP.join(node_sequence[i:i + seq_len])
+                bag[key] += 1
         return bag
 
 
@@ -180,5 +184,5 @@ class UastRandomWalk2Bag(Uast2StructBagBase):
             for seq_len in self._seq_lens:
                 for i in range(0, len(walk) - seq_len + 1, self._stride):
                     # convert to str - requirement from wmhash.BagsExtractor
-                    bag["".join(walk[i:i + seq_len])] += 1
+                    bag[self.SEP.join(walk[i:i + seq_len])] += 1
         return bag

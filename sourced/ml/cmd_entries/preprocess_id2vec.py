@@ -1,12 +1,16 @@
 import logging
 import os
 import shutil
+import warnings
 
 import numpy
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ImportError as e:
+    warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 
 from modelforge.progress_bar import progress_bar
-from sourced.ml.algorithms.id_embedding import _extract_coocc_matrix
+from sourced.ml.algorithms.id_embedding import extract_coocc_matrix
 from sourced.ml.models import Cooccurrences, DocumentFrequencies
 
 
@@ -67,7 +71,7 @@ def preprocess_id2vec(args):
     log.info("Saved col_vocab.txt")
     del chosen_words
 
-    ccmatrix = _extract_coocc_matrix((vs, vs), word_indices, coocc_model)
+    ccmatrix = extract_coocc_matrix((vs, vs), word_indices, coocc_model)
 
     log.info("Planning the sharding...")
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]

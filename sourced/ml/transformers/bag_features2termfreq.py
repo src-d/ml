@@ -2,20 +2,13 @@ import operator
 
 from pyspark import Row, RDD
 
+from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.transformers.transformer import Transformer
 
 
 class BagFeatures2TermFreq(Transformer):
-    class Columns:
-        """
-        Stores column names for return value.
-        """
-        token = "token"
-        document = "document"
-        value = "value"
-
     def __call__(self, rows: RDD):
-        c = self.Columns
+        c = Uast2BagFeatures.Columns
         return rows \
             .reduceByKey(operator.add) \
             .map(lambda x: Row(**{

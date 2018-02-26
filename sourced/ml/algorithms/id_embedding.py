@@ -1,7 +1,7 @@
 import numpy
 
 
-def _extract_coocc_matrix(global_shape, word_indices, model):
+def extract_coocc_matrix(global_shape, word_indices, model):
     # Stage 1 - extract the tokens, map them to the global vocabulary
     indices = []
     mapped_indices = []

@@ -1,8 +1,10 @@
 from typing import Union
 
 from pyspark import StorageLevel, Row, RDD
+from pyspark.sql import DataFrame
 
 from sourced.ml.transformers.transformer import Transformer
+from sourced.ml.utils import EngineConstants
 
 
 class Sampler(Transformer):
@@ -101,7 +103,7 @@ class UastExtractor(Transformer):
         super().__init__(**kwargs)
         self.languages = languages
 
-    def __call__(self, files):
+    def __call__(self, files: DataFrame) -> DataFrame:
         files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
         classified = files.classify_languages()
         lang_filter = classified.lang == self.languages[0]
@@ -118,7 +120,7 @@ class FieldsSelector(Transformer):
         super().__init__(**kwargs)
         self.fields = fields
 
-    def __call__(self, df):
+    def __call__(self, df: DataFrame) -> DataFrame:
         res = df.select(self.fields)
         if self.explained:
             self._log.info("toDebugString():\n%s", res.rdd.toDebugString().decode())
@@ -130,19 +132,29 @@ class ParquetSaver(Transformer):
         super().__init__(**kwargs)
         self.save_loc = save_loc
 
-    def __call__(self, df):
+    def __call__(self, df: DataFrame):
         if self.explained:
             self._log.info("toDebugString():\n%s", df.rdd.toDebugString().decode())
         df.write.parquet(self.save_loc)
 
 
 class ParquetLoader(Transformer):
-    def __init__(self, session, **kwargs):
+    def __init__(self, session, paths, **kwargs):
         super().__init__(**kwargs)
         self.session = session
+        self.paths = paths
 
-    def __call__(self, df):
-        return self.session.read.parquet(self.save_loc)
+    def __getstate__(self):
+        state = super().__getstate__()
+        del state["session"]
+        return state
+
+    def __call__(self, _):
+        if isinstance(self.paths, (list, tuple)):
+            return self.session.read.parquet(*self.paths)
+        if isinstance(self.paths, str):
+            return self.session.read.parquet(self.paths)
+        raise ValueError
 
 
 class UastDeserializer(Transformer):
@@ -151,12 +163,13 @@ class UastDeserializer(Transformer):
         from bblfsh import Node
         self.parse_uast = Node.FromString
 
-    def __call__(self, rows):
-        return rows.rdd.flatMap(self.deserialize_uast)
+    def __call__(self, rows: RDD) -> RDD:
+        return rows.flatMap(self.deserialize_uast)
 
-    def deserialize_uast(self, row):
-        if not row.uast:
+    def deserialize_uast(self, row: Row):
+        if not row[EngineConstants.Columns.Uast]:
             return
         row_dict = row.asDict()
-        row_dict["uast"] = self.parse_uast(row.uast[0])
+        row_dict[EngineConstants.Columns.Uast] = [
+            self.parse_uast(uast) for uast in row[EngineConstants.Columns.Uast]]
         yield Row(**row_dict)

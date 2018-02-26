@@ -1,8 +1,11 @@
 import operator
 from typing import Iterable
 
+from pyspark import Row
+
 from sourced.ml.extractors import BagsExtractor
-from sourced.ml.transformers import Transformer
+from sourced.ml.transformers.transformer import Transformer
+from sourced.ml.utils import EngineConstants
 
 
 class Uast2Quant(Transformer):
@@ -16,6 +19,7 @@ class Uast2Quant(Transformer):
         return self._levels
 
     def __call__(self, rows):
+        uast_column = EngineConstants.Columns.Uast
         for i, extractor in enumerate(self.extractors):
             try:
                 quantize = extractor.quantize
@@ -24,7 +28,8 @@ class Uast2Quant(Transformer):
             self._log.info("%s: performing quantization with %d partitions",
                            extractor.__class__.__name__, extractor.npartitions)
             items = rows \
-                .flatMap(lambda row: extractor.extract(row.uast)) \
+                .flatMap(lambda row: row[uast_column]) \
+                .flatMap(lambda uast: extractor.extract(uast)) \
                 .reduceByKey(operator.add) \
                 .map(lambda x: (x[0][0], (x[0][1], x[1]))) \
                 .groupByKey().mapValues(list).collect()

@@ -63,6 +63,7 @@ class EngineConstants:
         RepositoryId = "repository_id"
         Path = "path"
         BlobId = "blob_id"
+        Uast = "uast"
 
 
 class EngineDefault:

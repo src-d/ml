@@ -10,7 +10,7 @@ from sourced.ml.utils import create_engine
 def repos2ids_entry(args):
     log = logging.getLogger("repos2ids")
     engine = create_engine("repos2ids-%s" % uuid4(), **args.__dict__)
-   
+
     ids = Ignition(engine) \
         .link(HeadFiles()) \
         .link(ContentExtractor()) \
