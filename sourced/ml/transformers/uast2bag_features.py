@@ -19,8 +19,11 @@ class UastRow2Document(Transformer):
 
     def documentize(self, r: Row) -> Row:
         ec = EngineConstants.Columns
-        doc = ("%s" + self.REPO_PATH_SEP + "%s" + self.PATH_BLOB_SEP + "%s")
-        doc = doc % (r[ec.RepositoryId], r[ec.Path], r[ec.BlobId])
+        doc = r[ec.RepositoryId]
+        if r[ec.Path]:
+            doc += self.REPO_PATH_SEP + r[ec.Path]
+        if r[ec.BlobId]:
+            doc += self.PATH_BLOB_SEP + r[ec.BlobId]
         bfc = Uast2BagFeatures.Columns
         return Row(**{bfc.document: doc, ec.Uast: r[ec.Uast]})
 
@@ -44,6 +47,7 @@ class Uast2BagFeatures(Transformer):
     def process_row(self, row: Row):
         uast_column = EngineConstants.Columns.Uast
         doc = row[self.Columns.document]
-        for extractor in self.extractors:
-            for key, val in extractor.extract(row[uast_column]):
-                yield (key, doc), val
+        for uast in row[uast_column]:
+            for extractor in self.extractors:
+                for key, val in extractor.extract(uast):
+                    yield (key, doc), val

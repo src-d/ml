@@ -170,6 +170,6 @@ class UastDeserializer(Transformer):
         if not row[EngineConstants.Columns.Uast]:
             return
         row_dict = row.asDict()
-        row_dict[EngineConstants.Columns.Uast] = self.parse_uast(
-            row[EngineConstants.Columns.Uast][0])
+        row_dict[EngineConstants.Columns.Uast] = [
+            self.parse_uast(uast) for uast in row[EngineConstants.Columns.Uast]]
         yield Row(**row_dict)

@@ -2,6 +2,7 @@ import argparse
 import json
 
 from sourced.ml import extractors
+from sourced.ml.transformers import Moder
 
 
 def add_vocabulary_size_arg(my_parser: argparse.ArgumentParser):
@@ -36,7 +37,7 @@ def add_repo2_args(my_parser: argparse.ArgumentParser, quant=True):
 
 
 def add_feature_args(my_parser: argparse.ArgumentParser, required=True):
-    my_parser.add_argument("-x", "--mode", choices=("file", "func"),
+    my_parser.add_argument("-x", "--mode", choices=Moder.Options.__all__,
                            default="file", help="What to select for analysis.")
     my_parser.add_argument(
         "-f", "--feature", nargs="+",
