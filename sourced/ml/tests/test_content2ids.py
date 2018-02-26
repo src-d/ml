@@ -1,5 +1,7 @@
 import argparse
 import gzip
+import os
+from site import getsitepackages
 import tempfile
 from typing import NamedTuple
 import unittest
@@ -18,6 +20,13 @@ class Content2IdsTests(unittest.TestCase):
         Column = NamedTuple("Column", [("repo_id", str), ("file_id", str)])
         self.column_names = Column(repo_id="document", file_id="file")
         self.language_mapping = Content2Ids.build_mapping()
+
+    def test_languages(self):
+        for path in getsitepackages():
+            path_to_languages = os.path.join(path, "sourced/ml/transformers/languages.yml")
+            if os.path.exists(path_to_languages):
+                break
+        self.assertTrue(os.path.exists(path_to_languages))
 
     def test_call(self):
         content2ids = Content2Ids(self.language_mapping, self.column_names,

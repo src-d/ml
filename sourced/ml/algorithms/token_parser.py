@@ -18,7 +18,43 @@ class TokenParser:
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = stem_threshold
         self._max_token_length = max_token_length
-        self.min_split_length = min_split_length
+        self._min_split_length = min_split_length
+
+    @property
+    def stem_threshold(self):
+        return self._stem_threshold
+
+    @stem_threshold.setter
+    def stem_threshold(self, value):
+        if not isinstance(value, int):
+            raise TypeError("stem_threshold must be an integer - got %s" % type(value))
+        if value < 1:
+            raise ValueError("stem_threshold must be greater than 0 - got %d" % value)
+        self._stem_threshold = value
+
+    @property
+    def max_token_length(self):
+        return self._max_token_length
+
+    @max_token_length.setter
+    def max_token_length(self, value):
+        if not isinstance(value, int):
+            raise TypeError("max_token_length must be an integer - got %s" % type(value))
+        if value < 1:
+            raise ValueError("max_token_length must be greater than 0 - got %d" % value)
+        self._max_token_length = value
+
+    @property
+    def min_split_length(self):
+        return self._min_split_length
+
+    @min_split_length.setter
+    def min_split_length(self, value):
+        if not isinstance(value, int):
+            raise TypeError("min_split_length must be an integer - got %s" % type(value))
+        if value < 1:
+            raise ValueError("min_split_length must be greater than 0 - got %d" % value)
+        self._min_split_length = value
 
     def __call__(self, token):
         return self.process_token(token)
@@ -28,12 +64,12 @@ class TokenParser:
             yield self.stem(word)
 
     def stem(self, word):
-        if len(word) <= self._stem_threshold:
+        if len(word) <= self.stem_threshold:
             return word
         return self._stemmer.stemWord(word)
 
     def split(self, token):
-        token = token.strip()[:self._max_token_length]
+        token = token.strip()[:self.max_token_length]
         prev_p = [""]
 
         def ret(name):
