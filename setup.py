@@ -33,12 +33,14 @@ setup(
                       "sourced-engine>=0.5.1,<0.6",
                       "pyspark==2.2.0.post0",
                       "humanize>=0.5.0",
-                      "parquet>=1.2,<2.0"] + typing,
+                      "parquet>=1.2,<2.0",
+                      "pygments>=2.2.0,<3.0"] + typing,
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
     },
-    package_data={"": ["LICENSE", "README.md"]},
+    package_data={"": ["LICENSE.md", "README.md"],
+                  "sourced": ["ml/transformers/languages.yml"], },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",

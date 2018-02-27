@@ -7,7 +7,7 @@ from modelforge.logs import setup_logging
 
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
-    repos2bow_entry
+    repos2ids_entry, repos2bow_entry
 from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, add_vocabulary_size_arg
 from sourced.ml.cmd_entries.repos2bow import add_bow_args
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
@@ -56,6 +56,27 @@ def get_parser() -> argparse.ArgumentParser:
     add_repo2_args(repos2df_parser)
     add_engine_args(repos2df_parser)
     add_feature_args(repos2df_parser)
+    # ------------------------------------------------------------------------
+    repos2ids_parser = subparsers.add_parser(
+        "repos2ids", help="Convert source code to a bag of identifiers.")
+    repos2ids_parser.set_defaults(handler=repos2ids_entry)
+    add_engine_args(repos2ids_parser)
+    repos2ids_parser.add_argument(
+        "-r", "--repositories", required=True,
+        help="The path to the repositories.")
+    repos2ids_parser.add_argument(
+        "-o", "--output", required=True,
+        help="[OUT] output CSV file with identifiers.")
+    repos2ids_parser.add_argument(
+        "--split", action="store_true",
+        help="Enables filtering identifiers that are splittable"
+             "based on special characters or case changes.")
+    repos2ids_parser.add_argument(
+        "--idfreq", action="store_true",
+        help="Adds identifier frequencies to the output CSV file."
+             "num_repos is the number of repositories where the identifier appears in."
+             "num_files is the number of files where the identifier appears in."
+             "num_occ is the total number of occurences of the identifier.")
     # ------------------------------------------------------------------------
     repos2coocc_parser = add_parser(
         "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")

@@ -7,4 +7,5 @@ from sourced.ml.cmd_entries.projector_entry import projector_entry
 from sourced.ml.cmd_entries.repos2bow import repos2bow_entry
 from sourced.ml.cmd_entries.repos2coocc import repos2coocc_entry
 from sourced.ml.cmd_entries.repos2df import repos2df_entry
+from sourced.ml.cmd_entries.repos2ids import repos2ids_entry
 from sourced.ml.cmd_entries.run_swivel import run_swivel

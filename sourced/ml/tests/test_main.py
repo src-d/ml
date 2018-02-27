@@ -21,6 +21,7 @@ class MainTests(unittest.TestCase):
             "dump": "dump_model",
             "repos2coocc": "repos2coocc_entry",
             "repos2df": "repos2df_entry",
+            "repos2ids": "repos2ids_entry",
             "repos2bow": "repos2bow_entry"
         }
         parser = main.get_parser()
