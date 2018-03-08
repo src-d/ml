@@ -33,6 +33,7 @@ setup(
                       "sourced-engine>=0.5.1,<0.6",
                       "pyspark>=2.2.0,<2.2.1",
                       "humanize>=0.5.0",
+                      "pandas>=0.22.0,<1.0",
                       "parquet>=1.2,<2.0",
                       "pygments>=2.2.0,<3.0"] + typing,
     extras_require={
