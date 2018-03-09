@@ -66,7 +66,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="The path to the repositories.")
     repos2ids_parser.add_argument(
         "-o", "--output", required=True,
-        help="[OUT] output CSV file with identifiers.")
+        help="[OUT] output path to the CSV file with identifiers.")
     repos2ids_parser.add_argument(
         "--split", action="store_true",
         help="Enables filtering identifiers that are splittable"
