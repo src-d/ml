@@ -20,4 +20,9 @@ def repos2ids_entry(args):
         .execute()
 
     log.info("Writing %s", args.output)
-    ids.toDF().toPandas().to_csv(args.output)
+    ids.toDF() \
+        .coalesce(1) \
+        .write \
+        .option("header", "true") \
+        .mode("overwrite") \
+        .csv(args.output)
