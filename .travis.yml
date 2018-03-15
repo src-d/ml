@@ -15,6 +15,7 @@ addons:
 stages:
   - test
   - name: deploy
+    # require any tag name to deploy
     if: tag =~ .*
 _install: &_install
   - gimme 1.8
