@@ -49,7 +49,7 @@ class DocumentFrequencies(Model):
         return """Number of words: %d
 Random 10 words: %s
 Number of documents: %d""" % (
-            len(self._df), islice(self._df, 10), self.docs)
+            len(self._df), dict(islice(self._df.items(), 10)), self.docs)
 
     @property
     def docs(self):
