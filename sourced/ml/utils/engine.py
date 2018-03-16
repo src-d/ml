@@ -1,5 +1,6 @@
 import functools
 import logging
+import pip
 
 from sourced.engine import Engine
 from sourced.ml.utils import add_spark_args, create_spark, assemble_spark_config
@@ -24,7 +25,7 @@ class EngineDefault:
     Default arguments for create_engine function and __main__
     """
     BBLFSH = "localhost"
-    VERSION = "0.5.1"
+    VERSION = {pkg.key: pkg.version for pkg in pip.get_installed_distributions()}["sourced-engine"]
 
 
 def add_engine_args(my_parser, default_packages=None):
