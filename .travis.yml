@@ -12,6 +12,11 @@ addons:
       - libboost-all-dev
       - libxml2-dev
       - libsnappy-dev
+stages:
+  - test
+  - name: deploy
+    # require any tag name to deploy
+    if: tag =~ .*
 _install: &_install
   - gimme 1.8
   - source ~/.gimme/envs/latest.env
@@ -26,6 +31,12 @@ _install: &_install
   - pip install -e .
 _coverage: &_coverage
   - SCRIPT="coverage run --concurrency=multiprocessing -m unittest discover && coverage combine"
+_deploy: &_deploy
+  provider: script
+  script: twine upload dist/*py3-none-any* -u $PYPI_LOGIN -p $PYPI_PASS
+  skip_cleanup: true
+  on:
+    tags: true
 matrix:
   include:
     - python: 3.4
@@ -42,11 +53,20 @@ matrix:
       install: *_install
       after_success:
         - codecov
+    - stage: deploy
+      python: 3.4
+      install:
+        - pip3 install --upgrade pip
+        - pip3 install twine
+      before_script: skip
+      script:
+        - python3 setup.py bdist_wheel
+      deploy: *_deploy
   fast_finish: true
 before_script:
-- docker run -d --privileged -p 9432:9432 --name bblfshd bblfsh/bblfshd
-- docker exec -it bblfshd bblfshctl driver install --all
+  - docker run -d --privileged -p 9432:9432 --name bblfshd bblfsh/bblfshd
+  - docker exec -it bblfshd bblfshctl driver install python bblfsh/python-driver
 script:
-- (eval "$SCRIPT")
+  - (eval "$SCRIPT")
 notifications:
   email: false
