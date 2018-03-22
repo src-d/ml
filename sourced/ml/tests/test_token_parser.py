@@ -15,6 +15,14 @@ class TokenParserTests(unittest.TestCase):
         self.assertEqual(
             list(self.tp.split("JumpDown not Here")),
             ["jump", "down", "not", "here"])
+        _max_token_length = self.tp.max_token_length
+        self.tp.max_token_length = 100
+        self.assertEqual(list(self.tp.process_token("sourced.ml.algorithms.uast_ids_to_bag")),
+                         ["sourc", "sourcedml", "algorithm", "mlalgorithm",
+                          "uast", "ids", "idsto", "bag", "tobag"])
+        self.assertEqual(list(self.tp.process_token("a.b.c.d")), ["a", "b", "c", "d"])
+
+        self.tp.max_token_length = _max_token_length
 
     def test_split(self):
         self.assertEqual(list(self.tp.split("set for")), ["set", "for"])
@@ -24,7 +32,8 @@ class TokenParserTests(unittest.TestCase):
         self.assertEqual(list(self.tp.split("PrintAllExcept")), ["print", "all", "except"])
         self.assertEqual(
             list(self.tp.split("print really long line")),
-            ["print", "really", "long"])
+            # 'longli' is expected artifact due to edge effects
+            ["print", "really", "long", "longli"])
 
     def test_stem(self):
         self.assertEqual(self.tp.stem("lol"), "lol")
