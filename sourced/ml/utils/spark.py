@@ -1,6 +1,8 @@
 import logging
 import os
 import sys
+import pkg_resources
+import zipfile
 
 os.environ["PYSPARK_PYTHON"] = sys.executable
 
@@ -44,6 +46,8 @@ def add_spark_args(my_parser, default_packages=None):
     my_parser.add_argument("--spark-log-level", default=SparkDefault.LOG_LEVEL, choices=(
         "ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"),
                            help="Spark log level")
+    my_parser.add_argument("--dep-zip", default=False, dest="dep_zip", action="store_true",
+                           help="Adds ml and engine to the spark context.")
     persistences = [att for att in pyspark.StorageLevel.__dict__.keys() if "__" not in att]
     my_parser.add_argument(
         "--persist", default=None, choices=persistences,
@@ -56,6 +60,7 @@ def create_spark(session_name,
                  config=SparkDefault.CONFIG,
                  packages=SparkDefault.PACKAGES,
                  spark_log_level=SparkDefault.LOG_LEVEL,
+                 dep_zip=False,
                  **_):  # **kwargs are discarded for convenience
     log = logging.getLogger("spark")
     log.info("Starting %s on %s", session_name, spark)
@@ -68,6 +73,18 @@ def create_spark(session_name,
     session.sparkContext.setLogLevel(spark_log_level)
     # Hide py4j verbose logging (It appears in travis mostly)
     logging.getLogger("py4j").setLevel(logging.WARNING)
+    if dep_zip:
+        zip_path = os.path.expanduser("~/.cache/source{d}/ml/sourced.zip")
+        if not os.path.exists(zip_path):
+            os.makedirs(zip_path.split("sourced.zip")[0])
+            working_dir = os.getcwd()
+            os.chdir(pkg_resources.working_set.by_key["sourced-ml"].location)
+            with zipfile.PyZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                zf.write("sourced")
+                zf.writepy("sourced/ml", "sourced")
+                zf.writepy("sourced/engine", "sourced")
+            os.chdir(working_dir)
+        session.sparkContext.addPyFile(zip_path)
     return session
 
 
