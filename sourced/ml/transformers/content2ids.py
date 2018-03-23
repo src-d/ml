@@ -1,7 +1,6 @@
-import gzip
 import operator
 import os
-from typing import NamedTuple, Dict, Generator
+from typing import NamedTuple, Generator
 import yaml
 
 import pygments
@@ -15,7 +14,7 @@ from sourced.ml.transformers import Transformer
 from sourced.ml.utils import EngineConstants
 
 
-class ContentProcess(Transformer):
+class ContentToIdentifiers(Transformer):
 
     class FormatterProxy(Formatter):
         name = "Proxy"
@@ -23,7 +22,7 @@ class ContentProcess(Transformer):
         filenames = []
 
         def __init__(self, **options):
-            super(ContentProcess.FormatterProxy, self).__init__(**options)
+            super(ContentToIdentifiers.FormatterProxy, self).__init__(**options)
             self.callback = options["callback"]
 
         def format(self, tokensource, outfile):
@@ -51,7 +50,7 @@ class ContentProcess(Transformer):
                 lexer = get_lexer_by_name(self.linguist2pygments[row.lang][i])
                 pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
                 break
-            except (KeyError, ClassNotFound) as e:
+            except (KeyError, IndexError, ClassNotFound) as e:
                 continue
         for token in self.names:
             yield token, (repo_id, path)
@@ -96,7 +95,7 @@ class ContentProcess(Transformer):
         return linguist2pygments
 
 
-class Content2Ids(Transformer):
+class IdentifiersToDataset(Transformer):
 
     def __init__(self, idfreq: bool, **kwargs):
         super().__init__(**kwargs)
@@ -105,33 +104,48 @@ class Content2Ids(Transformer):
     def __call__(self, rows: RDD):
         list_RDDs = []
         if self.idfreq:
-            for i in (0, 1):
-                # initial structure of x: (identifier, (repositoryId, filepath))
-                freq_processed = rows.map(lambda x: (x[0], x[1][i])).distinct()
-                list_RDDs.append(self.reduce_rows(freq_processed))
-            list_RDDs.append(self.reduce_rows(rows))
-            return rows \
-                .context.union(list_RDDs) \
-                .groupByKey() \
-                .mapValues(list) \
-                .map(lambda x: Row(
-                        token=x[0],
-                        token_split=" ".join(TokenParser(min_split_length=1).split(x[0])),
-                        num_repos=x[1][0],
-                        num_files=x[1][1],
-                        num_occ=x[1][2]))
+            return self.process_stats(rows)
         else:
-            return rows \
-                .map(lambda x: x[0]) \
-                .distinct() \
-                .map(lambda x: Row(
-                        token=x,
-                        token_split=" ".join(TokenParser(min_split_length=1).split(x))))
+            return self.process(rows)
 
     def reduce_rows(self, rows: RDD):
         return rows \
             .map(lambda x: (x[0], 1)) \
             .reduceByKey(operator.add)
+
+    def process_stats(self, rows: RDD):
+        """
+        Process rows to gather identifier frequencies.
+        num_repos is the number of repositories where the identifier appears in.
+        num_files is the number of files where the identifier appears in.
+        num_occ is the total number of occurences of the identifier.
+        """
+        for i in (0, 1):
+            # initial structure of x: (identifier, (repositoryId, filepath))
+            freq_processed = rows.map(lambda x: (x[0], x[1][i])).distinct()
+            list_RDDs.append(self.reduce_rows(freq_processed))
+        list_RDDs.append(self.reduce_rows(rows))
+        return rows \
+            .context.union(list_RDDs) \
+            .groupByKey() \
+            .mapValues(list) \
+            .map(lambda x: Row(
+                    token=x[0],
+                    token_split=" ".join(TokenParser(min_split_length=1).split(x[0])),
+                    num_repos=x[1][0],
+                    num_files=x[1][1],
+                    num_occ=x[1][2]))
+
+    def process(self, rows: RDD):
+        """
+        Process rows to gather identifier without frequencies.
+        """
+        return rows \
+            .map(lambda x: x[0]) \
+            .distinct() \
+            .map(lambda x: Row(
+                    token=x,
+                    token_split=" ".join(TokenParser(min_split_length=1).split(x))))
 
 
 class ContentExtractor(Transformer):
