@@ -102,7 +102,6 @@ class IdentifiersToDataset(Transformer):
         self.idfreq = idfreq
 
     def __call__(self, rows: RDD):
-        list_RDDs = []
         if self.idfreq:
             return self.process_stats(rows)
         else:
@@ -120,6 +119,7 @@ class IdentifiersToDataset(Transformer):
         num_files is the number of files where the identifier appears in.
         num_occ is the total number of occurences of the identifier.
         """
+        list_RDDs = []
         for i in (0, 1):
             # initial structure of x: (identifier, (repositoryId, filepath))
             freq_processed = rows.map(lambda x: (x[0], x[1][i])).distinct()
@@ -141,7 +141,7 @@ class IdentifiersToDataset(Transformer):
         Process rows to gather identifier without frequencies.
         """
         return rows \
-            .map(lambda x: x[0]) \
+            .keys() \
             .distinct() \
             .map(lambda x: Row(
                     token=x,
