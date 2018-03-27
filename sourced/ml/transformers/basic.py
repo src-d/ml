@@ -5,6 +5,7 @@ from pyspark import StorageLevel, Row, RDD
 from pyspark.sql import DataFrame
 
 from sourced.ml.transformers.transformer import Transformer
+from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.utils import EngineConstants, assemble_spark_config, create_spark
 
 
@@ -182,6 +183,11 @@ class UastDeserializer(Transformer):
         if not row[EngineConstants.Columns.Uast]:
             return
         row_dict = row.asDict()
-        row_dict[EngineConstants.Columns.Uast] = [
-            self.parse_uast(uast) for uast in row[EngineConstants.Columns.Uast]]
+        row_dict[EngineConstants.Columns.Uast] = []
+        for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
+            try:
+                row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
+            except:
+                self._log.error("\nBabelfish Error: Failed to parse uast for document %s for uast "
+                                "#%s" % (row[Uast2BagFeatures.Columns.document], i))
         yield Row(**row_dict)
