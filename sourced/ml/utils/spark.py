@@ -74,7 +74,7 @@ def create_spark(session_name,
     # Hide py4j verbose logging (It appears in travis mostly)
     logging.getLogger("py4j").setLevel(logging.WARNING)
     if dep_zip:
-        zip_path = os.path.expanduser("~/.cache/source{d}/ml/sourced.zip")
+        zip_path = os.path.expanduser("~/.cache/sourced/ml/sourced.zip")
         if not os.path.exists(zip_path):
             os.makedirs(zip_path.split("sourced.zip")[0])
             working_dir = os.getcwd()
