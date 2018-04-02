@@ -12,8 +12,7 @@ class IdentifiersBagExtractor(BagsExtractor):
 
     def __init__(self, docfreq_threshold=None, split_stem=False, **kwargs):
         super().__init__(docfreq_threshold, **kwargs)
-        self.id2bag = UastIds2Bag(
-            None, NoopTokenParser() if not split_stem else None)
+        self.id2bag = UastIds2Bag(None, NoopTokenParser() if not split_stem else None)
 
     def uast_to_bag(self, uast):
         return self.id2bag(uast)

@@ -1,7 +1,8 @@
 import random
-from collections import defaultdict, deque
+from collections import defaultdict
 
 from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary, Uast2BagBase
+from sourced.ml.algorithms import uast2sequence
 
 
 class Uast2StructBagBase(Uast2BagBase):
@@ -33,23 +34,9 @@ class UastSeq2Bag(Uast2StructBagBase):
         _node2index = Node2InternalType() if node2index is None else node2index
         super().__init__(stride, seq_len, _node2index)
 
-    def _uast2sequence(self, root):
-        sequence = []
-        nodes = defaultdict(deque)
-        stack = [root]
-        nodes[id(root)].extend(root.children)
-        while stack:
-            if nodes[id(stack[-1])]:
-                child = nodes[id(stack[-1])].popleft()
-                nodes[id(child)].extend(child.children)
-                stack.append(child)
-            else:
-                sequence.append(stack.pop())
-        return sequence
-
     def __call__(self, uast):
         bag = defaultdict(int)
-        node_sequence = self._uast2sequence(uast)
+        node_sequence = uast2sequence(uast)
 
         # convert to str - requirement from wmhash.BagsExtractor
         node_sequence = [self.node2index[n] for n in node_sequence]
