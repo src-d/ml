@@ -1,9 +1,8 @@
 import logging
-from typing import NamedTuple
 from uuid import uuid4
 
-from sourced.ml.transformers import Ignition, Content2Ids, ContentExtractor, \
-    ContentProcess, HeadFiles, Cacher
+from sourced.ml.transformers import Ignition, ContentToIdentifiers, \
+    ContentExtractor, IdentifiersToDataset, HeadFiles, Cacher
 from sourced.ml.utils import create_engine
 
 
@@ -14,9 +13,9 @@ def repos2ids_entry(args):
     ids = Ignition(engine) \
         .link(HeadFiles()) \
         .link(ContentExtractor()) \
-        .link(ContentProcess(args.split)) \
+        .link(ContentToIdentifiers(args.split)) \
         .link(Cacher.maybe(args.persist)) \
-        .link(Content2Ids(args.idfreq)) \
+        .link(IdentifiersToDataset(args.idfreq)) \
         .execute()
 
     log.info("Writing %s", args.output)
