@@ -5,6 +5,17 @@ from sourced.ml import extractors
 from sourced.ml.transformers import Moder
 
 
+class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
+    """
+    Pretty formatter of help message for arguments.
+    It adds default value to the end if it is not None.
+    """
+    def _get_help_string(self, action):
+        if action.default is None:
+            return action.help
+        return super()._get_help_string(action)
+
+
 def add_vocabulary_size_arg(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "-v", "--vocabulary-size", default=10000000, type=int,
