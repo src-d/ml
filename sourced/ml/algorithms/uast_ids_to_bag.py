@@ -60,7 +60,7 @@ class UastIds2Bag(UastTokens2Bag):
     Converts a UAST to a bag-of-identifiers.
     """
 
-    XPATH = "//*[@roleIdentifier and not(@roleQualified)]"
+    XPATH = "//*[@roleIdentifier]"
 
     def __init__(self, token2index=None, token_parser=None):
         """
