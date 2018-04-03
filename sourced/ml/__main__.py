@@ -7,22 +7,11 @@ from modelforge.logs import setup_logging
 
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
-    repos2ids_entry, repos2bow_entry
+    repos2ids_entry, repos2bow_entry, ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, add_vocabulary_size_arg
 from sourced.ml.cmd_entries.repos2bow import add_bow_args
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm, add_engine_args
-
-
-class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
-    """
-    Pretty formatter of help message for arguments.
-    It adds default value to the end if it is not None.
-    """
-    def _get_help_string(self, action):
-        if action.default is None:
-            return action.help
-        return super()._get_help_string(action)
 
 
 def get_parser() -> argparse.ArgumentParser:
