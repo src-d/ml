@@ -9,6 +9,21 @@ from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.utils import EngineConstants, assemble_spark_config, create_spark
 
 
+class CsvSaver(Transformer):
+    def __init__(self, output: str, **kwargs):
+        super().__init__(**kwargs)
+        self.output = output
+
+    def __call__(self, head: RDD):
+        self._log.info("Writing %s", self.output)
+        return head.toDF() \
+            .coalesce(1) \
+            .write \
+            .option("header", "true") \
+            .mode("overwrite") \
+            .csv(self.output)
+
+
 class Sampler(Transformer):
     """
     Wraps `sample()` function from pyspark Dataframe.
@@ -19,7 +34,7 @@ class Sampler(Transformer):
         self.fraction = fraction
         self.seed = seed
 
-    def __call__(self, head):
+    def __call__(self, head: RDD):
         return head.sample(self.with_replacement, self.fraction, self.seed)
 
 
@@ -187,7 +202,7 @@ class UastDeserializer(Transformer):
         for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
             try:
                 row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
-            except:
+            except:  # nopep8
                 self._log.error("\nBabelfish Error: Failed to parse uast for document %s for uast "
                                 "#%s" % (row[Uast2BagFeatures.Columns.document], i))
         yield Row(**row_dict)

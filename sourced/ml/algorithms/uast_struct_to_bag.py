@@ -20,6 +20,9 @@ class Uast2StructBagBase(Uast2BagBase):
 
 
 class Node2InternalType:
+    # FIXME(zurk): change to simple function. Vadim Markovtsev comments:
+    # > would rather made this a simple function and change roles2index
+    # type from [] to callable. Saves time to understand.
     def __getitem__(self, item):
         return item.internal_type
 

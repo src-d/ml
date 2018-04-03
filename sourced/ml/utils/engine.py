@@ -30,12 +30,10 @@ class EngineDefault:
 
 def add_engine_args(my_parser, default_packages=None):
     add_spark_args(my_parser, default_packages=default_packages)
-    my_parser.add_argument(
-        "--bblfsh", default=EngineDefault.BBLFSH,
-        help="Babelfish server's address.")
-    my_parser.add_argument(
-        "--engine", default=EngineDefault.VERSION,
-        help="source{d} engine version.")
+    my_parser.add_argument("--bblfsh", default=EngineDefault.BBLFSH,
+                           help="Babelfish server's address.")
+    my_parser.add_argument("--engine", default=EngineDefault.VERSION,
+                           help="source{d} engine version.")
     my_parser.add_argument("--repository-format", default="siva",
                            help="Repository storage input format.")
     my_parser.add_argument("--explain", action="store_true",
