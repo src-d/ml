@@ -105,15 +105,18 @@ class Uast2IdLineDistance(Uast2IdDistance):
     """
 
     def _process_uast(self, uast):
-        stack = [(uast, 0)]
+        stack = [(uast, [0, 0])]
         while stack:
             node, last_position = stack.pop()
             if node.start_position.line != 0:
                 # A lot of Nodes do not have position
                 # It is good heuristic to take the last Node in tree with a position.
-                last_position = node.start_position.line
+                last_position[0] = node.start_position.line
+                last_position[1] = 0
+            if node.start_position.col != 0:
+                last_position[1] = node.start_position.col
             yield from self._process_point(node, last_position)
-            stack.extend([(child, last_position) for child in node.children])
+            stack.extend([(child, list(last_position)) for child in node.children])
 
     def distance(self, point1, point2):
-        return abs(point1[1] - point2[1])  # subtract line numbers
+        return abs(point1[1][0] - point2[1][0])  # subtract line numbers

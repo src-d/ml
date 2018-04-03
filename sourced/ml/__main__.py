@@ -8,7 +8,8 @@ from modelforge.logs import setup_logging
 from sourced.ml.extractors import IdentifierDistance
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
-    repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry
+    repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry, \
+    repos2id_sequence_entry
 from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, \
     add_vocabulary_size_arg, add_extractor_args, add_split_stem_arg, \
     ArgumentDefaultsHelpFormatterNoNone
@@ -106,6 +107,21 @@ def get_parser() -> argparse.ArgumentParser:
         "--max-distance", default=IdentifierDistance.DEFAULT_MAX_DISTANCE,
         help="Maximum distance to save.")
     repos2identifier_distance.add_argument(
+        "-o", "--output", required=True,
+        help="[OUT] Path to the directory where spark should store the result. "
+             "Inside the direcory you find result is csv format, status file and sumcheck files.")
+    # ------------------------------------------------------------------------
+    repos2id_sequence = add_parser(
+        "repos2id_sequence", "Converts a UAST to sequence of identifiers sorted by "
+                             "order of appearance.")
+    repos2id_sequence.set_defaults(handler=repos2id_sequence_entry)
+    add_engine_args(repos2id_sequence)
+    add_extractor_args(repos2id_sequence)
+    add_split_stem_arg(repos2id_sequence)
+    repos2id_sequence.add_argument(
+        "--skip-docname", default=False, action="store_true",
+        help="Do not save document name in CSV file, only identifier sequence.")
+    repos2id_sequence.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the directory where spark should store the result. "
              "Inside the direcory you find result is csv format, status file and sumcheck files.")
