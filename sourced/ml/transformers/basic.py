@@ -24,6 +24,19 @@ class CsvSaver(Transformer):
             .csv(self.output)
 
 
+class Mapper(Transformer):
+    """
+    WARNING: Do not use this Transformer for operations more complex than columns renaming
+    before data saving. Create another Transformer instead.
+    """
+    def __init__(self, function, **kwargs):
+        super().__init__(**kwargs)
+        self.function = function
+
+    def __call__(self, head: RDD):
+        return head.map(self.function)
+
+
 class Sampler(Transformer):
     """
     Wraps `sample()` function from pyspark Dataframe.
