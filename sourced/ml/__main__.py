@@ -80,6 +80,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     repos2coocc_parser = add_parser(
         "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")
+    repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     add_engine_args(repos2coocc_parser)
     add_repo2_args(repos2coocc_parser, quant=False)
     repos2coocc_parser.add_argument(
@@ -88,7 +89,6 @@ def get_parser() -> argparse.ArgumentParser:
     repos2coocc_parser.add_argument(
         "--split-stem", default=False, action="store_true",
         help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
-    repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
         "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
@@ -107,8 +107,8 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     train_parser = add_parser(
         "id2vec_train", "Train identifier embeddings using Swivel.")
-    mirror_tf_args(train_parser)
     train_parser.set_defaults(handler=run_swivel)
+    mirror_tf_args(train_parser)
     # ------------------------------------------------------------------------
     id2vec_postproc_parser = add_parser(
         "id2vec_postproc",

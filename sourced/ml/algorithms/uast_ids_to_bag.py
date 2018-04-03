@@ -7,6 +7,9 @@ from sourced.ml.algorithms.uast_to_bag import Uast2BagBase
 
 
 class FakeVocabulary:
+    # FIXME(zurk): change to simple function. Vadim Markovtsev comments:
+    # > would rather made this a simple function and change roles2index
+    # type from [] to callable. Saves time to understand.
     def __getitem__(self, item):
         return item
 
@@ -20,7 +23,6 @@ class UastTokens2Bag(Uast2BagBase):
 
     def __init__(self, token2index=None, token_parser=None):
         """
-        :param xpath: The libuast xpath query to filter nodes with needed tokens.
         :param token2index: The mapping from tokens to bag keys. If None, no mapping is performed.
         :param token_parser: Specify token parser if you want to use a custom one. \
             :class:'NoopTokenParser' is used if it is not specified.
