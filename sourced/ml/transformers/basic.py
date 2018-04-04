@@ -24,17 +24,13 @@ class CsvSaver(Transformer):
             .csv(self.output)
 
 
-class Mapper(Transformer):
-    """
-    WARNING: Do not use this Transformer for operations more complex than columns renaming
-    before data saving. Create another Transformer instead.
-    """
-    def __init__(self, function, **kwargs):
+class Rower(Transformer):
+    def __init__(self, dicter, **kwargs):
         super().__init__(**kwargs)
-        self.function = function
+        self.dicter = dicter
 
     def __call__(self, head: RDD):
-        return head.map(self.function)
+        return head.map(lambda x: Row(**self.dicter(x)))
 
 
 class Sampler(Transformer):

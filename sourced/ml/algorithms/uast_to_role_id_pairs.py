@@ -39,33 +39,30 @@ class Uast2RoleIdPairs(UastIds2Bag):
         :param uast: The UAST root node.
         :return: a list of identifier, role pairs.
         """
-        try:
-            yield from self._process_uast(uast, [])
-        except RecursionError as e:
-            # TODO(zurk): Remove when recursion is resolved
-            return
+        yield from self._process_uast(uast, [])
 
-    def _process_uast(self, node: bblfsh.Node, ancestors):
-        if bblfsh_roles.IDENTIFIER in node.roles and node.token:
-            roles = set(node.roles)
-            indx = -1
-            # We skip all Nodes with roles from `self.exclude_roles` set.
-            # We skip any Node with OPERATOR role.
-            # For them we take first parent Node from stack with another Role set.
-            while not (roles - self.exclude_roles and bblfsh_roles.OPERATOR not in roles):
-                roles = set(ancestors[indx].roles)
-                indx -= 1
-            for sub in self._token_parser.process_token(node.token):
-                try:
-                    yield (self._token2index[sub], self.merge_roles(roles))
-                except KeyError:
-                    continue
+    def _process_uast(self, uast: bblfsh.Node, ancestors):
+        stack = [(uast, [])]
+        while stack:
+            node, ancestors = stack.pop()
 
-        # FIXME(zurk): Rewrite without recursion
-        ancestors.append(node)
-        for child in node.children:
-            yield from self._process_uast(child, ancestors)
-        ancestors.pop()
+            if bblfsh_roles.IDENTIFIER in node.roles and node.token:
+                roles = set(node.roles)
+                indx = -1
+                # We skip all Nodes with roles from `self.exclude_roles` set.
+                # We skip any Node with OPERATOR role.
+                # For them we take first parent Node from stack with another Role set.
+                while not (roles - self.exclude_roles and bblfsh_roles.OPERATOR not in roles):
+                    roles = set(ancestors[indx].roles)
+                    indx -= 1
+                for sub in self._token_parser.process_token(node.token):
+                    try:
+                        yield (self._token2index[sub], self.merge_roles(roles))
+                    except KeyError:
+                        continue
+            ancestors = list(ancestors)
+            ancestors.append(node)
+            stack.extend([(child, ancestors) for child in node.children])
 
     @staticmethod
     def merge_roles(roles: Iterable[int]):
