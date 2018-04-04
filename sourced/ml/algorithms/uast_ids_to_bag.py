@@ -1,9 +1,25 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 
 import bblfsh
 
 from sourced.ml.algorithms import TokenParser, NoopTokenParser
 from sourced.ml.algorithms.uast_to_bag import Uast2BagBase
+from sourced.ml.utils import IDENTIFIER
+
+
+def uast2sequence(root):
+    sequence = []
+    nodes = defaultdict(deque)
+    stack = [root]
+    nodes[id(root)].extend(root.children)
+    while stack:
+        if nodes[id(stack[-1])]:
+            child = nodes[id(stack[-1])].popleft()
+            nodes[id(child)].extend(child.children)
+            stack.append(child)
+        else:
+            sequence.append(stack.pop())
+    return sequence
 
 
 class FakeVocabulary:
@@ -72,3 +88,23 @@ class UastIds2Bag(UastTokens2Bag):
         """
         token_parser = TokenParser() if token_parser is None else token_parser
         super().__init__(token2index, token_parser)
+
+    def __call__(self, uast):
+        """
+        HOTFIX for https://github.com/bblfsh/client-python/issues/92
+        Converts a UAST to a weighed bag-of-identifiers. The weights are identifiers frequencies.
+        The tokens are preprocessed by _token_parser.
+        Overwrite __call__ to avoid issues with `bblfsh.filter`.
+
+        :param uast: The UAST root node.
+        :return: bag
+        """
+        nodes = [node for node in uast2sequence(uast) if IDENTIFIER in node.roles]
+        bag = defaultdict(int)
+        for node in nodes:
+            for sub in self._token_parser.process_token(node.token):
+                try:
+                    bag[self._token2index[sub]] += 1
+                except KeyError:
+                    continue
+        return bag
