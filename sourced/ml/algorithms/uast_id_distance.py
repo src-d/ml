@@ -8,15 +8,12 @@ from sourced.ml.algorithms.uast_ids_to_bag import UastIds2Bag
 from sourced.ml.utils import bblfsh_roles
 
 
-Point = namedtuple("Point", ["token", "info"])
-
-
 class Uast2IdDistance(UastIds2Bag):
     """
     Converts a UAST to a list of identifiers pair and UAST distance between.
-    distance should be defined in inheritors class
+    Distance metric must be defined in the inheritors.
 
-    Be careful, __call__ is overridden here and return list instead of bag-of-words (dist).
+    __call__ is overridden here and return list instead of bag-of-words (dist).
     """
 
     DEFAULT_MAX_DISTANCE = 10  # to avoid collecting all distances we skip too big ones
@@ -39,13 +36,14 @@ class Uast2IdDistance(UastIds2Bag):
         :return: a list of (from identifier, to identifier) and distance pairs.
         """
         for point1, point2 in combinations(self._process_uast(uast), 2):
-            if point1.token == point2.token:
+            if point1[0] == point2[0]:
                 continue  # We do not want to calculate distance between the same identifiers
             distance = self.distance(point1, point2)
             if distance < self.max_distance:
-                yield ((point1.token, point2.token), distance)
+                yield ((point1[0], point2[0]) if point1[0] > point2[0] else
+                       (point2[0], point1[0])), distance
 
-    def distance(self, point1: Point, point2: Point) -> Union[int, float]:
+    def distance(self, point1, point2) -> Union[int, float]:
         """
         Calculate distance between two points. A point can be anything. self._process_uast returns
         list of points in the specific class.
@@ -54,43 +52,40 @@ class Uast2IdDistance(UastIds2Bag):
         """
         raise NotImplemented
 
-    def _process_uast(self, node: bblfsh.Node) -> Iterable[Point]:
+    def _process_uast(self, node: bblfsh.Node) -> Iterable:
         """
         Converts uast to points list. A point can be anything you need to calculate distance.
         """
         raise NotImplemented
+
+    def _process_point(self, node, info):
+        if bblfsh_roles.IDENTIFIER in node.roles and node.token:
+            for sub in self._token_parser.process_token(node.token):
+                try:
+                    yield (self._token2index[sub], info)
+                except KeyError:
+                    continue
 
 
 class Uast2IdTreeDistance(Uast2IdDistance):
     """
     Converts a UAST to a list of identifiers pair and UAST tree distance between.
 
-    Be careful, __call__ is overridden here and return list instead of bag-of-words (dist).
+    __call__ is overridden here and return list instead of bag-of-words (dist).
     """
-    def _process_uast(self, node: bblfsh.Node, ancestors=None) -> Iterable[Point]:
-        try:
-            if ancestors is None:
-                ancestors = []
-            if bblfsh_roles.IDENTIFIER in node.roles and node.token:
-                for sub in self._token_parser.process_token(node.token):
-                    try:
-                        yield Point(self._token2index[sub], list(ancestors))
-                    except KeyError:
-                        continue
-
-            # FIXME(zurk): Rewrite without recursion
+    def _process_uast(self, uast: bblfsh.Node) -> Iterable:
+        stack = [(uast, [])]
+        while stack:
+            node, ancestors = stack.pop()
+            yield from self._process_point(node, ancestors)
+            ancestors = list(ancestors)
             ancestors.append(node)
-            for child in node.children:
-                yield from self._process_uast(child, ancestors)
-            ancestors.pop()
-        except RecursionError as e:
-            # TODO(zurk): Remove when recursion is resolved
-            return
+            stack.extend([(child, ancestors) for child in node.children])
 
-    def distance(self, point1: Point, point2: Point) -> int:
+    def distance(self, point1, point2) -> int:
         i = 0
-        ancestors1 = point1.info
-        ancestors2 = point2.info
+        ancestors1 = point1[1]
+        ancestors2 = point2[1]
         for i, (ancestor1, ancestor2) in enumerate(zip(ancestors1, ancestors2)):
             if ancestor1 != ancestor2:
                 break
@@ -106,29 +101,19 @@ class Uast2IdLineDistance(Uast2IdDistance):
     """
     Converts a UAST to a list of identifiers pair and code line distance between where applicable.
 
-    Be careful, __call__ is overridden here and return list instead of bag-of-words (dist).
+    __call__ is overridden here and return list instead of bag-of-words (dist).
     """
 
-    def _process_uast(self, node, last_position=0):
-        try:
+    def _process_uast(self, uast):
+        stack = [(uast, 0)]
+        while stack:
+            node, last_position = stack.pop()
             if node.start_position.line != 0:
                 # A lot of Nodes do not have position
                 # It is good heuristic to take the last Node in tree with a position.
                 last_position = node.start_position.line
+            yield from self._process_point(node, last_position)
+            stack.extend([(child, last_position) for child in node.children])
 
-            if bblfsh_roles.IDENTIFIER in node.roles and node.token:
-                for sub in self._token_parser.process_token(node.token):
-                    try:
-                        yield Point(self._token2index[sub], last_position)
-                    except KeyError:
-                        continue
-
-            # FIXME(zurk): Rewrite without recursion
-            for child in node.children:
-                yield from self._process_uast(child, last_position)
-        except RecursionError as e:
-            # TODO(zurk): Remove when recursion is resolved
-            return
-
-    def distance(self, point1: Point, point2: Point):
-        return abs(point1.info - point2.info)  # info is equal to line number in this case
+    def distance(self, point1, point2):
+        return abs(point1[1] - point2[1])  # subtract line numbers

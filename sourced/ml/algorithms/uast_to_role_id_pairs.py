@@ -11,7 +11,7 @@ class Uast2RoleIdPairs(UastIds2Bag):
     Converts a UAST to a list of pairs. Pair is identifier and role, where role is Node role
     where identifier was found.
 
-    Be careful, __call__ is overridden here and returns list instead of bag-of-words (dist).
+    __call__ is overridden here and returns list instead of bag-of-words (dist).
     """
 
     def __init__(self, token2index=None, token_parser=None):

@@ -1,12 +1,10 @@
 import logging
 from uuid import uuid4
 
-from pyspark import Row
-
 from sourced.ml.extractors import IdentifierDistance
 from sourced.ml.transformers import Ignition, UastExtractor, UastDeserializer, \
     HeadFiles, Uast2BagFeatures, Cacher, UastRow2Document, CsvSaver
-from sourced.ml.transformers.basic import Mapper
+from sourced.ml.transformers.basic import Rower
 from sourced.ml.utils import create_engine
 from sourced.ml.utils.engine import pause
 
@@ -23,7 +21,7 @@ def repos2id_distance_entry(args):
         .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer()) \
         .link(Uast2BagFeatures(extractors)) \
-        .link(Mapper(lambda x: Row(identifier1=x[0][0][0],
+        .link(Rower(lambda x: dict(identifier1=x[0][0][0],
                                    identifier2=x[0][0][1],
                                    distance=x[1]))) \
         .link(CsvSaver(args.output)) \
