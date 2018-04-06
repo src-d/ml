@@ -10,7 +10,7 @@ from sourced.ml.algorithms import NoopTokenParser
 class RolesAndIdsExtractor(BagsExtractor):
     """
     Extractor wrapper for Uast2RoleIdPairs algorithm.
-    Note that this is unusual BagsExtractor since it returns iterable instead of bag.
+    Note that this is an unusual BagsExtractor since it returns iterable instead of bag.
 
     The class did not wrap with @register_extractor because it does not produce bags as others do.
     So nobody outside code will see it or use it directly.
