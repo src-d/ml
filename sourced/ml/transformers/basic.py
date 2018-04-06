@@ -24,6 +24,15 @@ class CsvSaver(Transformer):
             .csv(self.output)
 
 
+class Rower(Transformer):
+    def __init__(self, dicter, **kwargs):
+        super().__init__(**kwargs)
+        self.dicter = dicter
+
+    def __call__(self, head: RDD):
+        return head.map(lambda x: Row(**self.dicter(x)))
+
+
 class Sampler(Transformer):
     """
     Wraps `sample()` function from pyspark Dataframe.

@@ -7,8 +7,10 @@ from modelforge.logs import setup_logging
 
 from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
-    repos2ids_entry, repos2bow_entry, ArgumentDefaultsHelpFormatterNoNone
-from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, add_vocabulary_size_arg
+    repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry
+from sourced.ml.cmd_entries.args import add_repo2_args, add_feature_args, \
+    add_vocabulary_size_arg, add_extractor_args, add_split_stem_arg, \
+    ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd_entries.repos2bow import add_bow_args
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm, add_engine_args
@@ -72,12 +74,22 @@ def get_parser() -> argparse.ArgumentParser:
     repos2coocc_parser.set_defaults(handler=repos2coocc_entry)
     add_engine_args(repos2coocc_parser)
     add_repo2_args(repos2coocc_parser, quant=False)
+    add_split_stem_arg(repos2coocc_parser)
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the Cooccurrences model.")
-    repos2coocc_parser.add_argument(
-        "--split-stem", default=False, action="store_true",
-        help="Split Tokens to parts (ThisIs_token -> ['this', 'is', 'token']).")
+    # ------------------------------------------------------------------------
+    repos2roles_and_ids = add_parser(
+        "repos2roles_ids", "Converts a UAST to a list of pairs, where pair is a role and "
+        "identifier. Role is merged generic roles where identifier was found.")
+    repos2roles_and_ids.set_defaults(handler=repos2roles_and_ids_entry)
+    add_engine_args(repos2roles_and_ids)
+    add_extractor_args(repos2roles_and_ids)
+    add_split_stem_arg(repos2roles_and_ids)
+    repos2roles_and_ids.add_argument(
+        "-o", "--output", required=True,
+        help="[OUT] Path to the directory where spark should store the result. "
+             "Inside the direcory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
         "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
