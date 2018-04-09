@@ -55,8 +55,7 @@ class CooccConstructor(Transformer):
         stack = list(root.children)
         while stack:
             node = stack.pop(0)
-            if bblfsh_roles.IDENTIFIER in node.roles and \
-                    bblfsh_roles.QUALIFIED not in node.roles:
+            if bblfsh_roles.IDENTIFIER in node.roles:
                 ids.append(node)
             else:
                 stack.extend(node.children)
@@ -70,8 +69,7 @@ class CooccConstructor(Transformer):
             children = self._flatten_children(node)
             tokens = [token for ch in children for token in self.token_parser(ch.token)]
 
-            if bblfsh_roles.IDENTIFIER in node.roles and \
-                    bblfsh_roles.QUALIFIED not in node.roles:
+            if bblfsh_roles.IDENTIFIER in node.roles:
                 tokens.extend(self.token_parser(node.token))
             for pair in itertools.permutations(tokens, 2):
                 yield pair
