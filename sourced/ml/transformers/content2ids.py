@@ -50,7 +50,7 @@ class ContentToIdentifiers(Transformer):
                 lexer = get_lexer_by_name(self.linguist2pygments[row.lang][i])
                 pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
                 break
-            except (KeyError, IndexError, ClassNotFound) as e:
+            except (KeyError, IndexError, ClassNotFound, UnicodeDecodeError) as e:
                 continue
         for token in self.names:
             yield token, (repo_id, path)
