@@ -22,11 +22,20 @@ Here is the list of proof-of-concept projects which are built using sourced.ml:
 
 ## Installation
 
+### With Apache Spark included
 ```
 pip3 install sourced-ml
 ```
 
-You need to have some native libraries installed. E.g., on Ubuntu `apt install libxml2-dev libsnappy-dev`.
+### Use existing Apache Spark
+If you already have Apache Spark installed and configured on your environment at `$APACHE_SPARK` you can re-use it and avoid downloading 200Mb through [pip "editable installs"](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) by
+```
+pip3 install -e "$SPARK_HOME/python"
+pip3 install sourced-ml
+```
+
+
+In both cases, you will need to have some native libraries installed. E.g., on Ubuntu `apt install libxml2-dev libsnappy-dev`.
 Some parts require [Tensorflow](https://tensorflow.org).
 
 ## Usage
