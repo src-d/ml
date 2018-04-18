@@ -35,7 +35,9 @@ def add_extractor_args(my_parser: argparse.ArgumentParser):
         help="The path to the repositories.")
     my_parser.add_argument(
         "-l", "--languages", required=True, nargs="+", choices=(
-            "Java", "Python", "JavaScript", "Ruby", "Bash"),
+            # TODO(zurk): get languages from bblfsh directly as soon as
+            # https://github.com/bblfsh/client-scala/issues/68 resolved
+            "Java", "Python", "Go", "JavaScript", "TypeScript", "Ruby", "Bash", "Php"),
         help="The programming languages to analyse.")
 
 
