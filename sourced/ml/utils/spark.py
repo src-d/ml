@@ -63,8 +63,7 @@ def create_spark(session_name,
                  config=SparkDefault.CONFIG,
                  packages=SparkDefault.PACKAGES,
                  spark_log_level=SparkDefault.LOG_LEVEL,
-                 dep_zip=False,
-                 **_):  # **kwargs are discarded for convenience
+                 dep_zip=False):  # **kwargs are discarded for convenience
     log = logging.getLogger("spark")
     log.info("Starting %s on %s", session_name, spark)
     builder = SparkSession.builder.master(spark).appName(session_name)
