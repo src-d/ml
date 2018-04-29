@@ -151,6 +151,7 @@ class UastExtractor(Transformer):
         super().__init__(**kwargs)
 
     def __call__(self, files: DataFrame) -> DataFrame:
+        # if UAST is not extracted, returns an empty list that we filter out here
         return files.extract_uasts().where(functions.size(functions.col("uast")) > 0)
 
 
@@ -254,4 +255,3 @@ def create_uast_source(args, session_name, select=HeadFiles, language_selector=N
         if extract_uast:
             start_point = start_point.link(UastExtractor())
     return root, start_point
-
