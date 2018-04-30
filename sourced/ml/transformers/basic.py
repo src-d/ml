@@ -6,7 +6,7 @@ from pyspark.sql import DataFrame
 
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
-from sourced.ml.utils import EngineConstants, assemble_spark_config, create_spark
+from sourced.ml.utils import EngineConstants, assemble_spark_config, create_spark, SparkDefault
 
 
 class CsvSaver(Transformer):
@@ -183,11 +183,18 @@ class ParquetLoader(Transformer):
         raise ValueError
 
 
-def create_parquet_loader(session_name, repositories, config=None, memory="", packages=None,
-                          **spark_kwargs):
-    config, packages = assemble_spark_config(config=config, packages=packages, memory=memory)
-    session = create_spark(session_name, config=config, packages=packages,
-                           **spark_kwargs)
+def create_parquet_loader(session_name, repositories,
+                          config=SparkDefault.CONFIG,
+                          packages=SparkDefault.PACKAGES,
+                          spark=SparkDefault.MASTER_ADDRESS,
+                          spark_local_dir=SparkDefault.LOCAL_DIR,
+                          spark_log_level=SparkDefault.LOG_LEVEL,
+                          memory=SparkDefault.MEMORY,
+                          dep_zip=False, **_):
+    config = assemble_spark_config(config=config, memory=memory)
+    session = create_spark(session_name, spark=spark, spark_local_dir=spark_local_dir,
+                           config=config, packages=packages, spark_log_level=spark_log_level,
+                           dep_zip=dep_zip)
     log = logging.getLogger("parquet")
     log.info("Initializing on %s", repositories)
     parquet = ParquetLoader(session, repositories)
