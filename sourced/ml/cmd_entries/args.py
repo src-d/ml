@@ -38,10 +38,11 @@ def add_repo2_args(my_parser: argparse.ArgumentParser, default_packages=None):
         "--parquet", action="store_true", help="Use Parquet files as input.")
     my_parser.add_argument(
         "--graph", help="Write the tree in Graphviz format to this file.")
+    # TODO(zurk): get languages from bblfsh directly as soon as
+    # https://github.com/bblfsh/client-scala/issues/98 resolved
+    languages = ["Java", "Python", "Go", "JavaScript", "TypeScript", "Ruby", "Bash", "Php"]
     my_parser.add_argument(
-        "-l", "--languages", required=True, nargs="+",
-        choices=("Java", "Python", "Go", "JavaScript", "TypeScript", "Ruby", "Bash", "Php"),
-        default=["Java", "Python", "Go", "JavaScript", "TypeScript", "Ruby", "Bash", "Php"],
+        "-l", "--languages", nargs="+", choices=languages, default=languages,
         help="The programming languages to analyse.")
     add_engine_args(my_parser, default_packages)
 

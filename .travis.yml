@@ -27,6 +27,8 @@ _install: &_install
   - (cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-$SPARK_VERSION/$SPARK_NAME.tgz" -O $SPARK_NAME.tgz; tar -C ~/ -xvzf $SPARK_NAME.tgz)
   - export SPARK_HOME=~/$SPARK_NAME
   - export PATH=$PATH:$SPARK_HOME/bin
+  - export PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python/lib/py4j-0.10.4-src.zip
+  - pip install tensorflow
   - pip install -r requirements.txt codecov
   - pip install -e .
 _coverage: &_coverage

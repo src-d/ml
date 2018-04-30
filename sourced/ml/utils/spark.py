@@ -20,6 +20,7 @@ class SparkDefault:
     CONFIG = []
     PACKAGES = []
     MEMORY = ""
+    STORAGE_LEVEL = "MEMORY_AND_DISK"
 
 
 def add_spark_args(my_parser, default_packages=None):
@@ -51,7 +52,7 @@ def add_spark_args(my_parser, default_packages=None):
                            help="Adds ml and engine to the spark context.")
     persistences = [att for att in pyspark.StorageLevel.__dict__.keys() if "__" not in att]
     my_parser.add_argument(
-        "--persist", default=None, choices=persistences,
+        "--persist", default=SparkDefault.STORAGE_LEVEL, choices=persistences,
         help="Spark persistence type (StorageLevel.*).")
     my_parser.add_argument(
         "--pause", action="store_true",
