@@ -237,13 +237,21 @@ def create_parquet_loader(session_name, repositories,
     return parquet
 
 
-def create_uast_source(args, session_name, select=HeadFiles):
+def create_uast_source(args, session_name, select=HeadFiles, language_selector=None,
+                       extract_uast=True):
     if args.parquet:
         start_point = create_parquet_loader(session_name, **args.__dict__)
         root = start_point
+        if extract_uast and "uast" not in [col.name for col in start_point.execute().schema]:
+            raise ValueError("The parquet files do not contain UASTs.")
     else:
         root = create_engine(session_name, **args.__dict__)
+        if language_selector is None:
+            language_selector = LanguageSelector(languages=args.languages)
         start_point = Ignition(root, explain=args.explain) \
             .link(select()) \
-            .link(UastExtractor(languages=args.languages))
+            .link(language_selector)
+        if extract_uast:
+            start_point = start_point.link(UastExtractor())
     return root, start_point
+

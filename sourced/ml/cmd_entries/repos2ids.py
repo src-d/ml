@@ -1,20 +1,22 @@
+import logging
 from uuid import uuid4
 
-from sourced.ml.transformers import Ignition, ContentToIdentifiers, \
-    LanguageSelector, IdentifiersToDataset, HeadFiles, Cacher, CsvSaver
-from sourced.ml.utils import create_engine
-from sourced.ml.utils.engine import pause
+from sourced.ml.transformers import ContentToIdentifiers, create_uast_source, LanguageSelector, \
+    IdentifiersToDataset, Cacher, CsvSaver
+from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
 def repos2ids_entry(args):
-    engine = create_engine("repos2ids-%s" % uuid4(), **args.__dict__)
-
-    Ignition(engine) \
-        .link(HeadFiles()) \
-        .link(LanguageSelector(languages=["null"], blacklist=True)) \
+    log = logging.getLogger("repos2ids")
+    session_name = "repos2ids-%s" % uuid4()
+    language_selector = LanguageSelector(languages=["null"], blacklist=True)
+    root, start_point = create_uast_source(args, session_name, language_selector=language_selector,
+                                           extract_uast=False)
+    start_point \
         .link(ContentToIdentifiers(args.split)) \
         .link(Cacher.maybe(args.persist)) \
         .link(IdentifiersToDataset(args.idfreq)) \
         .link(CsvSaver(args.output)) \
         .execute()
+    pipeline_graph(args, log, root)

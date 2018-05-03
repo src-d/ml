@@ -2,22 +2,20 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import IdentifierDistance
-from sourced.ml.transformers import Ignition, UastExtractor, UastDeserializer, \
-    HeadFiles, Uast2BagFeatures, Cacher, UastRow2Document, CsvSaver, LanguageSelector
+from sourced.ml.transformers import UastDeserializer, Uast2BagFeatures, Cacher, UastRow2Document, \
+    CsvSaver, create_uast_source
 from sourced.ml.transformers.basic import Rower
-from sourced.ml.utils import create_engine
-from sourced.ml.utils.engine import pause
+from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
 def repos2id_distance_entry(args):
-    engine = create_engine("repos2id_distance-%s" % uuid4(), **args.__dict__)
+    log = logging.getLogger("repos2roles_and_ids")
     extractors = [IdentifierDistance(args.split, args.type, args.max_distance)]
+    session_name = "repos2roles_and_ids-%s" % uuid4()
+    root, start_point = create_uast_source(args, session_name)
 
-    Ignition(engine, explain=args.explain) \
-        .link(HeadFiles()) \
-        .link(LanguageSelector(languages=args.languages)) \
-        .link(UastExtractor()) \
+    start_point \
         .link(UastRow2Document()) \
         .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer()) \
@@ -27,3 +25,4 @@ def repos2id_distance_entry(args):
                                    distance=x[1]))) \
         .link(CsvSaver(args.output)) \
         .execute()
+    pipeline_graph(args, log, root)
