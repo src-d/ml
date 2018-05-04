@@ -2,7 +2,7 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors.roles_and_ids import RolesAndIdsExtractor
-from sourced.ml.transformers import UastDeserializer, Uast2BagFeatures, Cacher, UastRow2Document, \
+from sourced.ml.transformers import UastDeserializer, Uast2BagFeatures, UastRow2Document, \
     CsvSaver, create_uast_source
 from sourced.ml.transformers.basic import Rower
 from sourced.ml.utils.engine import pipeline_graph, pause
@@ -16,7 +16,6 @@ def repos2roles_and_ids_entry(args):
 
     start_point \
         .link(UastRow2Document()) \
-        .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer()) \
         .link(Uast2BagFeatures([RolesAndIdsExtractor(args.split)])) \
         .link(Rower(lambda x: dict(identifier=x[0][0], role=x[1]))) \

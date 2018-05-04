@@ -17,7 +17,6 @@ def repos2id_distance_entry(args):
 
     start_point \
         .link(UastRow2Document()) \
-        .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer()) \
         .link(Uast2BagFeatures(extractors)) \
         .link(Rower(lambda x: dict(identifier1=x[0][0][0],

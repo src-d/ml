@@ -2,7 +2,7 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import IdSequenceExtractor
-from sourced.ml.transformers import UastDeserializer, Uast2BagFeatures, Cacher, UastRow2Document, \
+from sourced.ml.transformers import UastDeserializer, Uast2BagFeatures, UastRow2Document, \
     CsvSaver, create_uast_source
 from sourced.ml.transformers.basic import Rower
 from sourced.ml.utils.engine import pipeline_graph, pause
@@ -21,7 +21,6 @@ def repos2id_sequence_entry(args):
         mapper = Rower(lambda x: dict(identifiers=x[0][0]))
     start_point \
         .link(UastRow2Document()) \
-        .link(Cacher.maybe(args.persist)) \
         .link(UastDeserializer()) \
         .link(Uast2BagFeatures(extractors)) \
         .link(mapper) \

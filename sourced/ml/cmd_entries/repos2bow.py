@@ -33,8 +33,7 @@ def repos2bow_entry_template(args, select=HeadFiles, cache_hook=None, save_hook=
         log.info("Writing quantization levels to %s", args.quant)
         QuantizationLevels().construct(quant.levels).save(args.quant)
     uast_extractor = uast_extractor \
-        .link(Uast2BagFeatures(extractors)) \
-        .link(Cacher.maybe(args.persist))
+        .link(Uast2BagFeatures(extractors))
     log.info("Calculating the document frequencies...")
     df = uast_extractor.link(BagFeatures2DocFreq()).execute()
     log.info("Writing docfreq to %s", args.docfreq)

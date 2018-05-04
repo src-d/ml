@@ -2,7 +2,7 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.transformers import ContentToIdentifiers, create_uast_source, LanguageSelector, \
-    IdentifiersToDataset, Cacher, CsvSaver
+    IdentifiersToDataset, CsvSaver
 from sourced.ml.utils.engine import pipeline_graph, pause
 
 
@@ -15,7 +15,6 @@ def repos2ids_entry(args):
                                            extract_uast=False)
     start_point \
         .link(ContentToIdentifiers(args.split)) \
-        .link(Cacher.maybe(args.persist)) \
         .link(IdentifiersToDataset(args.idfreq)) \
         .link(CsvSaver(args.output)) \
         .execute()
