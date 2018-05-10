@@ -61,6 +61,9 @@ class BOWWriter(Transformer):
         self._log.info("Writing files to %s", self.filename)
         for i, part in enumerate(it):
             docs = [doc_index_to_name[p[0]] for p in part]
+            if not len(docs):
+                self._log.info("Batch %d is empty, skipping.", i + 1)
+                continue
             size = sum(len(p[1]) for p in part)
             data = numpy.zeros(size, dtype=numpy.float32)
             indices = numpy.zeros(size, dtype=numpy.int32)
