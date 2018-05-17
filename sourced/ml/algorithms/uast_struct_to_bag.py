@@ -33,7 +33,7 @@ class UastSeq2Bag(Uast2StructBagBase):
     DFS traversal + preserves the order of node children.
     """
 
-    def __init__(self, stride=1, seq_len=5, node2index=None):
+    def __init__(self, stride=1, seq_len=(3, 4), node2index=None):
         _node2index = Node2InternalType() if node2index is None else node2index
         super().__init__(stride, seq_len, _node2index)
 
@@ -161,8 +161,8 @@ class Uast2RandomWalks:
 
 
 class UastRandomWalk2Bag(Uast2StructBagBase):
-    def __init__(self, p_explore_neighborhood=0.5, q_leave_neighborhood=0.5, n_walks=5, n_steps=19,
-                 stride=1, seq_len=(5, 6), seed=42):
+    def __init__(self, p_explore_neighborhood=0.79, q_leave_neighborhood=0.82, n_walks=2,
+                 n_steps=10, stride=1, seq_len=(2, 3), seed=42):
         super().__init__(stride, seq_len)
         self.uast2walks = Uast2RandomWalks(p_explore_neighborhood=p_explore_neighborhood,
                                            q_leave_neighborhood=q_leave_neighborhood,
