@@ -11,7 +11,8 @@ from sourced.ml.cmd_entries import bigartm2asdf_entry, dump_model, projector_ent
     repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry, \
     repos2id_sequence_entry
 from sourced.ml.cmd_entries.args import add_df_args, add_feature_args, add_split_stem_arg, \
-    add_vocabulary_size_arg, add_repo2_args, add_bow_args, ArgumentDefaultsHelpFormatterNoNone
+    add_vocabulary_size_arg, add_repo2_args, add_bow_args, add_repartitioner_arg, \
+    ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd_entries.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm
 
@@ -53,6 +54,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2ids_parser.set_defaults(handler=repos2ids_entry)
     add_repo2_args(repos2ids_parser)
     add_split_stem_arg(repos2ids_parser)
+    add_repartitioner_arg(repos2ids_parser)
     repos2ids_parser.add_argument(
         "-o", "--output", required=True,
         help="[OUT] output path to the CSV file with identifiers.")
@@ -69,6 +71,7 @@ def get_parser() -> argparse.ArgumentParser:
     add_df_args(repos2coocc_parser)
     add_repo2_args(repos2coocc_parser)
     add_split_stem_arg(repos2coocc_parser)
+    add_repartitioner_arg(repos2coocc_parser)
     repos2coocc_parser.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the Cooccurrences model.")
