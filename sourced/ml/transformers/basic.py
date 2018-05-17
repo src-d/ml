@@ -4,6 +4,7 @@ from typing import Union
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
 
+from sourced.ml.extractors.helpers import filter_kwargs
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.utils import EngineConstants, assemble_spark_config, create_engine, create_spark, \
@@ -227,7 +228,7 @@ def create_parquet_loader(session_name, repositories,
                           spark_local_dir=SparkDefault.LOCAL_DIR,
                           spark_log_level=SparkDefault.LOG_LEVEL,
                           memory=SparkDefault.MEMORY,
-                          dep_zip=False, **_):
+                          dep_zip=False):
     config = assemble_spark_config(config=config, memory=memory)
     session = create_spark(session_name, spark=spark, spark_local_dir=spark_local_dir,
                            config=config, packages=packages, spark_log_level=spark_log_level,
@@ -241,12 +242,14 @@ def create_parquet_loader(session_name, repositories,
 def create_uast_source(args, session_name, select=HeadFiles, language_selector=None,
                        extract_uast=True):
     if args.parquet:
-        start_point = create_parquet_loader(session_name, **args.__dict__)
+        parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
+        start_point = create_parquet_loader(session_name, **parquet_loader_args)
         root = start_point
         if extract_uast and "uast" not in [col.name for col in start_point.execute().schema]:
             raise ValueError("The parquet files do not contain UASTs.")
     else:
-        root = create_engine(session_name, **args.__dict__)
+        engine_args = filter_kwargs(args.__dict__, create_engine)
+        root = create_engine(session_name, **engine_args)
         if language_selector is None:
             language_selector = LanguageSelector(languages=args.languages)
         start_point = Ignition(root, explain=args.explain) \
