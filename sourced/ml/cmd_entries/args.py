@@ -20,7 +20,7 @@ class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter
 def add_repartitioner_arg(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "--partitions", required=False, default=None, type=int,
-        help="Performs data repartition to specified number of partitions. " 
+        help="Performs data repartition to specified number of partitions. "
              "Nothing happens if parameter is unset.")
     my_parser.add_argument(
         "--shuffle", action="store_true",

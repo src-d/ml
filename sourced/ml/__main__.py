@@ -41,6 +41,7 @@ def get_parser() -> argparse.ArgumentParser:
     add_repo2_args(repos2bow_parser)
     add_feature_args(repos2bow_parser)
     add_bow_args(repos2bow_parser)
+    add_repartitioner_arg(repos2bow_parser)
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(
         "repos2df", "Calculate document frequencies of features extracted from source code.")

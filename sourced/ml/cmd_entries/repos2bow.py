@@ -5,7 +5,7 @@ from sourced.ml.extractors import create_extractors_from_args
 from sourced.ml.models import OrderedDocumentFrequencies, QuantizationLevels
 from sourced.ml.transformers import UastDeserializer, Uast2Quant, \
     BagFeatures2DocFreq, BagFeatures2TermFreq, Uast2BagFeatures, HeadFiles, TFIDF, Cacher, \
-    Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source
+    Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, Repartitioner
 from sourced.ml.utils.engine import pipeline_graph, pause
 
 
@@ -15,7 +15,9 @@ def repos2bow_entry_template(args, select=HeadFiles, cache_hook=None, save_hook=
     extractors = create_extractors_from_args(args)
     session_name = "repos2bow-%s" % uuid4()
     root, start_point = create_uast_source(args, session_name, select=select)
-    uast_extractor = start_point.link(Moder(args.mode)).link(Cacher.maybe(args.persist))
+    uast_extractor = start_point.link(Moder(args.mode)) \
+        .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
+        .link(Cacher.maybe(args.persist))
     if cache_hook is not None:
         uast_extractor.link(cache_hook()).execute()
     # We link UastRow2Document after Cacher here because cache_hook() may want to have all possible
@@ -48,7 +50,9 @@ def repos2bow_entry_template(args, select=HeadFiles, cache_hook=None, save_hook=
         .link(document_indexer) \
         .link(Indexer(Uast2BagFeatures.Columns.token, df_model.order))
     if save_hook is not None:
-        bags_writer = bags_writer.link(save_hook())
+        bags_writer = bags_writer \
+            .link(Repartitioner.maybe(args.partitions * 10, args.shuffle)) \
+            .link(save_hook())
     bags_writer.link(BOWWriter(document_indexer, df_model, args.bow, args.batch)) \
         .execute()
     pipeline_graph(args, log, root)
