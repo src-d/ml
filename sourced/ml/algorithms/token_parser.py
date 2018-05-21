@@ -97,7 +97,7 @@ class TokenParser:
                     yield from ret(part[pos:i])
                     pos = i
                 elif prev.isupper() and this.islower():
-                    if 0 < i - 1 - pos <= 3:
+                    if 0 < i - 1 - pos <= self.min_split_length:
                         yield from ret(part[pos:i])
                         pos = i
                     elif i - 1 > pos:
