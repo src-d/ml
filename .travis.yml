@@ -6,11 +6,6 @@ services:
 cache:
   directories:
   - "$HOME/.cache/pip"
-addons:
-  apt:
-    packages:
-      - libxml2-dev
-      - libsnappy-dev
 stages:
   - test
   - name: deploy
