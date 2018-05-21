@@ -45,7 +45,7 @@ def create_engine(session_name, repositories, repository_format="siva", bblfsh=N
                   engine=None, config=SparkDefault.CONFIG, packages=SparkDefault.PACKAGES,
                   spark=SparkDefault.MASTER_ADDRESS, spark_local_dir=SparkDefault.LOCAL_DIR,
                   spark_log_level=SparkDefault.LOG_LEVEL, memory=SparkDefault.MEMORY,
-                  dep_zip=False, **_):
+                  dep_zip=False):
     if not bblfsh:
         bblfsh = "localhost"
     if not engine:
