@@ -17,9 +17,10 @@ class TokenParserTests(unittest.TestCase):
             ("sourced.ml.algorithms.uast_ids_to_bag",
              ["sourc", "sourcedml", "algorithm", "mlalgorithm",
               "uast", "ids", "idsto", "bag", "tobag"]),
-            # Bad example. Parser failed to parse it correctly
-            ("WORSTnameYOUcanIMAGINE", ['worst', 'name', 'nameyo', 'ucan', 'youcan', 'imagin']),
+            ("WORSTnameYOUcanIMAGINE", ['worst', 'name', 'you', 'can', 'imagin']),
             # Another bad example. Parser failed to parse it correctly
+            ("SmallIdsToFoOo", ["small", "ids", 'idsto', 'fo', 'oo']),
+            ("SmallIdFooo", ["small", "smallid", 'fooo', 'idfooo']),
             ("ONE_M0re_.__badId.example", ['one', 'onem', 're', 'bad', 'rebad',
                                            'badid', 'exampl', 'idexampl']),
             ("never_use_Such__varsableNames", ['never', 'use', 'such', 'varsabl', 'name']),

@@ -98,8 +98,8 @@ class TokenParser:
                     pos = i
                 elif prev.isupper() and this.islower():
                     if 0 < i - 1 - pos <= 3:
-                        yield from ret(part[pos:i - 1])
-                        pos = i - 1
+                        yield from ret(part[pos:i])
+                        pos = i
                     elif i - 1 > pos:
                         yield from ret(part[pos:i])
                         pos = i
