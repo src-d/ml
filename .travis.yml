@@ -9,7 +9,6 @@ cache:
 addons:
   apt:
     packages:
-      - libboost-all-dev
       - libxml2-dev
       - libsnappy-dev
 stages:
