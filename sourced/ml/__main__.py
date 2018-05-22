@@ -95,7 +95,7 @@ def get_parser() -> argparse.ArgumentParser:
         "-t", "--type", required=True, choices=IdentifierDistance.DistanceType.All,
         help="Distance type.")
     repos2identifier_distance.add_argument(
-        "--max-distance", default=IdentifierDistance.DEFAULT_MAX_DISTANCE,
+        "--max-distance", default=IdentifierDistance.DEFAULT_MAX_DISTANCE, type=int,
         help="Maximum distance to save.")
     repos2identifier_distance.add_argument(
         "-o", "--output", required=True,
