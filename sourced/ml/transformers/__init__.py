@@ -1,6 +1,6 @@
 from sourced.ml.transformers.basic import Sampler, Collector, First, Identity, Cacher, Ignition, \
-    HeadFiles, UastExtractor, FieldsSelector, ParquetSaver, ParquetLoader, UastDeserializer, \
-    Counter, create_uast_source, CsvSaver, LanguageSelector
+    HeadFiles, UastExtractor, FieldsSelector, ParquetSaver, ParquetLoader, Repartitioner,\
+    UastDeserializer, Counter, create_uast_source, CsvSaver, LanguageSelector
 from sourced.ml.transformers.indexer import Indexer
 from sourced.ml.transformers.tfidf import TFIDF
 from sourced.ml.transformers.transformer import Transformer

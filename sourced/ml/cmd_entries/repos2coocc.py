@@ -4,7 +4,8 @@ from uuid import uuid4
 from sourced.ml.extractors import IdentifiersBagExtractor
 from sourced.ml.models import OrderedDocumentFrequencies
 from sourced.ml.transformers import Cacher, UastDeserializer, CooccConstructor, CooccModelSaver, \
-    BagFeatures2DocFreq, Uast2BagFeatures, Counter, UastRow2Document, create_uast_source
+    BagFeatures2DocFreq, Uast2BagFeatures, Counter, UastRow2Document, Repartitioner, \
+    create_uast_source
 from sourced.ml.utils.engine import pipeline_graph, pause
 
 
@@ -18,6 +19,7 @@ def repos2coocc_entry(args):
 
     uast_extractor = start_point \
         .link(UastRow2Document()) \
+        .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
         .link(Cacher.maybe(args.persist))
     log.info("Extracting UASTs...")
     ndocs = uast_extractor.link(Counter()).execute()

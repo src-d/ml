@@ -11,6 +11,23 @@ from sourced.ml.utils import EngineConstants, assemble_spark_config, create_engi
     SparkDefault
 
 
+class Repartitioner(Transformer):
+    def __init__(self, partitions: int, shuffle: bool=False, **kwargs):
+        super().__init__(**kwargs)
+        self.partitions = partitions
+        self.shuffle = shuffle
+
+    def __call__(self, head: RDD):
+        return head.coalesce(self.partitions, self.shuffle)
+
+    @staticmethod
+    def maybe(partitions: Union[int, None], shuffle: bool=False):
+        if partitions is not None:
+            return Repartitioner(partitions, shuffle)
+        else:
+            return Identity()
+
+
 class CsvSaver(Transformer):
     def __init__(self, output: str, **kwargs):
         super().__init__(**kwargs)

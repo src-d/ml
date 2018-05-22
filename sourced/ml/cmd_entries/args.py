@@ -17,6 +17,16 @@ class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter
         return super()._get_help_string(action)
 
 
+def add_repartitioner_arg(my_parser: argparse.ArgumentParser):
+    my_parser.add_argument(
+        "--partitions", required=False, default=None, type=int,
+        help="Performs data repartition to specified number of partitions. "
+             "Nothing happens if parameter is unset.")
+    my_parser.add_argument(
+        "--shuffle", action="store_true",
+        help="Use RDD.repartition() instead of RDD.coalesce().")
+
+
 def add_split_stem_arg(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "--split", action="store_true",
