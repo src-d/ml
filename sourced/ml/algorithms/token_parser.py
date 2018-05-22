@@ -70,17 +70,21 @@ class TokenParser:
 
     def split(self, token):
         token = token.strip()[:self.max_token_length]
-        prev_p = [""]
 
         def ret(name):
             r = name.lower()
             if len(name) >= self.min_split_length:
+                ret.last_subtoken = r
                 yield r
-                if prev_p[0]:
-                    yield prev_p[0] + r
-                    prev_p[0] = ""
+                if ret.prev_p:
+                    yield ret.prev_p + r
+                    ret.prev_p = ""
             else:
-                prev_p[0] = r
+                ret.prev_p = r
+                yield ret.last_subtoken + r
+                ret.last_subtoken = ""
+        ret.prev_p = ""
+        ret.last_subtoken = ""
 
         for part in self.NAME_BREAKUP_RE.split(token):
             if not part:
@@ -94,8 +98,8 @@ class TokenParser:
                     pos = i
                 elif prev.isupper() and this.islower():
                     if 0 < i - 1 - pos <= self.min_split_length:
-                        yield from ret(part[pos:i - 1])
-                        pos = i - 1
+                        yield from ret(part[pos:i])
+                        pos = i
                     elif i - 1 > pos:
                         yield from ret(part[pos:i])
                         pos = i
