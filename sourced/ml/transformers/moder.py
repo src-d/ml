@@ -1,10 +1,12 @@
 from itertools import chain
+import os
 
 from pyspark import Row, RDD
 from pyspark.sql import DataFrame
 
+from sourced.ml.algorithms.uast_ids_to_bag import uast2sequence
 from sourced.ml.transformers import Transformer
-from sourced.ml.utils import EngineConstants
+from sourced.ml.utils import EngineConstants, FUNCTION, DECLARATION, NAME, IDENTIFIER
 
 
 class Moder(Transformer):
@@ -17,6 +19,8 @@ class Moder(Transformer):
         function = "func"
 
         __all__ = (file, function, repo)
+
+    USE_XPATH = os.getenv("USE_XPATH", False) in ("1", "true", "yes")
 
     # Copied from https://github.com/src-d/hercules/blob/master/shotness.go#L40
     # If you change here, please PR it to Hercules as well
@@ -73,21 +77,38 @@ class Moder(Transformer):
         template = row.asDict()
         for func, name in self.extract_functions_from_uast(uast):
             data = template.copy()
-            data[EngineConstants.Columns.Uast] = [self.serialize_uast(func)]
+            data[EngineConstants.Columns.Uast] = [bytearray(self.serialize_uast(func))]
             data[EngineConstants.Columns.BlobId] += "_%s:%d" % (name, func.start_position.line)
             yield Row(**data)
 
     def extract_functions_from_uast(self, uast: "bblfsh.Node"):
-        allfuncs = list(self.filter_uast(uast, self.FUNC_XPATH))
+        if self.USE_XPATH:
+            allfuncs = list(self.filter_uast(uast, self.FUNC_XPATH))
+        else:
+            node_seq = uast2sequence(uast)
+            allfuncs = [node for node in node_seq if FUNCTION in node.roles and
+                        DECLARATION in node.roles]
         internal = set()
         for func in allfuncs:
             if id(func) in internal:
                 continue
-            for sub in self.filter_uast(func, self.FUNC_XPATH):
+
+            if self.USE_XPATH:
+                sub_seq = self.filter_uast(func, self.FUNC_XPATH)
+            else:
+                sub_seq = [node for node in uast2sequence(func) if FUNCTION in node.roles and
+                           DECLARATION in node.roles]
+
+            for sub in sub_seq:
                 if sub != func:
                     internal.add(id(sub))
         for f in allfuncs:
             if id(f) not in internal:
-                name = "+".join(n.token for n in self.filter_uast(f, self.FUNC_NAME_XPATH))
+                if self.USE_XPATH:
+                    f_seq = self.filter_uast(f, self.FUNC_NAME_XPATH)
+                else:
+                    f_seq = [node for node in uast2sequence(f) if FUNCTION in node.roles and
+                             IDENTIFIER in node.roles and NAME in node.roles]
+                name = "+".join(n.token for n in f_seq)
                 if name:
                     yield f, name
