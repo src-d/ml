@@ -178,10 +178,12 @@ class FieldsSelector(Transformer):
         super().__init__(**kwargs)
         self.fields = fields
 
-    def __call__(self, df: DataFrame) -> DataFrame:
-        res = df.select(self.fields)
+    def __call__(self, rdd: RDD) -> RDD:
+        def select_fields(row):
+            return Row(**{f: getattr(row, f) for f in self.fields})
+        res = rdd.map(select_fields)
         if self.explained:
-            self._log.info("toDebugString():\n%s", res.rdd.toDebugString().decode())
+            self._log.info("toDebugString():\n%s", res.toDebugString().decode())
         return res
 
 
@@ -190,10 +192,10 @@ class ParquetSaver(Transformer):
         super().__init__(**kwargs)
         self.save_loc = save_loc
 
-    def __call__(self, df: DataFrame):
+    def __call__(self, rdd: RDD):
         if self.explained:
-            self._log.info("toDebugString():\n%s", df.rdd.toDebugString().decode())
-        df.write.parquet(self.save_loc)
+            self._log.info("toDebugString():\n%s", rdd.toDebugString().decode())
+        rdd.toDF().write.parquet(self.save_loc)
 
 
 class ParquetLoader(Transformer):
