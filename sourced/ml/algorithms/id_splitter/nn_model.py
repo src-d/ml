@@ -1,3 +1,4 @@
+import argparse
 import warnings
 
 import numpy
@@ -177,6 +178,36 @@ def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: in
     model = Model(inputs=char_seq, outputs=output)
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
+
+
+def prepare_cnn_model(args: argparse.ArgumentParser):
+    """
+    Construct a CNN model from parsed arguments.
+    :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
+                 kernel_sizes, optimizer, devices
+    :return: compiled model
+    """
+    # extract required arguments
+    n_uniq = args.num_chars
+    maxlen = args.length
+
+    def to_list(params):
+        """
+        Convert string parameters to list.
+        :param params: string that contains integer parameters separated by comma
+        :return: list of integers
+        """
+        return list(map(int, params.split(",")))
+
+    filters = to_list(args.filters)
+    output_n_filters = args.dim_reduction
+    stack = args.stack
+    kernel_sizes = to_list(args.kernel_sizes)
+    optimizer = args.optimizer
+    device, _ = prepare_devices(args)
+
+    return build_cnn(n_uniq, maxlen, filters, output_n_filters, stack, kernel_sizes, optimizer,
+                     device)
 
 
 @register_metric
