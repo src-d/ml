@@ -57,13 +57,15 @@ def add_repo2_args(my_parser: argparse.ArgumentParser, default_packages=None):
     add_engine_args(my_parser, default_packages)
 
 
-def add_df_args(my_parser: argparse.ArgumentParser):
+def add_df_args(my_parser: argparse.ArgumentParser, required=True):
     my_parser.add_argument(
         "--min-docfreq", default=1, type=int,
         help="The minimum document frequency of each feature.")
-    my_parser.add_argument(
-        "--docfreq", required=True,
-        help="[OUT] The path to the OrderedDocumentFrequencies model.")
+    df_group = my_parser.add_mutually_exclusive_group(required=required)
+    df_group.add_argument(
+        "--docfreq-out", help="Path to save generated DocumentFrequencies model.")
+    df_group.add_argument(
+        "--docfreq-in", help="Path to load pre-generated DocumentFrequencies model.")
     add_vocabulary_size_arg(my_parser)
 
 

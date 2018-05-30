@@ -56,7 +56,7 @@ class Id2VecTests(unittest.TestCase):
         projector.present_embeddings = fake_present
         projector.wait = fake_wait
         args = argparse.Namespace(
-            input=paths.ID2VEC, output="fake", docfreq=paths.DOCFREQ,
+            input=paths.ID2VEC, output="fake", docfreq_in=paths.DOCFREQ,
             no_browser=False, log_level=logging.DEBUG)
         try:
             projector_entry(args)
@@ -85,7 +85,7 @@ class Id2VecTests(unittest.TestCase):
         projector.present_embeddings = fake_present
         projector.wait = fake_wait
         args = argparse.Namespace(
-            input=paths.ID2VEC, output="fake", docfreq=None,
+            input=paths.ID2VEC, output="fake", docfreq_in=None,
             no_browser=False, log_level=logging.DEBUG)
         try:
             projector_entry(args)

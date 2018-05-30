@@ -34,7 +34,8 @@ def preprocess_id2vec(args):
     :return: None
     """
     log = logging.getLogger("preproc")
-    df_model = DocumentFrequencies().load(source=args.docfreq)
+    log.info("Loading docfreq model from %s", args.docfreq_in)
+    df_model = DocumentFrequencies(log_level=args.log_level).load(source=args.docfreq_in)
     coocc_model = Cooccurrences().load(args.input)
     try:
         df_meta = coocc_model.get_dep(DocumentFrequencies.NAME)
