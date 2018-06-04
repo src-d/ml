@@ -34,6 +34,7 @@ def add_engine_args(my_parser, default_packages=None):
 def add_engine_dependencies(engine, config=None, packages=None):
     # to clean up unpacked Siva files, see https://github.com/src-d/engine/issues/348
     config.append("spark.tech.sourced.engine.cleanup.skip=false")
+    config.append("spark.tech.sourced.engine.skip.read.errors=true")
     packages.append("tech.sourced:engine:" + engine)
 
 

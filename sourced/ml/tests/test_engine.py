@@ -13,5 +13,6 @@ class EngineTests(unittest.TestCase):
         config = []
         packages = []
         add_engine_dependencies("latest", config, packages)
-        self.assertEqual(config, ["spark.tech.sourced.engine.cleanup.skip=false"])
+        self.assertEqual(config, ["spark.tech.sourced.engine.cleanup.skip=false",
+                                  "spark.tech.sourced.engine.skip.read.errors=true"])
         self.assertEqual(packages, ["tech.sourced:engine:latest"])
