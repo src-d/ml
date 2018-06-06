@@ -37,6 +37,9 @@ def preprocess_id2vec(args):
     log.info("Loading docfreq model from %s", args.docfreq_in)
     df_model = DocumentFrequencies(log_level=args.log_level).load(source=args.docfreq_in)
     coocc_model = Cooccurrences().load(args.input)
+    if numpy.any(coocc_model.matrix.data < 0):
+        raise ValueError(("Co-occurrence matrix %s contains negative elements. "
+                          "Please check its correctness.") % args.input)
     try:
         df_meta = coocc_model.get_dep(DocumentFrequencies.NAME)
         if df_model.meta != df_meta:
