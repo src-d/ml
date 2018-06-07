@@ -11,8 +11,7 @@ from sourced.ml.cmd import bigartm2asdf_entry, dump_model, projector_entry, bow2
     repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry, \
     repos2id_sequence_entry
 from sourced.ml.cmd.args import add_df_args, add_feature_args, add_split_stem_arg, \
-    add_vocabulary_size_arg, add_repo2_args, add_bow_args, add_repartitioner_arg, \
-    ArgumentDefaultsHelpFormatterNoNone
+    add_repo2_args, add_bow_args, add_repartitioner_arg, ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm
 
@@ -123,13 +122,9 @@ def get_parser() -> argparse.ArgumentParser:
     preproc_parser = add_parser(
         "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
     preproc_parser.set_defaults(handler=preprocess_id2vec)
-    add_vocabulary_size_arg(preproc_parser)
+    add_df_args(preproc_parser)
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
-    preproc_parser.add_argument(
-        "--docfreq", default=None,
-        help="[IN] Path to the pre-calculated document frequencies in asdf format "
-             "(DF in TF-IDF).")
     preproc_parser.add_argument(
         "-i", "--input",
         help="Concurrence model produced by repos2coocc.")
@@ -154,12 +149,11 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_project_parser = add_parser(
         "id2vec_project", "Present id2vec model in Tensorflow Projector.")
     id2vec_project_parser.set_defaults(handler=projector_entry)
+    add_df_args(id2vec_project_parser, required=False)
     id2vec_project_parser.add_argument("-i", "--input", required=True,
                                        help="id2vec model to present.")
     id2vec_project_parser.add_argument("-o", "--output", required=True,
                                        help="Projector output directory.")
-    id2vec_project_parser.add_argument("--docfreq", help="docfreq model to pick the most "
-                                                         "significant identifiers.")
     id2vec_project_parser.add_argument("--no-browser", action="store_true",
                                        help="Do not open the browser.")
     # ------------------------------------------------------------------------

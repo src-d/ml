@@ -71,8 +71,8 @@ def default_swivel_args(tmpdir):
 
 def default_preprocess_params(tmpdir, vocab):
     args = argparse.Namespace(
-        output=tmpdir, docfreq=COOCC_DF, input=COOCC,
-        vocabulary_size=vocab, shard_size=vocab)
+        output=tmpdir, docfreq_in=COOCC_DF, input=COOCC,
+        vocabulary_size=vocab, shard_size=vocab, log_level=0)
     return args
 
 
@@ -94,7 +94,7 @@ class IdEmbeddingTests(unittest.TestCase):
                 sorted(os.listdir(tmpdir)),
                 ["col_sums.txt", "col_vocab.txt", "row_sums.txt", "row_vocab.txt",
                  "shard-000-000.pb"])
-            df = OrderedDocumentFrequencies().load(source=args.docfreq)
+            df = OrderedDocumentFrequencies().load(source=args.docfreq_in)
             self.assertEqual(len(df), VOCAB)
             with open(os.path.join(tmpdir, "col_sums.txt")) as fin:
                 col_sums = fin.read()

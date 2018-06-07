@@ -1,3 +1,4 @@
+import os
 import logging
 from uuid import uuid4
 
@@ -31,6 +32,6 @@ def repos2df_entry(args):
         .link(Uast2BagFeatures(extractors)) \
         .link(BagFeatures2DocFreq()) \
         .execute()
-    log.info("Writing %s", args.docfreq)
-    OrderedDocumentFrequencies().construct(ndocs, df).save(args.docfreq)
+    log.info("Writing docfreq model to %s", args.docfreq_out)
+    OrderedDocumentFrequencies().construct(ndocs, df).save(args.docfreq_out)
     pipeline_graph(args, log, root)

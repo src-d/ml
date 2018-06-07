@@ -2,11 +2,12 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import create_extractors_from_args
-from sourced.ml.models import OrderedDocumentFrequencies, QuantizationLevels
-from sourced.ml.transformers import UastDeserializer, Uast2Quant, \
-    BagFeatures2DocFreq, BagFeatures2TermFreq, Uast2BagFeatures, HeadFiles, TFIDF, Cacher, \
-    Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, Repartitioner
+from sourced.ml.models import QuantizationLevels
+from sourced.ml.transformers import UastDeserializer, Uast2Quant, BagFeatures2TermFreq, \
+    Uast2BagFeatures, HeadFiles, TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, \
+    create_uast_source, Repartitioner
 from sourced.ml.utils.engine import pipeline_graph, pause
+from sourced.ml.utils.docfreq import create_or_load_ordered_df
 
 
 @pause
@@ -36,14 +37,9 @@ def repos2bow_entry_template(args, select=HeadFiles, cache_hook=None, save_hook=
         QuantizationLevels().construct(quant.levels).save(args.quant)
     uast_extractor = uast_extractor \
         .link(Uast2BagFeatures(extractors))
-    log.info("Calculating the document frequencies...")
-    df = uast_extractor.link(BagFeatures2DocFreq()).execute()
-    log.info("Writing docfreq to %s", args.docfreq)
-    df_model = OrderedDocumentFrequencies() \
-        .construct(ndocs, df) \
-        .prune(args.min_docfreq) \
-        .greatest(args.vocabulary_size) \
-        .save(args.docfreq)
+
+    df_model = create_or_load_ordered_df(args, ndocs, uast_extractor)
+
     bags_writer = uast_extractor \
         .link(BagFeatures2TermFreq()) \
         .link(TFIDF(df_model)) \
