@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix
 
 from modelforge.model import split_strings, assemble_sparse_matrix
 from sourced.ml.algorithms import swivel
-from sourced.ml.cmd_entries import postprocess_id2vec, run_swivel, preprocess_id2vec
+from sourced.ml.cmd import postprocess_id2vec, run_swivel, preprocess_id2vec
 from sourced.ml.models import OrderedDocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
 from sourced.ml.tests.models import COOCC, COOCC_DF
