@@ -10,13 +10,13 @@ from sourced.ml.transformers import Moder
 from sourced.ml.cmd import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry, \
-    repos2id_sequence_entry, preprocess_repos_entry, merge_df_entry
+    repos2id_sequence_entry, preprocess_repos_entry, merge_df_entry, merge_coocc_entry
 from sourced.ml.cmd.args import add_df_args, add_feature_args, add_split_stem_arg, \
     add_vocabulary_size_arg, add_repo2_args, add_bow_args, add_repartitioner_arg, add_filter_arg, \
     add_min_docfreq, add_dzhigurda_arg, \
     ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd.run_swivel import mirror_tf_args
-from sourced.ml.utils import install_bigartm
+from sourced.ml.utils import install_bigartm, add_spark_args
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -221,7 +221,26 @@ def get_parser() -> argparse.ArgumentParser:
         "--ordered", action="store_true", default=False,
         help="Save OrderedDocumentFrequencies. "
              "If not specified DocumentFrequencies model will be saved")
-
+    # ------------------------------------------------------------------------
+    merge_coocc = add_parser("merge-coocc", "Merge Cooccurrences models to a singe one.")
+    merge_coocc.set_defaults(handler=merge_coocc_entry)
+    add_spark_args(merge_coocc)
+    add_filter_arg(merge_coocc)
+    merge_coocc.add_argument(
+        "-o", "--output", required=True,
+        help="Path to the merged Cooccurrences model.")
+    merge_coocc.add_argument(
+        "-i", "--input", required=True,
+        help="Cooccurrences models input files."
+             "Use `-i -` to read input files from stdin.")
+    merge_coocc.add_argument(
+        "--docfreq", required=True,
+        help="[IN] Specify OrderedDocumentFrequencies model. "
+             "Identifiers that are not present in the model will be ignored.")
+    merge_coocc.add_argument(
+        "--no-spark", action="store_true", default=False,
+        help="Do not use spark, but python native code. Can save time and memory consumption if "
+             "data fits into one PC.")
     return parser
 
 

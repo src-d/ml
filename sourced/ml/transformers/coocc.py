@@ -28,7 +28,8 @@ class CooccModelSaver(Transformer):
         """
         rows = sparse_matrix.collect()
 
-        mat_row, mat_col, mat_weights = zip(*rows)
+        mat_index, mat_weights = zip(*rows)
+        mat_row, mat_col = zip(*mat_index)
         tokens_num = len(self.tokens_list)
 
         self._log.info("Building matrix...")
@@ -77,10 +78,9 @@ class CooccConstructor(Transformer):
             stack.extend(children)
 
     def __call__(self, uasts):
-        sparse_matrix = uasts.flatMap(self._process_row)\
-            .reduceByKey(operator.add)\
-            .map(lambda row: (row[0][0], row[0][1], row[1]))
-        return sparse_matrix
+        return uasts \
+            .flatMap(self._process_row) \
+            .reduceByKey(operator.add)
 
     def _process_row(self, row: Row):
         for uast in row[EngineConstants.Columns.Uast]:

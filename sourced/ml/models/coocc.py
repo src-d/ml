@@ -1,3 +1,4 @@
+import pyspark
 from modelforge.model import Model, split_strings, assemble_sparse_matrix, \
     merge_strings, disassemble_sparse_matrix
 from modelforge.models import register_model
@@ -48,3 +49,10 @@ Matrix: shape: %s non-zero: %d""" % (
     def _generate_tree(self):
         return {"tokens": merge_strings(self.tokens),
                 "matrix": disassemble_sparse_matrix(self.matrix)}
+
+    def matrix_to_rdd(self, spark_context: pyspark.SparkContext) -> pyspark.RDD:
+        self._log.info("Convert coocc model to RDD...")
+        rdd_row = spark_context.parallelize(self._matrix.row)
+        rdd_col = spark_context.parallelize(self._matrix.col)
+        rdd_data = spark_context.parallelize(self._matrix.data)
+        return rdd_row.zip(rdd_col).zip(rdd_data)
