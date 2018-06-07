@@ -9,9 +9,10 @@ from sourced.ml.extractors import IdentifierDistance
 from sourced.ml.cmd import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry, \
-    repos2id_sequence_entry
+    repos2id_sequence_entry, merge_df_entry
 from sourced.ml.cmd.args import add_df_args, add_feature_args, add_split_stem_arg, \
-    add_repo2_args, add_bow_args, add_repartitioner_arg, ArgumentDefaultsHelpFormatterNoNone
+    add_vocabulary_size_arg, add_repo2_args, add_bow_args, add_repartitioner_arg, add_filter_arg, \
+    add_min_docfreq, ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm
 
@@ -186,6 +187,22 @@ def get_parser() -> argparse.ArgumentParser:
         "input", help="Path to the model file, URL or UUID.")
     dump_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
                              help="GCS bucket to use.")
+    # ------------------------------------------------------------------------
+    merge_df = add_parser("merge-df", "Merge DocumentFrequency models to a singe one.")
+    merge_df.set_defaults(handler=merge_df_entry)
+    add_filter_arg(merge_df)
+    add_min_docfreq(merge_df)
+    add_vocabulary_size_arg(merge_df)
+    merge_df.add_argument(
+        "-o", "--output", required=True,
+        help="Path to the merged document frequencies model.")
+    merge_df.add_argument(
+        "-i", "--input", required=True,
+        help="Directory to scan recursively for asdf files.")
+    merge_df.add_argument(
+        "--ordered", action="store_true", default=False,
+        help="Save OrderedDocumentFrequencies. "
+             "If not specified DocumentFrequency model will be saved")
 
     return parser
 

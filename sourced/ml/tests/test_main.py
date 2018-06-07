@@ -26,6 +26,7 @@ class MainTests(unittest.TestCase):
             "repos2roles_ids": "repos2roles_and_ids_entry",
             "repos2id_distance": "repos2id_distance_entry",
             "repos2id_sequence": "repos2id_sequence_entry",
+            "merge-df": "merge_df_entry",
         }
         parser = main.get_parser()
         subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])
