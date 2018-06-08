@@ -19,3 +19,5 @@ SOURCE_PY = join(DATA_DIR_SOURCE, "%s.py" % SOURCE_FILENAME)
 
 TOPICS_SRC = "topics_readable.txt"
 PARQUET_DIR = join(_root, "parquet")
+
+MODER_FUNC = join(DATA_DIR_SOURCE, "example_functions.py")
