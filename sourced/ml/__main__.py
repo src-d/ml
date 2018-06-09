@@ -141,10 +141,11 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
     id2vec_postproc_parser.add_argument(
         "-i", "--swivel-data", required=True,
-        help="Folder with swivel batches input data. You can get it using repos2coocc subcommand.")
+        help="Folder with swivel row and column embeddings data. "
+             "You can get it using id2vec_train subcommand.")
     id2vec_postproc_parser.add_argument(
         "-o", "--output", required=True,
-        help="Output directory for embedding data.")
+        help="Output directory for Id2Vec model.")
     # ------------------------------------------------------------------------
     id2vec_project_parser = add_parser(
         "id2vec_project", "Present id2vec model in Tensorflow Projector.")
