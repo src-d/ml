@@ -40,6 +40,10 @@ def preprocess_id2vec(args):
     if numpy.any(coocc_model.matrix.data < 0):
         raise ValueError(("Co-occurrence matrix %s contains negative elements. "
                           "Please check its correctness.") % args.input)
+    if numpy.any(numpy.isnan(coocc_model.matrix.data)):
+        raise ValueError(("Co-occurrence matrix %s contains nan elements. "
+                          "Please check its correctness.") % args.input)
+
     try:
         df_meta = coocc_model.get_dep(DocumentFrequencies.NAME)
         if df_model.meta != df_meta:
