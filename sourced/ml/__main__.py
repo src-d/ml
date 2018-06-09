@@ -188,21 +188,22 @@ def get_parser() -> argparse.ArgumentParser:
     dump_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
                              help="GCS bucket to use.")
     # ------------------------------------------------------------------------
-    merge_df = add_parser("merge-df", "Merge DocumentFrequency models to a singe one.")
+    merge_df = add_parser("merge-df", "Merge DocumentFrequencies models to a singe one.")
     merge_df.set_defaults(handler=merge_df_entry)
     add_filter_arg(merge_df)
     add_min_docfreq(merge_df)
     add_vocabulary_size_arg(merge_df)
     merge_df.add_argument(
         "-o", "--output", required=True,
-        help="Path to the merged document frequencies model.")
+        help="Path to the merged DocumentFrequencies model.")
     merge_df.add_argument(
-        "-i", "--input", required=True,
-        help="Directory to scan recursively for asdf files.")
+        "-i", "--input", required=True, nargs="+",
+        help="DocumentFrequencies models input files."
+             "Use `-i -` to read input files from stdin.")
     merge_df.add_argument(
         "--ordered", action="store_true", default=False,
         help="Save OrderedDocumentFrequencies. "
-             "If not specified DocumentFrequency model will be saved")
+             "If not specified DocumentFrequencies model will be saved")
 
     return parser
 

@@ -1,7 +1,5 @@
 from io import StringIO
-import os
 import sys
-import tempfile
 import unittest
 
 
@@ -20,15 +18,10 @@ class DocumentFrequenciesTests(unittest.TestCase):
         finally:
             sys.stdin = _stdin
 
-        with tempfile.TemporaryDirectory(prefix="srcdml_handle_input_arg_") as dirname:
-            for filename in files:
-                open(os.path.join(dirname, filename), 'a').close()
-            self.assertEqual(set(files),
-                             set(os.path.split(x)[1] for x in
-                                 handle_input_arg(dirname)))
-            self.assertEqual({"file1.asdf"},
-                             set(os.path.split(x)[1] for x in
-                                 handle_input_arg(dirname, filter_arg="*1*")))
+        self.assertEqual(set(files),
+                         set(handle_input_arg(files)))
+        self.assertEqual({files[0]},
+                         set(handle_input_arg(files[0])))
 
 
 if __name__ == "__main__":

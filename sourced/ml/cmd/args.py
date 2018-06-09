@@ -1,8 +1,7 @@
 import argparse
 import json
 import logging
-from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, Iterable
 import sys
 
 
@@ -25,28 +24,26 @@ class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter
         return super()._get_help_string(action)
 
 
-def handle_input_arg(input_arg: str,
-                     filter_arg: Optional[str] = DEFAULT_FILTER_ARG,
+def handle_input_arg(input_arg: Union[str, Iterable[str]],
                      log: Optional[logging.Logger] = None):
     """
     Process input arguments and return an iterator over input files.
 
-    :param input_arg: Directory path to scan or `-` to get file paths from stdin
-    :param filter_arg: File name glob selector for input directory. Ignored if `input_arg` is \
-        equal to `-`.
+    :param input_arg: list of files to process or `-` to get \
+        file paths from stdin.
     :param log: Logger if you want to log handling process.
-    :return: an iterator over input files.
+    :return: An iterator over input files.
     """
     log = log.info if log else (lambda *x: None)
-    if input_arg == "-":
+    if input_arg == "-" or input_arg == ['-']:
         log("Reading file paths from stdin.")
         for line in sys.stdin:
             yield line.strip()
     else:
-        log("Scanning %s", input_arg)
-        if filter_arg:
-            for path in Path(input_arg).glob(filter_arg):
-                yield str(path)
+        if isinstance(input_arg, str):
+            yield input_arg
+        else:
+            yield from input_arg
 
 
 def add_repartitioner_arg(my_parser: argparse.ArgumentParser):

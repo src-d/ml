@@ -9,4 +9,4 @@ def merge_df_entry(args):
     merger = MergeDocFreq(ordered=args.ordered,
                           vocabulary_size=args.vocabulary_size,
                           min_docfreq=args.min_docfreq)
-    merger.convert(handle_input_arg(args.input, args.filter, log), args.output)
+    merger.convert(handle_input_arg(args.input, log), args.output)
