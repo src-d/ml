@@ -4,14 +4,13 @@ from pyspark import Row
 
 from sourced.ml.algorithms import log_tf_log_idf
 from sourced.ml.models import DocumentFrequencies
-from sourced.ml.tests import tfidf_data
+from sourced.ml.tests import tfidf_data, create_spark_for_test
 from sourced.ml.transformers import TFIDF
-from sourced.ml.utils import create_spark
 
 
 class TFIDFTests(unittest.TestCase):
     def setUp(self):
-        self.sc = create_spark("test")
+        self.sc = create_spark_for_test()
 
         df = DocumentFrequencies().construct(10, {str(i): i for i in range(1, 5)})
         self.tfidf = TFIDF(df=df)

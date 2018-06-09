@@ -4,14 +4,14 @@ import unittest
 
 from pyspark import Row
 
+from sourced.ml.tests import create_spark_for_test
 from sourced.ml.tests import tfidf_data
 from sourced.ml.transformers import ContentToIdentifiers, IdentifiersToDataset
-from sourced.ml.utils import create_spark
 
 
 class Content2IdsTests(unittest.TestCase):
     def setUp(self):
-        self.sc = create_spark("test")
+        self.sc = create_spark_for_test()
 
     def test_languages(self):
         for path in sys.path:

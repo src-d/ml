@@ -1,13 +1,12 @@
 import unittest
 
-from sourced.ml.tests import tfidf_data
+from sourced.ml.tests import create_spark_for_test, tfidf_data
 from sourced.ml.transformers import BagFeatures2TermFreq
-from sourced.ml.utils import create_spark
 
 
 class Uast2TermFreqTests(unittest.TestCase):
     def setUp(self):
-        self.sc = create_spark("test")
+        self.sc = create_spark_for_test()
         self.bag2tf = BagFeatures2TermFreq()
 
     def test_call(self):

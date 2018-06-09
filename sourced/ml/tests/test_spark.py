@@ -16,5 +16,11 @@ class SparkTests(unittest.TestCase):
     def test_create_spark(self):
         spark = create_spark("test_1")
         self.assertEqual(spark.read.parquet(PARQUET_DIR).count(), 6)
+        spark.stop()
         spark = create_spark("test_2", dep_zip=False, config=["spark.rpc.retry.wait=10s"])
         self.assertEqual(spark.conf.get("spark.rpc.retry.wait"), "10s")
+        spark.stop()
+
+
+if __name__ == '__main__':
+    unittest.main()

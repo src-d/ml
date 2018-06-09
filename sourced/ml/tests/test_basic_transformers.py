@@ -4,15 +4,17 @@ import unittest
 
 from pyspark.sql import Row
 
-from sourced.ml.utils.spark import create_spark
+from sourced.ml.utils import create_engine
 from sourced.ml.transformers.basic import ParquetSaver, ParquetLoader, Collector, First, \
-     Identity, FieldsSelector, Repartitioner
-from sourced.ml.tests.models import PARQUET_DIR
+     Identity, FieldsSelector, Repartitioner, DzhigurdaFiles
+from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
 
 
 class BasicTransformerTest(unittest.TestCase):
-    def setUp(self):
-        self.spark = create_spark("test")
+    @classmethod
+    def setUpClass(cls):
+        cls.engine = create_engine("test_with_engine", SIVA_DIR, "siva")
+        cls.spark = cls.engine.session
 
     def test_repartitioner(self):
         partitions = 2
@@ -31,6 +33,12 @@ class BasicTransformerTest(unittest.TestCase):
         loader = ParquetLoader(session=self.spark, paths=PARQUET_DIR)
         data = loader.execute()
         self.assertEqual(data.count(), 6)
+
+    def test_dzhigurda(self):
+
+        self.assertEqual(DzhigurdaFiles(0)(self.engine).count(), 325)
+        self.assertEqual(DzhigurdaFiles(10)(self.engine).count(), 3490)
+        self.assertEqual(DzhigurdaFiles(-1)(self.engine).count(), 27745)
 
     def test_identity(self):
         # load parquet

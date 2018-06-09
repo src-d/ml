@@ -42,6 +42,18 @@ def add_bblfsh_dependencies(bblfsh, config=None):
     config.append("spark.tech.sourced.bblfsh.grpc.host=" + bblfsh)
 
 
+def get_engine_version():
+    try:
+        engine = get_distribution("sourced-engine").version
+    except DistributionNotFound:
+        log = logging.getLogger("engine_version")
+        engine = requests.get("https://api.github.com/repos/src-d/engine/releases/latest") \
+            .json()["tag_name"].replace("v", "")
+        log.warning("Engine not found, queried GitHub to get the latest release tag (%s)",
+                    engine)
+    return engine
+
+
 def create_engine(session_name, repositories, repository_format="siva", bblfsh=None,
                   engine=None, config=SparkDefault.CONFIG, packages=SparkDefault.PACKAGES,
                   spark=SparkDefault.MASTER_ADDRESS, spark_local_dir=SparkDefault.LOCAL_DIR,
@@ -50,14 +62,7 @@ def create_engine(session_name, repositories, repository_format="siva", bblfsh=N
     if not bblfsh:
         bblfsh = "localhost"
     if not engine:
-        try:
-            engine = get_distribution("sourced-engine").version
-        except DistributionNotFound:
-            log = logging.getLogger("engine_version")
-            engine = requests.get("https://api.github.com/repos/src-d/engine/releases/latest") \
-                .json()["tag_name"].replace("v", "")
-            log.warning("Engine not found, queried GitHub to get the latest release tag (%s)",
-                        engine)
+        engine = get_engine_version()
     config = assemble_spark_config(config=config, memory=memory)
     add_engine_dependencies(engine=engine, config=config, packages=packages)
     add_bblfsh_dependencies(bblfsh=bblfsh, config=config)

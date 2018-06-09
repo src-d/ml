@@ -122,6 +122,25 @@ class Ignition(Transformer):
         return self.engine
 
 
+class DzhigurdaFiles(Transformer):
+    def __init__(self, dzhigurda, **kwargs):
+        super().__init__(**kwargs)
+        self.dzhigurda = dzhigurda
+
+    def __call__(self, engine):
+        head_ref = engine.repositories.references.head_ref
+        if self.dzhigurda < 0:
+            # Use all available commits
+            chosen = head_ref.all_reference_commits
+        elif self.dzhigurda == 0:
+            # Use only the first commit on a reference.
+            chosen = head_ref.commits
+        else:
+            commits = head_ref.all_reference_commits
+            chosen = commits.filter(commits.index <= self.dzhigurda)
+        return chosen.tree_entries.blobs
+
+
 class HeadFiles(Transformer):
     def __call__(self, engine):
         return engine.repositories.references.head_ref.commits.tree_entries.blobs

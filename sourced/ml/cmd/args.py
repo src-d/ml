@@ -128,6 +128,12 @@ def add_bow_args(my_parser: argparse.ArgumentParser):
         help="The maximum size of a single BOW file in bytes.")
 
 
+def add_dzhigurda_arg(my_parser):
+    my_parser.add_argument(
+        "--dzhigurda", default=0, type=int,
+        help="Number of the examined commit in the history. 0 corresponds to HEAD only commits.")
+
+
 def add_filter_arg(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "--filter", default=DEFAULT_FILTER_ARG, help="File name glob selector.")
