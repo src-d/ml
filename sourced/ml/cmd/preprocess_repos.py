@@ -8,9 +8,9 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def preprocess_source_entry(args):
-    log = logging.getLogger("preprocess_source")
-    session_name = "preprocess_source-%s" % uuid4()
+def preprocess_repos_entry(args):
+    log = logging.getLogger("preprocess_repos")
+    session_name = "preprocess_repos-%s" % uuid4()
 
     if os.path.exists(args.output):
         log.critical("%s must not exist", args.output)

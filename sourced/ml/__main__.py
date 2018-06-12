@@ -10,7 +10,7 @@ from sourced.ml.transformers import Moder
 from sourced.ml.cmd import bigartm2asdf_entry, dump_model, projector_entry, bow2vw_entry, \
     run_swivel, postprocess_id2vec, preprocess_id2vec, repos2coocc_entry, repos2df_entry, \
     repos2ids_entry, repos2bow_entry, repos2roles_and_ids_entry, repos2id_distance_entry, \
-    repos2id_sequence_entry, preprocess_source_entry, merge_df_entry
+    repos2id_sequence_entry, preprocess_repos_entry, merge_df_entry
 from sourced.ml.cmd.args import add_df_args, add_feature_args, add_split_stem_arg, \
     add_vocabulary_size_arg, add_repo2_args, add_bow_args, add_repartitioner_arg, add_filter_arg, \
     add_min_docfreq, add_filter_arg, add_min_docfreq, \
@@ -37,8 +37,8 @@ def get_parser() -> argparse.ArgumentParser:
 
     # ------------------------------------------------------------------------
     preprocessing_parser = subparsers.add_parser(
-        "preprocess", help="Convert siva to parquet files with extracted information.")
-    preprocessing_parser.set_defaults(handler=preprocess_source_entry)
+        "preprocess_repos", help="Convert siva to parquet files with extracted information.")
+    preprocessing_parser.set_defaults(handler=preprocess_repos_entry)
     preprocessing_parser.add_argument("-x", "--mode", choices=Moder.Options.__all__,
                                       default="file", help="What to extract from repositories.")
     add_repo2_args(preprocessing_parser)
