@@ -16,7 +16,7 @@ _install: &_install
   - source ~/.gimme/envs/latest.env
   - pip install --upgrade pip
   - export HADOOP_VERSION=2.7
-  - export SPARK_VERSION=2.2.0
+  - export SPARK_VERSION=2.2.1
   - export SPARK_NAME=spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
   - (cd /tmp && wget "https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=spark/spark-$SPARK_VERSION/$SPARK_NAME.tgz" -O $SPARK_NAME.tgz; tar -C ~/ -xvzf $SPARK_NAME.tgz)
   - export SPARK_HOME=~/$SPARK_NAME

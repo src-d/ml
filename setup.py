@@ -31,7 +31,6 @@ setup(
                       "bblfsh>=2.2.1,<3.0",
                       "modelforge>=0.5.4-alpha",
                       "sourced-engine>=0.5.1,<0.7",
-                      "pyspark>=2.2.0,<2.2.1",
                       "humanize>=0.5.0",
                       "parquet>=1.2,<2.0",
                       "pygments>=2.2.0,<3.0"] + typing,
