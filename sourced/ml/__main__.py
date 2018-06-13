@@ -13,7 +13,7 @@ from sourced.ml.cmd import bigartm2asdf_entry, dump_model, projector_entry, bow2
     repos2id_sequence_entry, preprocess_repos_entry, merge_df_entry
 from sourced.ml.cmd.args import add_df_args, add_feature_args, add_split_stem_arg, \
     add_vocabulary_size_arg, add_repo2_args, add_bow_args, add_repartitioner_arg, add_filter_arg, \
-    add_min_docfreq, add_filter_arg, add_min_docfreq, \
+    add_min_docfreq, add_dzhigurda_arg, \
     ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd.run_swivel import mirror_tf_args
 from sourced.ml.utils import install_bigartm
@@ -46,9 +46,9 @@ def get_parser() -> argparse.ArgumentParser:
     preprocessing_parser.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the parquet files with bag batches.")
-    default_fields = ["blob_id", "repository_id", "content", "path", "commit_hash", "uast"]
+    default_fields = ("blob_id", "repository_id", "content", "path", "commit_hash", "uast")
     preprocessing_parser.add_argument(
-        "-f", "--fields", action="append", default=default_fields,
+        "-f", "--fields", nargs="+", default=default_fields,
         help="Fields to save.")
     # ------------------------------------------------------------------------
     repos2bow_parser = add_parser(
@@ -124,8 +124,7 @@ def get_parser() -> argparse.ArgumentParser:
              "Inside the direcory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     repos2id_sequence = add_parser(
-        "repos2idseq", "Converts a UAST to sequence of identifiers sorted by "
-                             "order of appearance.")
+        "repos2idseq", "Converts a UAST to sequence of identifiers sorted by order of appearance.")
     repos2id_sequence.set_defaults(handler=repos2id_sequence_entry)
     add_repo2_args(repos2id_sequence)
     add_split_stem_arg(repos2id_sequence)

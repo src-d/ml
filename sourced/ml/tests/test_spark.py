@@ -5,6 +5,7 @@ from sourced.ml.tests.models import PARQUET_DIR
 
 
 class SparkTests(unittest.TestCase):
+    @unittest.skip("Until assemble_spark_config alter Spark default values.")
     def test_assemble_spark_config(self):
         config = assemble_spark_config()
         self.assertEqual(len(config), 0)

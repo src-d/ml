@@ -11,10 +11,10 @@ from sourced.ml.tests.test_dump import captured_output
 class MainTests(unittest.TestCase):
     def test_handlers(self):
         action2handler = {
-            "id2vec_preproc": "preprocess_id2vec",
-            "id2vec_train": "run_swivel",
-            "id2vec_postproc": "postprocess_id2vec",
-            "id2vec_project": "projector_entry",
+            "id2vec-preproc": "preprocess_id2vec",
+            "id2vec-train": "run_swivel",
+            "id2vec-postproc": "postprocess_id2vec",
+            "id2vec-project": "projector_entry",
             "bigartm2asdf": "bigartm2asdf_entry",
             "bow2vw": "bow2vw_entry",
             "bigartm": "install_bigartm",
@@ -23,10 +23,10 @@ class MainTests(unittest.TestCase):
             "repos2df": "repos2df_entry",
             "repos2ids": "repos2ids_entry",
             "repos2bow": "repos2bow_entry",
-            "repos2roles_ids": "repos2roles_and_ids_entry",
+            "repos2roleids": "repos2roles_and_ids_entry",
             "repos2id_distance": "repos2id_distance_entry",
-            "repos2id_sequence": "repos2id_sequence_entry",
-            "preprocess": "preprocess_repos_entry",
+            "repos2idseq": "repos2id_sequence_entry",
+            "preprocrepos": "preprocess_repos_entry",
             "merge-df": "merge_df_entry",
         }
         parser = main.get_parser()
