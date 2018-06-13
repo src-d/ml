@@ -37,7 +37,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # ------------------------------------------------------------------------
     preprocessing_parser = subparsers.add_parser(
-        "preprocess_repos", help="Convert siva to parquet files with extracted information.")
+        "preprocrepos", help="Convert siva to parquet files with extracted information.")
     preprocessing_parser.set_defaults(handler=preprocess_repos_entry)
     preprocessing_parser.add_argument("-x", "--mode", choices=Moder.Options.__all__,
                                       default="file", help="What to extract from repositories.")
@@ -96,7 +96,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # ------------------------------------------------------------------------
     repos2roles_and_ids = add_parser(
-        "repos2roles_ids", "Converts a UAST to a list of pairs, where pair is a role and "
+        "repos2roleids", "Converts a UAST to a list of pairs, where pair is a role and "
         "identifier. Role is merged generic roles where identifier was found.")
     repos2roles_and_ids.set_defaults(handler=repos2roles_and_ids_entry)
     add_repo2_args(repos2roles_and_ids)
@@ -124,7 +124,7 @@ def get_parser() -> argparse.ArgumentParser:
              "Inside the direcory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     repos2id_sequence = add_parser(
-        "repos2id_sequence", "Converts a UAST to sequence of identifiers sorted by "
+        "repos2idseq", "Converts a UAST to sequence of identifiers sorted by "
                              "order of appearance.")
     repos2id_sequence.set_defaults(handler=repos2id_sequence_entry)
     add_repo2_args(repos2id_sequence)
@@ -138,7 +138,7 @@ def get_parser() -> argparse.ArgumentParser:
              "Inside the direcory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
-        "id2vec_preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
+        "id2vec-preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
     preproc_parser.set_defaults(handler=preprocess_id2vec)
     add_df_args(preproc_parser)
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
@@ -149,12 +149,12 @@ def get_parser() -> argparse.ArgumentParser:
     preproc_parser.add_argument("-o", "--output", required=True, help="Output directory.")
     # ------------------------------------------------------------------------
     train_parser = add_parser(
-        "id2vec_train", "Train identifier embeddings using Swivel.")
+        "id2vec-train", "Train identifier embeddings using Swivel.")
     train_parser.set_defaults(handler=run_swivel)
     mirror_tf_args(train_parser)
     # ------------------------------------------------------------------------
     id2vec_postproc_parser = add_parser(
-        "id2vec_postproc",
+        "id2vec-postproc",
         "Combine row and column embeddings produced by Swivel and write them to an .asdf.")
     id2vec_postproc_parser.set_defaults(handler=postprocess_id2vec)
     id2vec_postproc_parser.add_argument(
@@ -166,7 +166,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="Output directory for Id2Vec model.")
     # ------------------------------------------------------------------------
     id2vec_project_parser = add_parser(
-        "id2vec_project", "Present id2vec model in Tensorflow Projector.")
+        "id2vec-project", "Present id2vec model in Tensorflow Projector.")
     id2vec_project_parser.set_defaults(handler=projector_entry)
     add_df_args(id2vec_project_parser, required=False)
     id2vec_project_parser.add_argument("-i", "--input", required=True,
