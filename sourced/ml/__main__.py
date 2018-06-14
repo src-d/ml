@@ -222,7 +222,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="Save OrderedDocumentFrequencies. "
              "If not specified DocumentFrequencies model will be saved")
     # ------------------------------------------------------------------------
-    merge_coocc = add_parser("merge-coocc", "Merge Cooccurrences models to a singe one.")
+    merge_coocc = add_parser("merge-coocc", "Merge several Cooccurrences models together.")
     merge_coocc.set_defaults(handler=merge_coocc_entry)
     add_spark_args(merge_coocc)
     add_filter_arg(merge_coocc)
@@ -239,8 +239,8 @@ def get_parser() -> argparse.ArgumentParser:
              "Identifiers that are not present in the model will be ignored.")
     merge_coocc.add_argument(
         "--no-spark", action="store_true", default=False,
-        help="Do not use spark, but python native code. Can save time and memory consumption if "
-             "data fits into one PC.")
+        help="Use the local reduction instead of PySpark. "
+             "Can be faster and consume less memory if the data fits into RAM.")
     return parser
 
 
