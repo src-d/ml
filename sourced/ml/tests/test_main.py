@@ -3,7 +3,7 @@ import sys
 import unittest
 
 import sourced.ml.__main__ as main
-from sourced.ml.__main__ import ArgumentDefaultsHelpFormatterNoNone
+from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
 
 from sourced.ml.tests.test_dump import captured_output
 
@@ -11,24 +11,24 @@ from sourced.ml.tests.test_dump import captured_output
 class MainTests(unittest.TestCase):
     def test_handlers(self):
         action2handler = {
-            "id2vec-preproc": "preprocess_id2vec",
+            "id2vec-preproc": "id2vec_preprocess",
             "id2vec-train": "run_swivel",
-            "id2vec-postproc": "postprocess_id2vec",
-            "id2vec-project": "projector_entry",
-            "bigartm2asdf": "bigartm2asdf_entry",
-            "bow2vw": "bow2vw_entry",
+            "id2vec-postproc": "id2vec_postprocess",
+            "id2vec-project": "id2vec_projector",
+            "bigartm2asdf": "bigartm2asdf",
+            "bow2vw": "bow2vw",
             "bigartm": "install_bigartm",
             "dump": "dump_model",
-            "repos2coocc": "repos2coocc_entry",
-            "repos2df": "repos2df_entry",
-            "repos2ids": "repos2ids_entry",
-            "repos2bow": "repos2bow_entry",
-            "repos2roleids": "repos2roles_and_ids_entry",
-            "repos2id_distance": "repos2id_distance_entry",
-            "repos2idseq": "repos2id_sequence_entry",
-            "preprocrepos": "preprocess_repos_entry",
-            "merge-df": "merge_df_entry",
-            "merge-coocc": "merge_coocc_entry",
+            "repos2coocc": "repos2coocc",
+            "repos2df": "repos2df",
+            "repos2ids": "repos2ids",
+            "repos2bow": "repos2bow",
+            "repos2roleids": "repos2roles_and_ids",
+            "repos2id_distance": "repos2id_distance",
+            "repos2idseq": "repos2id_sequence",
+            "preprocrepos": "preprocess_repos",
+            "merge-df": "merge_df",
+            "merge-coocc": "merge_coocc",
         }
         parser = main.get_parser()
         subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])
@@ -51,13 +51,14 @@ class MainTests(unittest.TestCase):
                 def handler_append(*args, **kwargs):
                     called_actions.append(action)
 
-                handler_save = getattr(main, handler)
+                module = main.cmd if hasattr(main.cmd, handler) else main
+                handler_save = getattr(module, handler)
                 try:
-                    setattr(main, handler, handler_append)
+                    setattr(module, handler, handler_append)
                     sys.argv = [main.__file__, action]
                     main.main()
                 finally:
-                    setattr(main, handler, handler_save)
+                    setattr(module, handler, handler_save)
         finally:
             sys.argv = args_save
             argparse.ArgumentParser.error = error_save

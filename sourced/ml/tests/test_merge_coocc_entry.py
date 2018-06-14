@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 
-from sourced.ml.cmd.merge_coocc import merge_coocc_entry, load_and_check, MAX_INT32
+from sourced.ml.cmd.merge_coocc import merge_coocc, load_and_check, MAX_INT32
 from sourced.ml.models import Cooccurrences
 from sourced.ml.tests import models
 
@@ -45,14 +45,14 @@ class MergeCooccEntry(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="merge-coocc-entry-test") as input_dir:
             self.copy_models(models.COOCC, input_dir, COPIES_NUMBER)
             args = get_args(input_dir, False)
-            merge_coocc_entry(args)
+            merge_coocc(args)
             self.check_coocc(args.output)
 
     def test_without_spark(self):
         with tempfile.TemporaryDirectory(prefix="merge-coocc-entry-test") as input_dir:
             self.copy_models(models.COOCC, input_dir, COPIES_NUMBER)
             args = get_args(input_dir, True)
-            merge_coocc_entry(args)
+            merge_coocc(args)
             self.check_coocc(args.output)
 
     def test_load_and_check(self):
@@ -79,7 +79,7 @@ class MergeCooccEntry(unittest.TestCase):
             c_neg = Cooccurrences().load(args.input[0])
             c_neg.matrix.data[0] = MAX_INT32 - c_neg.matrix.data[0]
             c_neg.save(args.input[0])
-            merge_coocc_entry(args)
+            merge_coocc(args)
 
             result = Cooccurrences().load(args.output)
             self.assertTrue(np.all(result.matrix.data <= MAX_INT32))
@@ -92,7 +92,7 @@ class MergeCooccEntry(unittest.TestCase):
             c_neg = Cooccurrences().load(args.input[0])
             c_neg.matrix.data[0] = MAX_INT32 - 5 * c_neg.matrix.data[0]
             c_neg.save(args.input[0])
-            merge_coocc_entry(args)
+            merge_coocc(args)
 
             result = Cooccurrences().load(args.output)
             self.assertTrue(np.all(result.matrix.data <= MAX_INT32))

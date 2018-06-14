@@ -9,7 +9,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def repos2id_sequence_entry(args):
+def repos2id_sequence(args):
     log = logging.getLogger("repos2id_distance")
     extractors = [IdSequenceExtractor(args.split)]
     session_name = "repos2roles_and_ids-%s" % uuid4()

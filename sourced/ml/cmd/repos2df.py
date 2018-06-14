@@ -10,7 +10,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def repos2df_entry(args):
+def repos2df(args):
     log = logging.getLogger("repos2df")
     extractors = create_extractors_from_args(args)
     session_name = "repos2df-%s" % uuid4()

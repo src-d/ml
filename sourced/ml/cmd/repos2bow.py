@@ -11,7 +11,7 @@ from sourced.ml.utils.docfreq import create_or_load_ordered_df
 
 
 @pause
-def repos2bow_entry_template(args, select=HeadFiles, cache_hook=None, save_hook=None):
+def repos2bow_template(args, select=HeadFiles, cache_hook=None, save_hook=None):
     log = logging.getLogger("repos2bow")
     extractors = create_extractors_from_args(args)
     session_name = "repos2bow-%s" % uuid4()
@@ -54,5 +54,5 @@ def repos2bow_entry_template(args, select=HeadFiles, cache_hook=None, save_hook=
     pipeline_graph(args, log, root)
 
 
-def repos2bow_entry(args):
-    return repos2bow_entry_template(args)
+def repos2bow(args):
+    return repos2bow_template(args)

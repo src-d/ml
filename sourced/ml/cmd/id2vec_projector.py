@@ -5,7 +5,7 @@ import numpy
 from sourced.ml.models import Id2Vec
 
 
-def projector_entry(args):
+def id2vec_projector(args):
     MAX_TOKENS = 10000  # hardcoded in Tensorflow Projector
 
     log = logging.getLogger("id2vec_projector")

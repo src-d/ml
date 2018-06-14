@@ -8,7 +8,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def preprocess_repos_entry(args):
+def preprocess_repos(args):
     log = logging.getLogger("preprocess_repos")
     session_name = "preprocess_repos-%s" % uuid4()
 

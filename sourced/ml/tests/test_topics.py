@@ -5,7 +5,7 @@ import unittest
 
 import sourced.ml.tests.models as paths
 from sourced.ml.models import Topics
-from sourced.ml.cmd import bigartm2asdf_entry
+from sourced.ml.cmd import bigartm2asdf
 
 
 class TopicsTests(unittest.TestCase):
@@ -43,12 +43,12 @@ non-zero elements: 6211  (0.019409)""")  # nopep8
             self.assertEqual(self.model.tokens, new.tokens)
             self.assertEqual((self.model.matrix != new.matrix).getnnz(), 0)
 
-    def test_bigartm2asdf_entry(self):
+    def test_bigartm2asdf(self):
         with tempfile.NamedTemporaryFile(prefix="sourced.ml-topics-test-") as f:
             args = argparse.Namespace(
                 input=os.path.join(os.path.dirname(__file__), paths.TOPICS_SRC),
                 output=f.name)
-            bigartm2asdf_entry(args)
+            bigartm2asdf(args)
             model = Topics().load(f.name)
             self.assertEqual(len(model), 320)
             self.assertEqual(len(model.tokens), 1000)

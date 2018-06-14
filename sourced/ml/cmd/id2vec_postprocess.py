@@ -8,7 +8,7 @@ from sourced.ml.algorithms import TokenParser
 from sourced.ml.models import Id2Vec
 
 
-def postprocess_id2vec(args):
+def id2vec_postprocess(args):
     """
     Merges row and column embeddings produced by Swivel and writes the Id2Vec
     model.

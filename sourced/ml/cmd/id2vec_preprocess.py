@@ -24,7 +24,7 @@ def _floats(xs):
         float_list=tf.train.FloatList(value=list(xs)))
 
 
-def preprocess_id2vec(args):
+def id2vec_preprocess(args):
     """
     Loads co-occurrence matrices for several repositories and generates the
     document frequencies and the Swivel protobuf dataset.

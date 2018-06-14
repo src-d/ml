@@ -7,7 +7,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def repos2ids_entry(args):
+def repos2ids(args):
     log = logging.getLogger("repos2ids")
     session_name = "repos2ids-%s" % uuid4()
     language_selector = LanguageSelector(languages=["null"], blacklist=True)
