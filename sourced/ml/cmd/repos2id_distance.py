@@ -9,7 +9,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def repos2id_distance_entry(args):
+def repos2id_distance(args):
     log = logging.getLogger("repos2roles_and_ids")
     extractors = [IdentifierDistance(args.split, args.type, args.max_distance)]
     session_name = "repos2roles_and_ids-%s" % uuid4()

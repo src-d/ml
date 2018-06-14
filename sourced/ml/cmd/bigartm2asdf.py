@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 from sourced.ml.models import Topics
 
 
-def bigartm2asdf_entry(args):
+def bigartm2asdf(args):
     """
     BigARTM "readable" model -> Topics -> Modelforge ASDF.
     """

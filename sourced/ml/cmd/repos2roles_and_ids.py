@@ -9,7 +9,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 
 
 @pause
-def repos2roles_and_ids_entry(args):
+def repos2roles_and_ids(args):
     log = logging.getLogger("repos2roles_and_ids")
     session_name = "repos2roles_and_ids-%s" % uuid4()
     root, start_point = create_uast_source(args, session_name)

@@ -17,16 +17,16 @@ MAX_INT32 = 2**31 - 1
 
 
 @pause
-def merge_coocc_entry(args):
+def merge_coocc(args):
     log = logging.getLogger("merge_coocc")
     log.setLevel(args.log_level)
     filepaths = list(handle_input_arg(args.input, log))
     log.info("Will merge %d files", len(filepaths))
     df = OrderedDocumentFrequencies().load(args.docfreq)
     if args.no_spark:
-        merge_coocc_entry_no_spark(df, filepaths, log, args)
+        merge_coocc_no_spark(df, filepaths, log, args)
     else:
-        merge_coocc_entry_spark(df, filepaths, log, args)
+        merge_coocc_spark(df, filepaths, log, args)
 
 
 def load_and_check(filepaths: list, log: logging.Logger):
@@ -50,7 +50,7 @@ def load_and_check(filepaths: list, log: logging.Logger):
         yield path, coocc
 
 
-def merge_coocc_entry_spark(df, filepaths, log, args):
+def merge_coocc_spark(df, filepaths, log, args):
     session_name = "merge_coocc-%s" % uuid4()
     session = create_spark(session_name, **filter_kwargs(args.__dict__, create_spark))
     spark_context = session.sparkContext
@@ -85,7 +85,7 @@ def merge_coocc_entry_spark(df, filepaths, log, args):
     CooccModelSaver(args.output, df)(rdd)
 
 
-def merge_coocc_entry_no_spark(df, filepaths, log, args):
+def merge_coocc_no_spark(df, filepaths, log, args):
     """
     Algorithm explanation:
 

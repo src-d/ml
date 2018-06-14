@@ -38,7 +38,7 @@ class Id2VecTests(unittest.TestCase):
         key, val = next(iter(self.model.items()))
         self.assertEqual(self.model[key], val)
 
-    def test_projector_entry1(self):
+    def test_id2vec_projector1(self):
         present_embeddings = projector.present_embeddings
         wait = projector.wait
 
@@ -67,7 +67,7 @@ class Id2VecTests(unittest.TestCase):
         self.assertTrue(presented)
         self.assertTrue(waited)
 
-    def test_projector_entry2(self):
+    def test_id2vec_projector2(self):
         present_embeddings = projector.present_embeddings
         wait = projector.wait
 

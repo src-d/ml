@@ -6,7 +6,7 @@ import unittest
 import sourced
 import sourced.ml.tests.models as paths
 from sourced.ml.models import BOW
-from sourced.ml.cmd import bow2vw_entry
+from sourced.ml.cmd import bow2vw
 
 
 class Bow2vwTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class Bow2vwTests(unittest.TestCase):
                 hits += 1
         self.assertEqual(hits, 4)
 
-    def test_repo2bow_entry(self):
+    def test_repo2bow(self):
         called = [None] * 2
 
         def fake_convert_bow_to_vw(*args):
@@ -37,7 +37,7 @@ class Bow2vwTests(unittest.TestCase):
         backup = sourced.ml.models.BOW.convert_bow_to_vw
         sourced.ml.models.BOW.convert_bow_to_vw = fake_convert_bow_to_vw
         try:
-            bow2vw_entry(args)
+            bow2vw(args)
         finally:
             sourced.ml.models.BOW.convert_bow_to_vw = backup
         self.assertIsInstance(called[0], BOW)

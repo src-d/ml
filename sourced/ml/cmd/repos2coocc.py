@@ -9,7 +9,7 @@ from sourced.ml.utils.docfreq import create_or_load_ordered_df
 
 
 @pause
-def repos2coocc_entry(args):
+def repos2coocc(args):
     log = logging.getLogger("repos2coocc")
     id_extractor = IdentifiersBagExtractor(docfreq_threshold=args.min_docfreq,
                                            split_stem=args.split)

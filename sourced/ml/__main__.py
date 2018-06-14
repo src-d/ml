@@ -32,7 +32,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     preprocessing_parser = subparsers.add_parser(
         "preprocrepos", help="Convert siva to parquet files with extracted information.")
-    preprocessing_parser.set_defaults(handler=cmd.preprocess_repos_entry)
+    preprocessing_parser.set_defaults(handler=cmd.preprocess_repos)
     preprocessing_parser.add_argument("-x", "--mode", choices=Moder.Options.__all__,
                                       default="file", help="What to extract from repositories.")
     args.add_repo2_args(preprocessing_parser)
@@ -47,7 +47,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     repos2bow_parser = add_parser(
         "repos2bow", "Convert source code to the bag-of-words model.")
-    repos2bow_parser.set_defaults(handler=cmd.repos2bow_entry)
+    repos2bow_parser.set_defaults(handler=cmd.repos2bow)
     args.add_df_args(repos2bow_parser)
     args.add_repo2_args(repos2bow_parser)
     args.add_feature_args(repos2bow_parser)
@@ -56,14 +56,14 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(
         "repos2df", "Calculate document frequencies of features extracted from source code.")
-    repos2df_parser.set_defaults(handler=cmd.repos2df_entry)
+    repos2df_parser.set_defaults(handler=cmd.repos2df)
     args.add_df_args(repos2df_parser)
     args.add_repo2_args(repos2df_parser)
     args.add_feature_args(repos2df_parser)
     # ------------------------------------------------------------------------
     repos2ids_parser = subparsers.add_parser(
         "repos2ids", help="Convert source code to a bag of identifiers.")
-    repos2ids_parser.set_defaults(handler=cmd.repos2ids_entry)
+    repos2ids_parser.set_defaults(handler=cmd.repos2ids)
     args.add_repo2_args(repos2ids_parser)
     args.add_split_stem_arg(repos2ids_parser)
     args.add_repartitioner_arg(repos2ids_parser)
@@ -79,7 +79,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     repos2coocc_parser = add_parser(
         "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")
-    repos2coocc_parser.set_defaults(handler=cmd.repos2coocc_entry)
+    repos2coocc_parser.set_defaults(handler=cmd.repos2coocc)
     args.add_df_args(repos2coocc_parser)
     args.add_repo2_args(repos2coocc_parser)
     args.add_split_stem_arg(repos2coocc_parser)
@@ -92,7 +92,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2roles_and_ids = add_parser(
         "repos2roleids", "Converts a UAST to a list of pairs, where pair is a role and "
         "identifier. Role is merged generic roles where identifier was found.")
-    repos2roles_and_ids.set_defaults(handler=cmd.repos2roles_and_ids_entry)
+    repos2roles_and_ids.set_defaults(handler=cmd.repos2roles_and_ids)
     args.add_repo2_args(repos2roles_and_ids)
     args.add_split_stem_arg(repos2roles_and_ids)
     repos2roles_and_ids.add_argument(
@@ -103,7 +103,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2identifier_distance = add_parser(
         "repos2id_distance", "Converts a UAST to a list of identifier pairs "
                              "and distance between them.")
-    repos2identifier_distance.set_defaults(handler=cmd.repos2id_distance_entry)
+    repos2identifier_distance.set_defaults(handler=cmd.repos2id_distance)
     args.add_repo2_args(repos2identifier_distance)
     args.add_split_stem_arg(repos2identifier_distance)
     repos2identifier_distance.add_argument(
@@ -119,7 +119,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     repos2id_sequence = add_parser(
         "repos2idseq", "Converts a UAST to sequence of identifiers sorted by order of appearance.")
-    repos2id_sequence.set_defaults(handler=cmd.repos2id_sequence_entry)
+    repos2id_sequence.set_defaults(handler=cmd.repos2id_sequence)
     args.add_repo2_args(repos2id_sequence)
     args.add_split_stem_arg(repos2id_sequence)
     repos2id_sequence.add_argument(
@@ -171,7 +171,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     bow2vw_parser = add_parser(
         "bow2vw", "Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
-    bow2vw_parser.set_defaults(handler=cmd.bow2vw_entry)
+    bow2vw_parser.set_defaults(handler=cmd.bow2vw)
     bow2vw_parser.add_argument(
         "--bow", help="URL or path to a bag-of-words model.")
     bow2vw_parser.add_argument(
@@ -181,7 +181,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     bigartm_postproc_parser = add_parser(
         "bigartm2asdf", "Convert a human-readable BigARTM model to Modelforge format.")
-    bigartm_postproc_parser.set_defaults(handler=cmd.bigartm2asdf_entry)
+    bigartm_postproc_parser.set_defaults(handler=cmd.bigartm2asdf)
     bigartm_postproc_parser.add_argument("input")
     bigartm_postproc_parser.add_argument("output")
     # ------------------------------------------------------------------------
@@ -200,7 +200,7 @@ def get_parser() -> argparse.ArgumentParser:
                              help="GCS bucket to use.")
     # ------------------------------------------------------------------------
     merge_df = add_parser("merge-df", "Merge DocumentFrequencies models to a singe one.")
-    merge_df.set_defaults(handler=cmd.merge_df_entry)
+    merge_df.set_defaults(handler=cmd.merge_df)
     args.add_filter_arg(merge_df)
     args.add_min_docfreq(merge_df)
     args.add_vocabulary_size_arg(merge_df)
@@ -217,7 +217,7 @@ def get_parser() -> argparse.ArgumentParser:
              "If not specified DocumentFrequencies model will be saved")
     # ------------------------------------------------------------------------
     merge_coocc = add_parser("merge-coocc", "Merge several Cooccurrences models together.")
-    merge_coocc.set_defaults(handler=cmd.merge_coocc_entry)
+    merge_coocc.set_defaults(handler=cmd.merge_coocc)
     add_spark_args(merge_coocc)
     args.add_filter_arg(merge_coocc)
     merge_coocc.add_argument(
