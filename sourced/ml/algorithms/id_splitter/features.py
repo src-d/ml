@@ -4,61 +4,78 @@ import tarfile
 import warnings
 
 import numpy as np
-try:
-    from keras.preprocessing.sequence import pad_sequences
-except ImportError as e:
-    warnings.warn("Tensorflow or/and Keras are not installed, dependent functionality is "
-                  "unavailable.")
+from keras.preprocessing.sequence import pad_sequences
+from modelforge.progress_bar import progress_bar
 
 
-MAXLEN = 40  # max length of sequence
+DEFAULT_MAX_IDENTIFIER_LEN = 40  # default max length of sequence
 PADDING = "post"  # add padding values after input
 
-# CSV default parameters
-TOKEN_COL = 3
-TOKEN_SPLIT_COL = 4
+# In the CSV file, columns 0,1,2 contain statistics about the identifier.
+CSV_IDENTIFIERS_COL = 3  # Column 3 contains the input identifier e.g. "FooBar".
+CSV_SPLIT_IDENTIFIERS_COL = 4  # Column 4 contains the identifier lowercase and spitted "foo bar".
 
 
-def read_identifiers(csv_loc, use_header=True, mode="r", maxlen=MAXLEN, token_col=TOKEN_COL,
-                     token_split_col=TOKEN_SPLIT_COL, shuffle=True):
+def read_identifiers(csv_path: str, use_header: bool=True,
+                     max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
+                     identifiers_col: int=CSV_IDENTIFIERS_COL,
+                     split_identifiers_col: int=CSV_SPLIT_IDENTIFIERS_COL,
+                     shuffle: bool=True):
     """
-    Read and filter too long identifiers from CSV file.
-    :param csv_loc: location of CSV file
-    :param use_header: use header as normal line (True) or treat as header line with column names
-    :param mode: mode to read tarfile
-    :param maxlen: maximum length of raw identifier. If it's longer than skip it
-    :param token_col: column in CSV file for raw token
-    :param token_split_col: column in CSV file for splitted token
-    :param shuffle: shuffle or not list of identifiers
-    :return: list of splitted tokens
+    Reads and filters too long identifiers from CSV file.
+    :param csv_path: path to the CSV file.
+    :param use_header: uses header as normal line (True) or treat as header line with column names.
+    :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
+    :param identifiers_col: column in CSV file for the raw identifier.
+    :param split_identifiers_col: column in CSV file for the splitted identifier.
+    :param shuffle: indicates whether to reorder the list of identifiers
+        at random after reading it.
+    :return: list of splitted identifiers.
     """
-    log = logging.getLogger("id-splitter-prep")
+    log = logging.getLogger("read_identifiers")
     log.info("Reading data from CSV...")
     identifiers = []
-    with tarfile.open(csv_loc, mode=mode, encoding="utf-8") as f:
-        assert len(f.members) == 1, "Expect one archived file"
+    # TODO: Update dataset loading as soon as https://github.com/src-d/backlog/issues/1212 done.
+    # Think about dataset download step.
+    with tarfile.open(csv_path, mode="r", encoding="utf-8") as f:
+        assert len(f.members) == 1, "One archived file is expected, got: %s" % len(f.members)
         content = f.extractfile(f.members[0])
         if not use_header:
             content.readline()
-        for line in content:
-            parts = line.decode("utf-8").strip().split(",")
-            if len(parts[token_col]) <= maxlen:
-                identifiers.append(parts[token_split_col])
+        for line in progress_bar(content.readlines(), log):
+            row = line.decode("utf-8").strip().split(",")
+            if len(row[identifiers_col]) <= max_identifier_len:
+                identifiers.append(row[split_identifiers_col])
     if shuffle:
         np.random.shuffle(identifiers)
-    log.info("Number of identifiers after filtering: {}.".format(len(identifiers)))
+    log.info("Number of identifiers after filtering: %s." % len(identifiers))
     return identifiers
 
 
-def prepare_features(csv_loc, use_header=True, token_col=TOKEN_COL, maxlen=MAXLEN, mode="r",
-                     token_split_col=TOKEN_SPLIT_COL, shuffle=True, test_size=0.2,
-                     padding=PADDING):
-    log = logging.getLogger("id-splitter-prep")
+def prepare_features(csv_path: str, use_header: bool=True,
+                     max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
+                     identifiers_col: int=CSV_IDENTIFIERS_COL,
+                     split_identifiers_col: int=CSV_SPLIT_IDENTIFIERS_COL,
+                     shuffle: bool=True, test_size: float=0.2, padding: str=PADDING):
+    """
+    Prepare the features for training the identifier splitting task.
+    :param csv_path: path to the CSV file.
+    :param use_header: uses header as normal line (True) or treat as header line with column names.
+    :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
+    :param identifiers_col: column in CSV file for the raw identifier.
+    :param split_identifiers_col: column in CSV file for the splitted identifier.
+    :param shuffle: indicates whether to reorder the list of identifiers at random after reading it
+    :param padding: position where to add padding values:
+        after the intput sequence if "post", before if "pre".
+    :return: training and testing features to train the neural net for the splitting task.
+    """
+    log = logging.getLogger("prepare_features")
 
     # read data from file
-    identifiers = read_identifiers(csv_loc=csv_loc, use_header=use_header, token_col=token_col,
-                                   maxlen=maxlen, mode=mode, token_split_col=token_split_col,
-                                   shuffle=shuffle)
+    identifiers = read_identifiers(csv_path=csv_path, use_header=use_header,
+                                   max_identifier_len=max_identifier_len,
+                                   identifiers_col=identifiers_col,
+                                   split_identifiers_col=split_identifiers_col, shuffle=shuffle)
 
     # convert identifiers into character indices and labels
     log.info("Converting identifiers to character indices...")
@@ -79,10 +96,11 @@ def prepare_features(csv_loc, use_header=True, token_col=TOKEN_COL, maxlen=MAXLE
                     skip_char = False
                     continue
                 split_arr.append(0)
-            else:
-                # space
+            elif char == " ":
                 split_arr.append(1)
                 skip_char = True
+            else:
+                log.warning("Unexpected symbol %s in identifier", char)
         # sanity check
         assert len(index_arr) == len(split_arr)
         char_id_seq.append(index_arr)
@@ -91,18 +109,17 @@ def prepare_features(csv_loc, use_header=True, token_col=TOKEN_COL, maxlen=MAXLE
     # train/test splitting
     log.info("Train/test splitting...")
     n_train = int((1 - test_size) * len(char_id_seq))
-    x_tr = char_id_seq[:n_train]
-    x_t = char_id_seq[n_train:]
-    y_tr = splits[:n_train]
-    y_t = splits[n_train:]
-    log.info("Number of train samples: {}, number of test samples: {}.".format(len(x_tr),
-                                                                               len(x_t)))
+    x_train = char_id_seq[:n_train]
+    x_test = char_id_seq[n_train:]
+    y_train = splits[:n_train]
+    y_test = splits[n_train:]
+    log.info("Number of train samples: %s, number of test samples: %s.", len(x_train), len(x_test))
 
     # pad sequence
     log.info("Padding of the sequences...")
-    x_tr = pad_sequences(x_tr, maxlen=maxlen, padding=padding)
-    x_t = pad_sequences(x_t, maxlen=maxlen, padding=padding)
-    y_tr = pad_sequences(y_tr, maxlen=maxlen, padding=padding)
-    y_t = pad_sequences(y_t, maxlen=maxlen, padding=padding)
+    x_train = pad_sequences(x_train, maxlen=max_identifier_len, padding=padding)
+    x_test = pad_sequences(x_test, maxlen=max_identifier_len, padding=padding)
+    y_train = pad_sequences(y_train, maxlen=max_identifier_len, padding=padding)
+    y_test = pad_sequences(y_test, maxlen=max_identifier_len, padding=padding)
 
-    return x_tr, x_t, y_tr[:, :, None], y_t[:, :, None]
+    return x_train, x_test, y_train[:, :, None], y_test[:, :, None]
