@@ -390,6 +390,11 @@ def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
     start_time = time.time()
 
+    omitted = {"handler", "command"}
+
+    log("Swivel parameters:\n" + "\n".join(
+        "\t{:20} {}".format(key, value) for key, value in
+        sorted(FLAGS.__dict__.items()) if key not in omitted))
     # Create the output path.  If this fails, it really ought to fail now. :)
     if not os.path.isdir(FLAGS.output_base_path):
         os.makedirs(FLAGS.output_base_path)
