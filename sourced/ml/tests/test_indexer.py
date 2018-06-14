@@ -2,15 +2,15 @@ import unittest
 
 from pyspark import Row
 
+from sourced.ml.tests import create_spark_for_test
 from sourced.ml.transformers import Indexer
-from sourced.ml.utils import create_spark
 
 
 class IndexerTests(unittest.TestCase):
     def setUp(self):
         data = [Row(to_index="to_index%d" % i, value=i) for i in range(10)]
         self.data = data
-        self.sc = create_spark("test")
+        self.sc = create_spark_for_test()
         self.data_rdd = self.sc.sparkContext \
             .parallelize(range(len(data))) \
             .map(lambda x: data[x])
