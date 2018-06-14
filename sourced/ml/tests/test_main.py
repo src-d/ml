@@ -3,7 +3,7 @@ import sys
 import unittest
 
 import sourced.ml.__main__ as main
-from sourced.ml.__main__ import ArgumentDefaultsHelpFormatterNoNone
+from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
 
 from sourced.ml.tests.test_dump import captured_output
 
@@ -51,13 +51,14 @@ class MainTests(unittest.TestCase):
                 def handler_append(*args, **kwargs):
                     called_actions.append(action)
 
-                handler_save = getattr(main, handler)
+                module = main.cmd if hasattr(main.cmd, handler) else main
+                handler_save = getattr(module, handler)
                 try:
-                    setattr(main, handler, handler_append)
+                    setattr(module, handler, handler_append)
                     sys.argv = [main.__file__, action]
                     main.main()
                 finally:
-                    setattr(main, handler, handler_save)
+                    setattr(module, handler, handler_save)
         finally:
             sys.argv = args_save
             argparse.ArgumentParser.error = error_save
