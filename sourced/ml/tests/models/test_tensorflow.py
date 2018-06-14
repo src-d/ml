@@ -33,5 +33,6 @@ class TensorFlowModelTests(unittest.TestCase):
         model = TensorFlowModel().load(buffer)
         self.assertEqual(gd.node, model.graphdef.node)
 
+
 if __name__ == "__main__":
     unittest.main()

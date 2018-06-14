@@ -1,9 +1,16 @@
 import argparse
 import json
+import logging
+from typing import Optional, Union, Iterable
+import sys
+
 
 from sourced.ml import extractors
 from sourced.ml.transformers import BOWWriter, Moder
 from sourced.ml.utils import add_engine_args
+
+
+DEFAULT_FILTER_ARG = "**/*.asdf"
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
@@ -15,6 +22,28 @@ class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter
         if action.default is None:
             return action.help
         return super()._get_help_string(action)
+
+
+def handle_input_arg(input_arg: Union[str, Iterable[str]],
+                     log: Optional[logging.Logger] = None):
+    """
+    Process input arguments and return an iterator over input files.
+
+    :param input_arg: list of files to process or `-` to get \
+        file paths from stdin.
+    :param log: Logger if you want to log handling process.
+    :return: An iterator over input files.
+    """
+    log = log.info if log else (lambda *x: None)
+    if input_arg == "-" or input_arg == ['-']:
+        log("Reading file paths from stdin.")
+        for line in sys.stdin:
+            yield line.strip()
+    else:
+        if isinstance(input_arg, str):
+            yield input_arg
+        else:
+            yield from input_arg
 
 
 def add_repartitioner_arg(my_parser: argparse.ArgumentParser):
@@ -38,6 +67,12 @@ def add_vocabulary_size_arg(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "-v", "--vocabulary-size", default=10000000, type=int,
         help="The maximum vocabulary size.")
+
+
+def add_min_docfreq(my_parser: argparse.ArgumentParser):
+    my_parser.add_argument(
+        "--min-docfreq", default=1, type=int,
+        help="The minimum document frequency of each feature.")
 
 
 def add_repo2_args(my_parser: argparse.ArgumentParser, default_packages=None):
@@ -91,3 +126,8 @@ def add_bow_args(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "--batch", default=BOWWriter.DEFAULT_CHUNK_SIZE, type=int,
         help="The maximum size of a single BOW file in bytes.")
+
+
+def add_filter_arg(my_parser: argparse.ArgumentParser):
+    my_parser.add_argument(
+        "--filter", default=DEFAULT_FILTER_ARG, help="File name glob selector.")
