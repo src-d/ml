@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix
 
 from modelforge.model import split_strings, assemble_sparse_matrix
 from sourced.ml.algorithms import swivel
-from sourced.ml.cmd import postprocess_id2vec, run_swivel, preprocess_id2vec
+from sourced.ml.cmd import id2vec_postprocess, run_swivel, id2vec_preprocess
 from sourced.ml.models import OrderedDocumentFrequencies, Id2Vec
 from sourced.ml.tests.test_dump import captured_output
 from sourced.ml.tests.models import COOCC, COOCC_DF
@@ -81,13 +81,13 @@ class IdEmbeddingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, VOCAB)
             args.shard_size = VOCAB + 1
-            self.assertRaises(ValueError, lambda: preprocess_id2vec(args))
+            self.assertRaises(ValueError, lambda: id2vec_preprocess(args))
 
     def test_preprocess(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, VOCAB)
             with captured_output() as (out, err, log):
-                preprocess_id2vec(args)
+                id2vec_preprocess(args)
             self.assertFalse(out.getvalue())
             self.assertFalse(err.getvalue())
             self.assertEqual(
@@ -176,7 +176,7 @@ class IdEmbeddingTests(unittest.TestCase):
             output=buffer)
         prepare_postproc_files(args.swivel_data)
 
-        postprocess_id2vec(args)
+        id2vec_postprocess(args)
 
         buffer.seek(0)
         check_postproc_results(self, buffer)

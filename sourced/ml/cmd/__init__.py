@@ -4,10 +4,10 @@ from sourced.ml.cmd.bow_converters import bow2vw_entry
 from sourced.ml.cmd.dump_model import dump_model
 from sourced.ml.cmd.merge_df import merge_df_entry
 from sourced.ml.cmd.merge_coocc import merge_coocc_entry
-from sourced.ml.cmd.id2vec_postprocess import postprocess_id2vec
-from sourced.ml.cmd.id2vec_preprocess import preprocess_id2vec
+from sourced.ml.cmd.id2vec_postprocess import id2vec_postprocess
+from sourced.ml.cmd.id2vec_preprocess import id2vec_preprocess
 from sourced.ml.cmd.preprocess_repos import preprocess_repos_entry
-from sourced.ml.cmd.id2vec_projector import projector_entry
+from sourced.ml.cmd.id2vec_projector import id2vec_projector
 from sourced.ml.cmd.repos2bow import repos2bow_entry
 from sourced.ml.cmd.repos2coocc import repos2coocc_entry
 from sourced.ml.cmd.repos2df import repos2df_entry

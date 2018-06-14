@@ -11,10 +11,10 @@ from sourced.ml.tests.test_dump import captured_output
 class MainTests(unittest.TestCase):
     def test_handlers(self):
         action2handler = {
-            "id2vec-preproc": "preprocess_id2vec",
+            "id2vec-preproc": "id2vec_preprocess",
             "id2vec-train": "run_swivel",
-            "id2vec-postproc": "postprocess_id2vec",
-            "id2vec-project": "projector_entry",
+            "id2vec-postproc": "id2vec_postprocess",
+            "id2vec-project": "id2vec_projector",
             "bigartm2asdf": "bigartm2asdf_entry",
             "bow2vw": "bow2vw_entry",
             "bigartm": "install_bigartm",

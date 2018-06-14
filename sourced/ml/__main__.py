@@ -132,7 +132,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
         "id2vec-preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
-    preproc_parser.set_defaults(handler=cmd.preprocess_id2vec)
+    preproc_parser.set_defaults(handler=cmd.id2vec_preprocess)
     args.add_df_args(preproc_parser)
     preproc_parser.add_argument("-s", "--shard-size", default=4096, type=int,
                                 help="The shard (submatrix) size.")
@@ -149,7 +149,7 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_postproc_parser = add_parser(
         "id2vec-postproc",
         "Combine row and column embeddings produced by Swivel and write them to an .asdf.")
-    id2vec_postproc_parser.set_defaults(handler=cmd.postprocess_id2vec)
+    id2vec_postproc_parser.set_defaults(handler=cmd.id2vec_postprocess)
     id2vec_postproc_parser.add_argument(
         "-i", "--swivel-data", required=True,
         help="Folder with swivel row and column embeddings data. "
@@ -160,7 +160,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     id2vec_project_parser = add_parser(
         "id2vec-project", "Present id2vec model in Tensorflow Projector.")
-    id2vec_project_parser.set_defaults(handler=cmd.projector_entry)
+    id2vec_project_parser.set_defaults(handler=cmd.id2vec_projector)
     args.add_df_args(id2vec_project_parser, required=False)
     id2vec_project_parser.add_argument("-i", "--input", required=True,
                                        help="id2vec model to present.")
