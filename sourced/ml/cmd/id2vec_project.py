@@ -5,10 +5,10 @@ import numpy
 from sourced.ml.models import Id2Vec
 
 
-def id2vec_projector(args):
+def id2vec_project(args):
     MAX_TOKENS = 10000  # hardcoded in Tensorflow Projector
 
-    log = logging.getLogger("id2vec_projector")
+    log = logging.getLogger("id2vec_project")
     id2vec = Id2Vec(log_level=args.log_level).load(source=args.input)
     if args.docfreq_in:
         log.info("Loading docfreq model from %s", args.docfreq_in)

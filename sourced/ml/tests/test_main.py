@@ -14,7 +14,7 @@ class MainTests(unittest.TestCase):
             "id2vec-preproc": "id2vec_preprocess",
             "id2vec-train": "run_swivel",
             "id2vec-postproc": "id2vec_postprocess",
-            "id2vec-project": "id2vec_projector",
+            "id2vec-project": "id2vec_project",
             "bigartm2asdf": "bigartm2asdf",
             "bow2vw": "bow2vw",
             "bigartm": "install_bigartm",
