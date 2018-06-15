@@ -8,7 +8,7 @@ import numpy
 import sourced.ml.tests.models as paths
 from sourced.ml.models import Id2Vec
 from sourced.ml.utils import projector
-from sourced.ml.cmd import id2vec_projector
+from sourced.ml.cmd import id2vec_project
 
 
 class Id2VecTests(unittest.TestCase):
@@ -38,7 +38,7 @@ class Id2VecTests(unittest.TestCase):
         key, val = next(iter(self.model.items()))
         self.assertEqual(self.model[key], val)
 
-    def test_id2vec_projector1(self):
+    def test_id2vec_project1(self):
         present_embeddings = projector.present_embeddings
         wait = projector.wait
 
@@ -59,7 +59,7 @@ class Id2VecTests(unittest.TestCase):
             input=paths.ID2VEC, output="fake", docfreq_in=paths.DOCFREQ,
             no_browser=False, log_level=logging.DEBUG)
         try:
-            id2vec_projector(args)
+            id2vec_project(args)
         finally:
             projector.present_embeddings = present_embeddings
             projector.wait = wait
@@ -67,7 +67,7 @@ class Id2VecTests(unittest.TestCase):
         self.assertTrue(presented)
         self.assertTrue(waited)
 
-    def test_id2vec_projector2(self):
+    def test_id2vec_project2(self):
         present_embeddings = projector.present_embeddings
         wait = projector.wait
 
@@ -88,7 +88,7 @@ class Id2VecTests(unittest.TestCase):
             input=paths.ID2VEC, output="fake", docfreq_in=None,
             no_browser=False, log_level=logging.DEBUG)
         try:
-            id2vec_projector(args)
+            id2vec_project(args)
         finally:
             projector.present_embeddings = present_embeddings
             projector.wait = wait

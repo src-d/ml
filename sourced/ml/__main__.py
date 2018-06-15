@@ -160,7 +160,7 @@ def get_parser() -> argparse.ArgumentParser:
     # ------------------------------------------------------------------------
     id2vec_project_parser = add_parser(
         "id2vec-project", "Present id2vec model in Tensorflow Projector.")
-    id2vec_project_parser.set_defaults(handler=cmd.id2vec_projector)
+    id2vec_project_parser.set_defaults(handler=cmd.id2vec_project)
     args.add_df_args(id2vec_project_parser, required=False)
     id2vec_project_parser.add_argument("-i", "--input", required=True,
                                        help="id2vec model to present.")

@@ -7,7 +7,7 @@ from sourced.ml.cmd.merge_coocc import merge_coocc
 from sourced.ml.cmd.id2vec_postprocess import id2vec_postprocess
 from sourced.ml.cmd.id2vec_preprocess import id2vec_preprocess
 from sourced.ml.cmd.preprocess_repos import preprocess_repos
-from sourced.ml.cmd.id2vec_projector import id2vec_projector
+from sourced.ml.cmd.id2vec_project import id2vec_project
 from sourced.ml.cmd.repos2bow import repos2bow, repos2bow_template
 from sourced.ml.cmd.repos2coocc import repos2coocc
 from sourced.ml.cmd.repos2df import repos2df
