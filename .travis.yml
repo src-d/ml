@@ -15,7 +15,7 @@ _install: &_install
   - gimme 1.8
   - source ~/.gimme/envs/latest.env
   - pip install --upgrade pip
-  - pip install tensorflow keras
+  - pip install tensorflow
   - pip install -r requirements.txt codecov
   - pip install -e .
 _coverage: &_coverage

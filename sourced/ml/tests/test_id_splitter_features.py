@@ -3,7 +3,7 @@ import tarfile
 import tempfile
 import unittest
 
-import numpy as np
+import numpy
 
 from sourced.ml.algorithms.id_splitter.features import prepare_features, read_identifiers
 from sourced.ml.tests.models import IDENTIFIERS
@@ -54,11 +54,11 @@ class IdSplitterTest(unittest.TestCase):
             self.assertEqual(x_test.shape, x_train.shape)
             self.assertEqual(y_test.shape, y_train.shape)
             # each line contains only one split -> so it should be only 5 nonzero for train/test
-            self.assertEqual(np.sum(y_test), 5)
-            self.assertEqual(np.sum(y_train), 5)
+            self.assertEqual(numpy.sum(y_test), 5)
+            self.assertEqual(numpy.sum(y_train), 5)
             # each line contains only two chars -> so it should be only 10 nonzero for train/test
-            self.assertEqual(np.count_nonzero(x_test), 10)
-            self.assertEqual(np.count_nonzero(x_train), 10)
+            self.assertEqual(numpy.count_nonzero(x_test), 10)
+            self.assertEqual(numpy.count_nonzero(x_train), 10)
             # y should be 3 dimensional matrix
             self.assertEqual(y_test.ndim, 3)
             self.assertEqual(y_train.ndim, 3)

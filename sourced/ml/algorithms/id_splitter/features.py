@@ -3,13 +3,15 @@ import string
 import tarfile
 import warnings
 
-import numpy as np
+import numpy
 from keras.preprocessing.sequence import pad_sequences
 from modelforge.progress_bar import progress_bar
 
 
 DEFAULT_MAX_IDENTIFIER_LEN = 40  # default max length of sequence
 PADDING = "post"  # add padding values after input
+DEFAULT_TEST_SIZE = 0.2
+DEFAULT_SHUFFLE_VALUE = True
 
 # In the CSV file, columns 0,1,2 contain statistics about the identifier.
 CSV_IDENTIFIERS_COL = 3  # Column 3 contains the input identifier e.g. "FooBar".
@@ -33,11 +35,11 @@ def read_identifiers(csv_path: str, use_header: bool=True,
     :return: list of splitted identifiers.
     """
     log = logging.getLogger("read_identifiers")
-    log.info("Reading data from CSV...")
+    log.info("Reading data from the CSV file %s", csv_path)
     identifiers = []
     # TODO: Update dataset loading as soon as https://github.com/src-d/backlog/issues/1212 done.
     # Think about dataset download step.
-    with tarfile.open(csv_path, mode="r", encoding="utf-8") as f:
+    with tarfile.open(csv_path, encoding="utf-8") as f:
         assert len(f.members) == 1, "One archived file is expected, got: %s" % len(f.members)
         content = f.extractfile(f.members[0])
         if not use_header:
@@ -47,7 +49,7 @@ def read_identifiers(csv_path: str, use_header: bool=True,
             if len(row[identifiers_col]) <= max_identifier_len:
                 identifiers.append(row[split_identifiers_col])
     if shuffle:
-        np.random.shuffle(identifiers)
+        numpy.random.shuffle(identifiers)
     log.info("Number of identifiers after filtering: %s." % len(identifiers))
     return identifiers
 
@@ -56,7 +58,8 @@ def prepare_features(csv_path: str, use_header: bool=True,
                      max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
                      identifiers_col: int=CSV_IDENTIFIERS_COL,
                      split_identifiers_col: int=CSV_SPLIT_IDENTIFIERS_COL,
-                     shuffle: bool=True, test_size: float=0.2, padding: str=PADDING):
+                     shuffle: bool=DEFAULT_SHUFFLE_VALUE, test_size: float=DEFAULT_TEST_SIZE,
+                     padding: str=PADDING):
     """
     Prepare the features for training the identifier splitting task.
     :param csv_path: path to the CSV file.
@@ -65,6 +68,7 @@ def prepare_features(csv_path: str, use_header: bool=True,
     :param identifiers_col: column in CSV file for the raw identifier.
     :param split_identifiers_col: column in CSV file for the splitted identifier.
     :param shuffle: indicates whether to reorder the list of identifiers at random after reading it
+    :param test_size: Proportion of test samples used for evaluation.
     :param padding: position where to add padding values:
         after the intput sequence if "post", before if "pre".
     :return: training and testing features to train the neural net for the splitting task.
@@ -78,7 +82,9 @@ def prepare_features(csv_path: str, use_header: bool=True,
                                    split_identifiers_col=split_identifiers_col, shuffle=shuffle)
 
     # convert identifiers into character indices and labels
-    log.info("Converting identifiers to character indices...")
+    log.info("Converting identifiers to character indices")
+    log.info("Number of identifiers: %d, Average length: %d characters" %
+             (len(identifiers), numpy.mean([len(i) for i in identifiers])))
 
     char2ind = dict((c, i + 1) for i, c in enumerate(sorted(string.ascii_lowercase)))
 
@@ -106,6 +112,10 @@ def prepare_features(csv_path: str, use_header: bool=True,
         char_id_seq.append(index_arr)
         splits.append(split_arr)
 
+    log.info("Number of subtokens: %d, Number of distinct characters: %d" %
+             (sum([sum(split_arr) for split_arr in splits]) + len(identifiers),
+              len(set([i for index_arr in char_id_seq for i in index_arr]))))
+
     # train/test splitting
     log.info("Train/test splitting...")
     n_train = int((1 - test_size) * len(char_id_seq))
@@ -113,7 +123,8 @@ def prepare_features(csv_path: str, use_header: bool=True,
     x_test = char_id_seq[n_train:]
     y_train = splits[:n_train]
     y_test = splits[n_train:]
-    log.info("Number of train samples: %s, number of test samples: %s.", len(x_train), len(x_test))
+    log.info("Number of train samples: %s, number of test samples: %s" % (len(x_train),
+                                                                          len(x_test)))
 
     # pad sequence
     log.info("Padding of the sequences...")
