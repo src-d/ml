@@ -20,5 +20,6 @@ SOURCE_PY = join(DATA_DIR_SOURCE, "%s.py" % SOURCE_FILENAME)
 TOPICS_SRC = "topics_readable.txt"
 PARQUET_DIR = join(_root, "parquet")
 SIVA_DIR = join(_root, "siva")
+IDENTIFIERS = join(_root, "identifiers.csv.tar.gz")
 
 MODER_FUNC = join(DATA_DIR_SOURCE, "example_functions.py")
