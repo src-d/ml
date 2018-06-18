@@ -1,3 +1,4 @@
+import os
 import unittest
 
 from pyspark import Row
@@ -23,6 +24,15 @@ class IndexerTests(unittest.TestCase):
             .map(lambda x: Row(to_index=values[x.to_index], value=x.value)) \
             .collect()
         self.assertEqual(self.data, data_reverse)
+
+    def test_save_load(self):
+        indexer = Indexer("to_index")
+        res = indexer(self.data_rdd)
+        cached_index_path = "/tmp/index.asdf"
+        indexer.save_index(cached_index_path)
+        indexer = Indexer("to_index", cached_index_path=cached_index_path)
+        self.assertEqual(res.collect(), indexer(self.data_rdd).collect())
+        os.remove(cached_index_path)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ class MainTests(unittest.TestCase):
             "repos2df": "repos2df",
             "repos2ids": "repos2ids",
             "repos2bow": "repos2bow",
+            "repos2bow_index": "repos2bow_index",
             "repos2roleids": "repos2roles_and_ids",
             "repos2id_distance": "repos2id_distance",
             "repos2idseq": "repos2id_sequence",

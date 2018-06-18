@@ -3,6 +3,7 @@ from pyspark.rdd import RDD
 from pyspark import Row
 
 from sourced.ml.transformers.transformer import Transformer
+from sourced.ml.models import DocumentFrequencies
 
 
 class Indexer(Transformer):
@@ -12,7 +13,7 @@ class Indexer(Transformer):
     enumerating. Use value_to_index or [] to get index value.
     """
     def __init__(self, column: Union[int, str], column2id: Union[Dict[str, int], None]=None,
-                 **kwargs):
+                 cached_index_path: str=None, **kwargs):
         """
         :param column: column index or its name in pyspark.RDD for indexing.
         :param kwargs:
@@ -20,6 +21,10 @@ class Indexer(Transformer):
         super().__init__(**kwargs)
         self.column = column
         self._value_to_index = column2id
+        self.cached_index_path = cached_index_path
+        if self.cached_index_path:
+            self._log.info("Loading the index from %s", self.cached_index_path)
+            self._value_to_index = DocumentFrequencies().load(source=self.cached_index_path)
 
     def __getitem__(self, key: Union[int, str]):
         """
@@ -68,6 +73,11 @@ class Indexer(Transformer):
         if len(values) == 0:
             raise RuntimeError("Number of distinct values is zero.")
         self._value_to_index = {d: i for i, d in enumerate(values)}
+
+    def save_index(self, path):
+        self._log.info("Saving the index to %s", path)
+        DocumentFrequencies().construct(len(self._value_to_index), self._value_to_index) \
+            .save(path)
 
     def __call__(self, rdd: RDD):
         column_name = self.column

@@ -1,8 +1,6 @@
 import operator
 from typing import Iterable
 
-from pyspark import Row
-
 from sourced.ml.extractors import BagsExtractor
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.utils import EngineConstants

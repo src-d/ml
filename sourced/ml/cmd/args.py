@@ -108,7 +108,7 @@ def add_feature_args(my_parser: argparse.ArgumentParser, required=True):
     my_parser.add_argument("-x", "--mode", choices=Moder.Options.__all__,
                            default="file", help="What to select for analysis.")
     my_parser.add_argument(
-        "--quant", help="[OUT] The path to the QuantizationLevels model.")
+        "--quant", help="[IN/OUT] The path to the QuantizationLevels model.")
     my_parser.add_argument(
         "-f", "--feature", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
