@@ -28,6 +28,9 @@ class BasicTransformerTest(unittest.TestCase):
         repartitioned_data = Repartitioner(partitions, shuffle=True)(data)
         self.assertEqual(partitions, repartitioned_data.getNumPartitions())
 
+        repartitioned_data = Repartitioner.maybe(partitions, shuffle=True, multiplier=2)(data)
+        self.assertEqual(partitions * 2, repartitioned_data.getNumPartitions())
+
     def test_parquet_loader(self):
         # load parquet and check number of rows
         loader = ParquetLoader(session=self.spark, paths=PARQUET_DIR)

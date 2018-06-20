@@ -47,7 +47,7 @@ def repos2bow_template(args, select=HeadFiles, cache_hook=None, save_hook=None):
         .link(Indexer(Uast2BagFeatures.Columns.token, df_model.order))
     if save_hook is not None:
         bags_writer = bags_writer \
-            .link(Repartitioner.maybe(args.partitions * 10, args.shuffle)) \
+            .link(Repartitioner.maybe(args.partitions, args.shuffle, multiplier=10)) \
             .link(save_hook())
     bags_writer.link(BOWWriter(document_indexer, df_model, args.bow, args.batch)) \
         .execute()

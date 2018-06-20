@@ -21,9 +21,9 @@ class Repartitioner(Transformer):
         return head.coalesce(self.partitions, self.shuffle)
 
     @staticmethod
-    def maybe(partitions: Union[int, None], shuffle: bool=False):
+    def maybe(partitions: Union[int, None], shuffle: bool=False, multiplier: int=1):
         if partitions is not None:
-            return Repartitioner(partitions, shuffle)
+            return Repartitioner(partitions * multiplier, shuffle)
         else:
             return Identity()
 
