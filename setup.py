@@ -39,6 +39,7 @@ setup(
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
     },
+    tests_require=["docker>=3.4.0,<4.0"],
     package_data={"": ["LICENSE.md", "README.md"],
                   "sourced": ["ml/transformers/languages.yml"], },
     classifiers=[
