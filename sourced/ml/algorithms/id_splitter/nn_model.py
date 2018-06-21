@@ -3,7 +3,7 @@ import warnings
 import numpy
 import keras
 from keras import backend as kbackend
-from keras.layers import BatchNormalization, Concatenate, Conv1D, CuDNNLSTM, Dense, Embedding, \
+from keras.layers import BatchNormalization, Concatenate, Conv1D, Dense, Embedding, \
     Input, TimeDistributed
 from keras.models import Model
 try:
@@ -72,9 +72,8 @@ def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
     """
     # select the RNN layer
     if rnn_layer is None:
-        rnn_layer = CuDNNLSTM
-    elif isinstance(rnn_layer, str):
-        rnn_layer = getattr(keras.layers, rnn_layer)
+        rnn_layer = DEFAULT_RNN_TYPE
+    rnn_layer = getattr(keras.layers, rnn_layer)
 
     # add the forward & backward RNN
     with tf.device(dev0):
@@ -88,8 +87,8 @@ def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
     return bidi
 
 
-def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, rnn_layer: str,
-              dev0: str, dev1: str) -> keras.engine.training.Model:
+def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
+              dev1: str, rnn_layer: str=None) -> keras.engine.training.Model:
     """
     Builds a RNN model with the parameters specified as arguments.
 
@@ -103,9 +102,6 @@ def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, 
     :param dev1: second device to use when running specific operations.
     :return: compiled RNN model.
     """
-    if rnn_layer is None:
-        rnn_layer = DEFAULT_RNN_TYPE
-
     # prepare the model
     with tf.device(dev0):
         char_seq, hidden_layer = prepare_input_emb(maxlen, n_uniq)
@@ -175,12 +171,10 @@ def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: in
         for _ in range(stack):
             hidden_layer = add_conv(hidden_layer, filters=filters, kernel_sizes=kernel_sizes,
                                     output_n_filters=output_n_filters)
-
         output = add_output_layer(hidden_layer)
 
     # compile the model
     model = Model(inputs=char_seq, outputs=output)
-
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
 
