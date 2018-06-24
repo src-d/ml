@@ -9,7 +9,7 @@ from keras.layers import BatchNormalization, Concatenate, Conv1D, Dense, Embeddi
 from keras.models import Model
 try:
     import tensorflow as tf
-except ImportError as e:
+except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 from typing import Callable, List, Tuple, Union
 
@@ -17,6 +17,8 @@ from typing import Callable, List, Tuple, Union
 LOSS = "binary_crossentropy"
 METRICS = ["accuracy"]
 DEFAULT_RNN_TYPE = "LSTM"
+# Number of unique characters and dimension of the embedding layer.
+NUM_CHARS = len(string.ascii_lowercase)
 
 
 def register_metric(metric: Union[str, Callable]) -> Union[str, Callable]:
@@ -31,7 +33,28 @@ def register_metric(metric: Union[str, Callable]) -> Union[str, Callable]:
     return metric
 
 
-def prepare_input_emb(maxlen: int, n_uniq: int) -> Tuple[tf.Tensor]:
+def prepare_devices(args: argparse.ArgumentParser) -> Tuple[str]:
+    """
+    Extract devices from arguments.
+
+    :param args: arguments
+    :return: splitted devices
+    """
+    devices = args.devices.split(",")
+    if len(devices) == 2:
+        dev0, dev1 = ("/gpu:" + dev for dev in devices)
+    elif len(devices) == 1:
+        if int(devices[0]) != -1:
+            dev0 = dev1 = "/gpu:" + args.devices
+        else:
+            dev0 = dev1 = "/cpu:0"
+    else:
+        raise ValueError("Expected 1 or 2 devices but got %d from args.devices argument %s" %
+                         (len(devices), args.devices))
+    return dev0, dev1
+
+
+def prepare_input_emb(maxlen: int) -> Tuple[tf.Tensor]:
     """
     Builds character embeddings, a dense representation of characters to feed the RNN with.
 
@@ -40,8 +63,8 @@ def prepare_input_emb(maxlen: int, n_uniq: int) -> Tuple[tf.Tensor]:
     :return: tensor for input, one-hot character embeddings.
     """
     char_seq = Input((maxlen,))
-    emb = Embedding(input_dim=n_uniq + 1, output_dim=n_uniq + 1, input_length=maxlen,
-                    mask_zero=False, weights=[numpy.eye(n_uniq + 1)], trainable=False)(char_seq)
+    emb = Embedding(input_dim=NUM_CHARS + 1, output_dim=NUM_CHARS + 1, input_length=maxlen,
+                    mask_zero=False, weights=[numpy.eye(NUM_CHARS + 1)], trainable=False)(char_seq)
     return char_seq, emb
 
 
@@ -88,12 +111,11 @@ def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
     return bidi
 
 
-def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
+def build_rnn(maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
               dev1: str, rnn_layer: str=None) -> keras.engine.training.Model:
     """
     Builds a RNN model with the parameters specified as arguments.
 
-    :param n_uniq: number of unique items/characters.
     :param maxlen: maximum length of the input sequence.
     :param units: number of neurons or dimensionality of the output RNN.
     :param stack: number of RNN layers to stack.
@@ -105,7 +127,7 @@ def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, 
     """
     # prepare the model
     with tf.device(dev0):
-        char_seq, hidden_layer = prepare_input_emb(maxlen, n_uniq)
+        char_seq, hidden_layer = prepare_input_emb(maxlen)
 
         # stack the BiDi-RNN layers
         for i in range(stack):
@@ -117,6 +139,25 @@ def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, 
     model = Model(inputs=char_seq, outputs=output)
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
+
+
+def build_rnn_from_args(args: argparse.ArgumentParser):
+    """
+    Construct a RNN model from parsed arguments.
+
+    :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
+                 kernel_sizes, optimizer, devices.
+    :return: compiled model.
+    """
+    # extract required arguments
+    maxlen = args.length
+    units = args.neurons
+    stack = args.stack
+    optimizer = args.optimizer
+    rnn_layer = args.type
+    dev0, dev1 = prepare_devices(args)
+
+    return build_rnn(maxlen, units, stack, optimizer, rnn_layer, dev0, dev1)
 
 
 def add_conv(X: tf.Tensor, filters: List[int]=[64, 32, 16, 8],
@@ -149,7 +190,7 @@ def add_conv(X: tf.Tensor, filters: List[int]=[64, 32, 16, 8],
     return conv(conc)
 
 
-def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: int, stack: int,
+def build_cnn(maxlen: int, filters: List[int], output_n_filters: int, stack: int,
               kernel_sizes: List[int], optimizer: str, device: str) -> keras.engine.training.Model:
     """
     Builds a CNN model with the parameters specified as arguments.
@@ -166,7 +207,7 @@ def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: in
     """
     # prepare the model
     with tf.device(device):
-        char_seq, hidden_layer = prepare_input_emb(maxlen, n_uniq)
+        char_seq, hidden_layer = prepare_input_emb(maxlen)
 
         # stack the CNN layers
         for _ in range(stack):
@@ -180,7 +221,7 @@ def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: in
     return model
 
 
-def prepare_cnn_model(args: argparse.ArgumentParser):
+def build_cnn_from_args(args: argparse.ArgumentParser):
     """
     Construct a CNN model from parsed arguments.
     :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
@@ -188,7 +229,6 @@ def prepare_cnn_model(args: argparse.ArgumentParser):
     :return: compiled model
     """
     # extract required arguments
-    n_uniq = args.num_chars
     maxlen = args.length
 
     def to_list(params):
@@ -206,7 +246,7 @@ def prepare_cnn_model(args: argparse.ArgumentParser):
     optimizer = args.optimizer
     device, _ = prepare_devices(args)
 
-    return build_cnn(n_uniq, maxlen, filters, output_n_filters, stack, kernel_sizes, optimizer,
+    return build_cnn(maxlen, filters, output_n_filters, stack, kernel_sizes, optimizer,
                      device)
 
 

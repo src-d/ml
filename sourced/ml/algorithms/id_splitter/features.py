@@ -9,7 +9,7 @@ from modelforge.progress_bar import progress_bar
 
 DEFAULT_MAX_IDENTIFIER_LEN = 40  # default max length of sequence
 PADDING = "post"  # add padding values after input
-DEFAULT_TEST_SIZE = 0.2
+DEFAULT_TEST_RATIO = 0.2
 DEFAULT_SHUFFLE_VALUE = True
 
 # In the CSV file, columns 0,1,2 contain statistics about the identifier.
@@ -57,7 +57,7 @@ def prepare_features(csv_path: str, use_header: bool=True,
                      max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
                      identifiers_col: int=CSV_IDENTIFIERS_COL,
                      split_identifiers_col: int=CSV_SPLIT_IDENTIFIERS_COL,
-                     shuffle: bool=DEFAULT_SHUFFLE_VALUE, test_size: float=DEFAULT_TEST_SIZE,
+                     shuffle: bool=DEFAULT_SHUFFLE_VALUE, test_ratio: float=DEFAULT_TEST_RATIO,
                      padding: str=PADDING):
     """
     Prepare the features for training the identifier splitting task.
@@ -67,7 +67,7 @@ def prepare_features(csv_path: str, use_header: bool=True,
     :param identifiers_col: column in CSV file for the raw identifier.
     :param split_identifiers_col: column in CSV file for the splitted identifier.
     :param shuffle: indicates whether to reorder the list of identifiers at random after reading it
-    :param test_size: Proportion of test samples used for evaluation.
+    :param test_ratio: Proportion of test samples used for evaluation.
     :param padding: position where to add padding values:
         after the intput sequence if "post", before if "pre".
     :return: training and testing features to train the neural net for the splitting task.
@@ -117,7 +117,7 @@ def prepare_features(csv_path: str, use_header: bool=True,
 
     # train/test splitting
     log.info("Train/test splitting...")
-    n_train = int((1 - test_size) * len(char_id_seq))
+    n_train = int((1 - test_ratio) * len(char_id_seq))
     x_train = char_id_seq[:n_train]
     x_test = char_id_seq[n_train:]
     y_train = splits[:n_train]

@@ -1,19 +1,19 @@
 import argparse
-from datetime import datetime as dt
+from datetime import datetime
 import logging
 import pickle
 import random
 import os
 import warnings
 
-import numpy as np
+import numpy
+from keras import backend as kbackend
+from keras.callbacks import CSVLogger, TensorBoard, ModelCheckpoint, LearningRateScheduler
 try:
-    from keras import backend as K
-    from keras.callbacks import CSVLogger, TensorBoard, ModelCheckpoint, LearningRateScheduler
     import tensorflow as tf
-except ImportError as e:
-    warnings.warn("Tensorflow or/and Keras are not installed, dependent functionality is "
-                  "unavailable.")
+except ImportError:
+    warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
+from typing import Tuple
 
 from sourced.ml.algorithms.id_splitter.features import prepare_features
 
@@ -27,30 +27,30 @@ def set_random_seed(seed):
     Fix random seed for reproducibility.
     :param seed: seed value
     """
-    np.random.seed(seed)
+    numpy.random.seed(seed)
     random.seed(seed)
     tf.set_random_seed(seed)
 
 
-def to_binary(mat, threshold, inplace=True):
+def to_binary(matrix, threshold: float, inplace: bool=True):
     """
-    Helper function to binarize matrix
+    Helper function to binarize a matrix.
     :param mat: matrix or array
     :param threshold: if value >= threshold than it will be 1, else 0
-    :param inplace: whether modify mat inplace or not
-    :return: binarized matrix
+    :param inplace: whether modify the matrix inplace or not
+    :return: the binarized matrix
     """
-    mask = mat >= threshold
+    mask = matrix >= threshold
     if inplace:
-        mat_ = mat
+        matrix_ = matrix
     else:
-        mat_ = mat.copy()
-    mat_[mask] = 1
-    mat_[np.logical_not(mask)] = 0
-    return mat_
+        matrix_ = matrix.copy()
+    matrix_[mask] = 1
+    matrix_[numpy.logical_not(mask)] = 0
+    return matrix_
 
 
-def precision_np(y_true, y_pred, epsilon=EPSILON):
+def precision_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) -> float:
     """
     Precision metric.
     :param y_true: ground truth labels - expect binary values
@@ -63,7 +63,7 @@ def precision_np(y_true, y_pred, epsilon=EPSILON):
     return true_positives / (predicted_positives + epsilon)
 
 
-def recall_np(y_true, y_pred, epsilon=EPSILON):
+def recall_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) -> float:
     """
     Compute recall metric.
     :param y_true: matrix with ground truth labels - expect binary values
@@ -76,9 +76,11 @@ def recall_np(y_true, y_pred, epsilon=EPSILON):
     return true_positives / (possible_positives + epsilon)
 
 
-def report(model, X, y, batch_size, threshold=DEFAULT_THRESHOLD, epsilon=EPSILON):
+def report(model: keras.engine.training.Model, X, y, batch_size: int,
+           threshold: float=DEFAULT_THRESHOLD, epsilon: float=EPSILON):
     """
     Prepare report for `model` on data `X` & `y`. It prints precision, recall, F1 score.
+
     :param model: model to apply
     :param X: features
     :param y: labels (expected binary labels)
@@ -86,7 +88,7 @@ def report(model, X, y, batch_size, threshold=DEFAULT_THRESHOLD, epsilon=EPSILON
     :param threshold: threshold to binarize predictions
     :param epsilon: added to denominator to avoid division by zero
     """
-    log = logging.getLogger("quality-reporter")
+    log = logging.getLogger("report")
 
     # predict & skip the last dimension & binarize
     predictions = model.predict(X, batch_size=batch_size, verbose=1)[:, :, 0]
@@ -102,7 +104,7 @@ def report(model, X, y, batch_size, threshold=DEFAULT_THRESHOLD, epsilon=EPSILON
 def config_keras():
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
-    K.tensorflow_backend.set_session(tf.Session(config=config))
+    kbackend.tensorflow_backend.set_session(tf.Session(config=config))
 
 
 def prepare_train_generator(x, y, batch_size=500):
@@ -114,13 +116,13 @@ def prepare_train_generator(x, y, batch_size=500):
             if n_batches * batch_size < x.shape[0]:
                 n_batches += 1  # to yield last samples
             for i in range(n_batches):
-                st = i * batch_size
+                start = i * batch_size
                 end = min((i + 1) * batch_size, x.shape[0])
-                yield x[st:end], y[st:end]
+                yield x[start:end], y[start:end]
     return xy_generator()
 
 
-def prepare_schedule(lr=0.001, final_lr=0.00001, n_epochs=10):
+def prepare_schedule(lr, final_lr, n_epochs):
     delta = (lr - final_lr) / n_epochs
 
     def schedule(epoch):
@@ -132,6 +134,7 @@ def prepare_schedule(lr=0.001, final_lr=0.00001, n_epochs=10):
 def make_lr_scheduler(lr=0.001, final_lr=0.00001, n_epochs=10, verbose=1):
     """
     Prepare learning rate scheduler to change learning rate during the training.
+
     :param lr: initial learning rate
     :param final_lr: final learning rate
     :param n_epochs: number of epochs
@@ -145,6 +148,7 @@ def make_lr_scheduler(lr=0.001, final_lr=0.00001, n_epochs=10, verbose=1):
 def prepare_devices(args: argparse.ArgumentParser):
     """
     Extract devices from arguments.
+
     :param args: arguments
     :return: splitted devices
     """
@@ -163,20 +167,20 @@ def prepare_devices(args: argparse.ArgumentParser):
     return dev0, dev1
 
 
-def prepare_callbacks(output_dir):
+def prepare_callbacks(output_dir: str):
     """
-    Prepare logging, tensorboard, model checkpoint callbacks and store their outputs at output_dir.
-    :param output_dir: location of directory to store results.
-    :return: list of callbacks
+    Prepare logging, tensorboard, model checkpoint callbacks and store their outputs in output_dir.
+    :param output_dir: path to the results.
+    :return: list of callbacks.
     """
-    time = dt.now().strftime("%y%m%d-%H%M")
+    time = datetime.now().strftime("%y%m%d-%H%M")
     log_dir = os.path.join(output_dir, "tensorboard" + time)
-    logging.info("Tensorboard directory: {}".format(log_dir))
+    logging.info("Tensorboard directory: %s" % log_dir)
     tensorboard = TensorBoard(log_dir=log_dir, batch_size=1000, write_images=True,
                               write_graph=True)
-    csv_loc = os.path.join(output_dir, "csv_logger_" + time + ".txt")
-    logging.info("CSV logs: {}".format(csv_loc))
-    csv_logger = CSVLogger(csv_loc)
+    csv_path = os.path.join(output_dir, "csv_logger_" + time + ".txt")
+    logging.info("CSV logs: %s" % csv_path)
+    csv_logger = CSVLogger(csv_path)
 
     filepath = os.path.join(output_dir, "best_" + time + ".model")
     model_saver = ModelCheckpoint(filepath, monitor='val_recall', verbose=1, save_best_only=True,
@@ -187,50 +191,54 @@ def prepare_callbacks(output_dir):
 def generator_parameters(batch_size, samples_per_epoch, n_samples, epochs):
     """
     Helper function to split huge dataset into smaller one to make reports more frequently.
-    :param batch_size: batch size
-    :param samples_per_epoch: number of samples per mini-epoch or before report
-    :param n_samples: total number of samples
-    :param epochs: number epochs over full dataset
+    :param batch_size: batch size.
+    :param samples_per_epoch: number of samples per mini-epoch or before each report.
+    :param n_samples: total number of samples.
+    :param epochs: number epochs over full dataset.
     :return: number of steps per epoch (should be used with generator) and number of sub-epochs
-             where during sub-epoch only samples_per_epoch will be generated
+             where during sub-epoch only samples_per_epoch will be generated.
     """
     steps_per_epoch = samples_per_epoch // batch_size
-    n_epochs = np.ceil(epochs * n_samples / samples_per_epoch)
+    n_epochs = numpy.ceil(epochs * n_samples / samples_per_epoch)
     return steps_per_epoch, n_epochs
 
 
-def pipeline(args: argparse.ArgumentParser, prepare_model):
-    log = logging.getLogger("id-splitter-train")
+def train_id_splitter(args: argparse.ArgumentParser, model):
+    log = logging.getLogger("train_id_splitter")
     config_keras()
     set_random_seed(args.seed)
 
     # prepare features
-    x_tr, x_t, y_tr, y_t = prepare_features(csv_loc=args.input, use_header=args.csv_header,
-                                            token_col=args.csv_token, maxlen=args.length,
-                                            token_split_col=args.csv_token_split,
-                                            test_size=args.test_size, padding=args.padding)
+    x_train, x_test, y_train, y_test = prepare_features(csv_path=args.input,
+                                                        use_header=args.include_csv_header,
+                                                        identifiers_col=args.csv_token,
+                                                        max_identifier_length=args.length,
+                                                        split_identifiers_col=args.csv_token_split,
+                                                        test_ratio=args.test_ratio,
+                                                        padding=args.padding)
 
     # prepare train generator
     steps_per_epoch, n_epochs = generator_parameters(batch_size=args.batch_size,
                                                      samples_per_epoch=args.samples_before_report,
-                                                     n_samples=x_tr.shape[0], epochs=args.epochs)
-
-    train_gen = prepare_train_generator(x=x_tr, y=y_tr, batch_size=args.batch_size)
+                                                     n_samples=x_train.shape[0],
+                                                     epochs=args.epochs)
+    train_gen = prepare_train_generator(x=x_train, y=y_train, batch_size=args.batch_size)
 
     # prepare test generator
     validation_steps, _ = generator_parameters(batch_size=args.val_batch_size,
-                                               samples_per_epoch=x_t.shape[0],
-                                               n_samples=x_t.shape[0], epochs=args.epochs)
-    test_gen = prepare_train_generator(x=x_t, y=y_t, batch_size=args.val_batch_size)
+                                               samples_per_epoch=x_test.shape[0],
+                                               n_samples=x_test.shape[0],
+                                               epochs=args.epochs)
+    test_gen = prepare_train_generator(x=x_test, y=y_test, batch_size=args.val_batch_size)
 
     # initialize model
-    model = prepare_model(args)
+    model = model(args)
     log.info("Model summary:")
     model.summary(print_fn=log.info)
 
     # callbacks
     callbacks = prepare_callbacks(args.output)
-    lr_scheduler = make_lr_scheduler(lr=args.rate, final_lr=args.final_rate, n_epochs=n_epochs)
+    lr_scheduler = make_lr_scheduler(lr=args.lr, final_lr=args.final_lr, n_epochs=n_epochs)
     callbacks.append(lr_scheduler)
 
     # train
@@ -239,10 +247,10 @@ def pipeline(args: argparse.ArgumentParser, prepare_model):
                                   callbacks=callbacks, epochs=n_epochs)
 
     # report quality on test dataset
-    report(model, X=x_t, y=y_t, batch_size=args.val_batch_size)
+    report(model, X=x_test, y=y_test, batch_size=args.val_batch_size)
 
     # save model & history
-    with open(os.path.join(args.output, "model.history"), "wb") as f:
+    with open(os.path.join(args.output, "model_history.pickle"), "wb") as f:
         pickle.dump(history.history, f)
     model.save(os.path.join(args.output, "last.model"))
     log.info("Completed!")
