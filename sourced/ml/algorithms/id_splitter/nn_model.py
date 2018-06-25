@@ -39,8 +39,8 @@ def prepare_devices(devices: str) -> Tuple[str]:
     """
     Extract devices from arguments.
 
-    :param args: arguments
-    :return: splitted devices
+    :param args: arguments.
+    :return: splitted devices.
     """
     devices = devices.split(",")
     if len(devices) == 2:
@@ -95,18 +95,18 @@ def add_rnn(X: tf.Tensor, units: int, rnn_layer: str=None, dev0: str="/gpu:0",
     :param dev1: device that will be used for backward pass.
     :return: output bidirectional RNN layer.
     """
-    # select the RNN layer
+    # select the RNN layer.
     if rnn_layer is None:
         rnn_layer = DEFAULT_RNN_TYPE
     rnn_layer = getattr(keras.layers, rnn_layer)
 
-    # add the forward & backward RNN
+    # add the forward & backward RNN.
     with tf.device(dev0):
         forward = rnn_layer(units=units, return_sequences=True)(X)
     with tf.device(dev1):
         backward = rnn_layer(units=units, return_sequences=True, go_backwards=True)(X)
 
-    # concatenate
+    # concatenate.
     with tf.device(dev1):
         bidi = Concatenate(axis=-1)([forward, backward])
     return bidi
@@ -121,22 +121,22 @@ def build_rnn(maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
     :param units: number of neurons or dimensionality of the output RNN.
     :param stack: number of RNN layers to stack.
     :param optimizer: algorithm to use as an optimizer for the RNN.
-    :param rnn_layer: recurrent layer type to use..
+    :param rnn_layer: recurrent layer type to use.
     :param dev0: first device to use when running specific operations.
     :param dev1: second device to use when running specific operations.
     :return: compiled RNN model.
     """
-    # prepare the model
+    # prepare the model.
     with tf.device(dev0):
         char_seq, hidden_layer = prepare_input_emb(maxlen)
 
-        # stack the BiDi-RNN layers
+        # stack the BiDi-RNN layers.
         for i in range(stack):
             hidden_layer = add_rnn(hidden_layer, units=units, rnn_layer=rnn_layer,
                                    dev0=dev0, dev1=dev1)
         output = add_output_layer(hidden_layer)
 
-    # compile the model
+    # compile the model.
     model = Model(inputs=char_seq, outputs=output)
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
@@ -150,7 +150,7 @@ def build_rnn_from_args(args: argparse.ArgumentParser) -> keras.engine.training.
                  kernel_sizes, optimizer, devices.
     :return: compiled RNN model.
     """
-    # extract required arguments
+    # extract required arguments.
     maxlen = args.length
     units = args.neurons
     stack = args.stack
@@ -172,21 +172,21 @@ def add_conv(X: tf.Tensor, filters: List[int], kernel_sizes: List[int],
     :param output_n_filters: number of 1D output filters.
     :return: output layer.
     """
-    # normalize the input
+    # normalize the input.
     X = BatchNormalization()(X)
 
-    # add convolutions
+    # add convolutions.
     convs = []
 
     for n_filters, kern_size in zip(filters, kernel_sizes):
         conv = Conv1D(filters=n_filters, kernel_size=kern_size, padding="same", activation="relu")
         convs.append(conv(X))
 
-    # concatenate all convolutions
+    # concatenate all convolutions.
     conc = Concatenate(axis=-1)(convs)
     conc = BatchNormalization()(conc)
 
-    # dimensionality reduction
+    # dimensionality reduction.
     conv = Conv1D(filters=output_n_filters, kernel_size=1, padding="same", activation="relu")
     return conv(conc)
 
@@ -206,17 +206,17 @@ def build_cnn(maxlen: int, filters: List[int], output_n_filters: int, stack: int
     :param device: device to use when running specific operations.
     :return: compiled CNN model.
     """
-    # prepare the model
+    # prepare the model.
     with tf.device(device):
         char_seq, hidden_layer = prepare_input_emb(maxlen)
 
-        # stack the CNN layers
+        # stack the CNN layers.
         for _ in range(stack):
             hidden_layer = add_conv(hidden_layer, filters=filters, kernel_sizes=kernel_sizes,
                                     output_n_filters=output_n_filters)
         output = add_output_layer(hidden_layer)
 
-    # compile the model
+    # compile the model.
     model = Model(inputs=char_seq, outputs=output)
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
@@ -230,7 +230,7 @@ def build_cnn_from_args(args: argparse.ArgumentParser) -> keras.engine.training.
                  kernel_sizes, optimizer, devices.
     :return: compiled CNN model.
     """
-    # extract required arguments
+    # extract required arguments.
     maxlen = args.length
 
     def to_list(params):

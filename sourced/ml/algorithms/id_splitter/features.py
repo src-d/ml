@@ -18,7 +18,7 @@ def read_identifiers(csv_path: str, use_header: bool=True,
                      shuffle: bool=True) -> List[str]:
     """
     Reads and filters too long identifiers from CSV file.
-    
+
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
@@ -70,13 +70,13 @@ def prepare_features(csv_path: str, use_header: bool=True,
     """
     log = logging.getLogger("prepare_features")
 
-    # read data from file
+    # read data from file.
     identifiers = read_identifiers(csv_path=csv_path, use_header=use_header,
                                    max_identifier_len=max_identifier_len,
                                    identifier_col=identifier_col,
                                    split_identifier_col=split_identifier_col, shuffle=shuffle)
 
-    # convert identifiers into character indices and labels
+    # convert identifiers into character indices and labels.
     log.info("Converting identifiers to character indices")
     log.info("Number of identifiers: %d, Average length: %d characters" %
              (len(identifiers), numpy.mean([len(i) for i in identifiers])))
@@ -86,7 +86,7 @@ def prepare_features(csv_path: str, use_header: bool=True,
     char_id_seq = []
     splits = []
     for identifier in identifiers:
-        # iterate through identifier and convert to array of char indices & boolean split array
+        # iterate through identifier and convert to array of char indices & boolean split array.
         index_arr = []
         split_arr = []
         skip_char = False

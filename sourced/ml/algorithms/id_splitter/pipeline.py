@@ -19,13 +19,14 @@ from sourced.ml.algorithms.id_splitter.features import prepare_features
 
 
 EPSILON = 10 ** -8
-DEFAULT_THRESHOLD = 0.5  # threshold that is used to binarize predictions of the model
+DEFAULT_THRESHOLD = 0.5  # threshold that is used to binarize predictions of the model.
 
 
 def set_random_seed(seed: int) -> None:
     """
-    Fix random seed for reproducibility.
-    :param seed: seed value
+    Fixes random seed for reproducibility.
+
+    :param seed: seed value.
     """
     numpy.random.seed(seed)
     random.seed(seed)
@@ -36,10 +37,10 @@ def to_binary(matrix: numpy.array, threshold: float, inplace: bool=True) -> nump
     """
     Helper function to binarize a matrix.
 
-    :param matrix: matrix or array
-    :param threshold: if value >= threshold than it will be 1, else 0
-    :param inplace: whether modify the matrix inplace or not
-    :return: the binarized matrix
+    :param matrix: matrix as a numpy.array.
+    :param threshold: if value >= threshold then the value will be 1, else 0.
+    :param inplace: whether to modify the matrix inplace or not.
+    :return: the binarized matrix.
     """
     mask = matrix >= threshold
     if inplace:
@@ -53,12 +54,13 @@ def to_binary(matrix: numpy.array, threshold: float, inplace: bool=True) -> nump
 
 def precision_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) -> float:
     """
-    Precision metric.
+    Computes the precision metric, a metric for multi-label classification of
+    how many selected items are relevant.
 
-    :param y_true: ground truth labels - expect binary values
-    :param y_pred: predicted labels - expect binary values
-    :param epsilon: to avoid division by zero
-    :return: precision
+    :param y_true: ground truth labels - expect binary values.
+    :param y_pred: predicted labels - expect binary values.
+    :param epsilon: to avoid division by zero.
+    :return: precision metric.
     """
     true_positives = np.sum(y_true * y_pred)
     predicted_positives = np.sum(y_pred)
@@ -67,12 +69,13 @@ def precision_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILO
 
 def recall_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) -> float:
     """
-    Compute recall metric.
+    Computes the recall metric, a metric for multi-label classification of
+    how many relevant items are selected.
 
-    :param y_true: matrix with ground truth labels - expect binary values
-    :param y_pred: matrix with predicted labels - expect binary values
-    :param epsilon: added to denominator to avoid division by zero
-    :return: recall
+    :param y_true: matrix with ground truth labels - expect binary values.
+    :param y_pred: matrix with predicted labels - expect binary values.
+    :param epsilon: added to denominator to avoid division by zero.
+    :return: recall metric.
     """
     true_positives = np.sum(y_true * y_pred)
     possible_positives = np.sum(y_true)
@@ -82,22 +85,23 @@ def recall_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) 
 def report(model: keras.engine.training.Model, X: numpy.array, y: numpy.array, batch_size: int,
            threshold: float=DEFAULT_THRESHOLD, epsilon: float=EPSILON) -> None:
     """
-    Prepare report for `model` on data `X` & `y`. It prints precision, recall, F1 score.
+    Prints a metric report of the `model` on the  data `X` & `y`.
+    The metrics printed are precision, recall, F1 score.
 
-    :param model: model to apply
-    :param X: features
-    :param y: labels (expected binary labels)
-    :param batch_size: batch size that will be used or prediction
-    :param threshold: threshold to binarize predictions
-    :param epsilon: added to denominator to avoid division by zero
+    :param model: model considered.
+    :param X: features.
+    :param y: labels (expected binary labels).
+    :param batch_size: batch size that will be used for prediction.
+    :param threshold: threshold to binarize the predictions.
+    :param epsilon: added to the denominator to avoid division by zero.
     """
     log = logging.getLogger("report")
 
-    # predict & skip the last dimension & binarize
+    # predict & skip the last dimension & binarize.
     predictions = model.predict(X, batch_size=batch_size, verbose=1)[:, :, 0]
     predictions = to_binary(predictions, threshold)
 
-    # report
+    # report.
     pr = precision_np(y[:, :, 0], predictions, epsilon=epsilon)
     rec = recall_np(y[:, :, 0], predictions, epsilon=epsilon)
     f1 = 2 * pr * rec / (pr + rec + epsilon)
@@ -105,20 +109,31 @@ def report(model: keras.engine.training.Model, X: numpy.array, y: numpy.array, b
 
 
 def config_keras() -> None:
+    """
+    Initializes keras backend session.
+    """
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     kbackend.tensorflow_backend.set_session(tf.Session(config=config))
 
 
-def prepare_train_generator(X: numpy.array, y: numpy.array,
-                            batch_size: int=500) -> Iterable[Tuple[numpy.array]]:
+def build_train_generator(X: numpy.array, y: numpy.array,
+                          batch_size: int=500) -> Iterable[Tuple[numpy.array]]:
+    """
+    Builds the generator that yields features and their labels.
+
+    :param X: features.
+    :param y: binary labels.
+    :param batch_size: higher values better utilize GPUs.
+    :return: generator of features and their labels.
+    """
     assert X.shape[0] == y.shape[0], "Number of samples mismatch in X and y."
 
     def xy_generator():
         while True:
             n_batches = X.shape[0] // batch_size
             if n_batches * batch_size < X.shape[0]:
-                n_batches += 1  # to yield last samples
+                n_batches += 1  # to yield last samples.
             for i in range(n_batches):
                 start = i * batch_size
                 end = min((i + 1) * batch_size, X.shape[0])
@@ -126,7 +141,16 @@ def prepare_train_generator(X: numpy.array, y: numpy.array,
     return xy_generator()
 
 
-def prepare_schedule(lr: float, final_lr: float, n_epochs: int) -> Callable:
+def build_schedule(lr: float, final_lr: float, n_epochs: int) -> Callable:
+    """
+    Builds the schedule of which the learning rate decreases.
+    The schedule makes the learning rate decrease linearly.
+
+    :param lr: initial learning rate.
+    :param final_lr: final learning rate.
+    :param n_epochs: number of training epochs.
+    :return: the schedule of the learning rate.
+    """
     delta = (lr - final_lr) / n_epochs
 
     def schedule(epoch: int) -> float:
@@ -138,23 +162,24 @@ def prepare_schedule(lr: float, final_lr: float, n_epochs: int) -> Callable:
 def make_lr_scheduler(lr: float, final_lr: float, n_epochs: int,
                       verbose: int=1) -> keras.callbacks.LearningRateScheduler:
     """
-    Prepare learning rate scheduler to change learning rate during the training.
+    Prepares the learning rate scheduler to decrease the learning rate while training.
 
-    :param lr: initial learning rate
-    :param final_lr: final learning rate
-    :param n_epochs: number of epochs
-    :param verbose: verbosity
-    :return: LearningRateScheduler with linear schedule of learning rates
+    :param lr: initial learning rate.
+    :param final_lr: final learning rate.
+    :param n_epochs: number of training epochs.
+    :param verbose: level of verbosity.
+    :return: LearningRateScheduler with linear schedule of the learning rate.
     """
-    schedule = prepare_schedule(lr, final_lr, n_epochs)
+    schedule = build_schedule(lr, final_lr, n_epochs)
     return LearningRateScheduler(schedule=schedule, verbose=verbose)
 
 
-def prepare_callbacks(output_dir: str) -> List[keras.callbacks.TensorBoard,
-                                               keras.callbacks.CSVLogger,
-                                               keras.callbacks.ModelCheckpoint]:
+def build_callbacks(output_dir: str) -> List[keras.callbacks.TensorBoard,
+                                             keras.callbacks.CSVLogger,
+                                             keras.callbacks.ModelCheckpoint]:
     """
-    Prepare logging, tensorboard, model checkpoint callbacks and store their outputs in output_dir.
+    Prepares logging, tensorboard, model checkpoint callbacks and store the outputs in output_dir.
+
     :param output_dir: path to the results.
     :return: list of callbacks.
     """
@@ -176,12 +201,13 @@ def prepare_callbacks(output_dir: str) -> List[keras.callbacks.TensorBoard,
 def generator_parameters(batch_size: int, samples_per_epoch: int, n_samples: int,
                          epochs: int) -> Tuple[int]:
     """
-    Helper function to split huge dataset into smaller one to make reports more frequently.
+    Helper function to split a huge dataset into smaller ones to enable more frequent reports.
+
     :param batch_size: batch size.
     :param samples_per_epoch: number of samples per mini-epoch or before each report.
     :param n_samples: total number of samples.
-    :param epochs: number epochs over full dataset.
-    :return: number of steps per epoch (should be used with generator) and number of sub-epochs
+    :param epochs: number epochs over the full dataset.
+    :return: number of steps per epoch (should be used with the generator) and number of sub-epochs
              where during sub-epoch only samples_per_epoch will be generated.
     """
     steps_per_epoch = samples_per_epoch // batch_size
@@ -190,11 +216,17 @@ def generator_parameters(batch_size: int, samples_per_epoch: int, n_samples: int
 
 
 def train_id_splitter(args: argparse.ArgumentParser, model: Callable) -> None:
+    """
+    Pipeline to train a neural network to split identifiers.
+
+    :param args: arguments.
+    :param model: type of neural network used to learn the splitting task.
+    """
     log = logging.getLogger("train_id_splitter")
     config_keras()
     set_random_seed(args.seed)
 
-    # prepare features
+    # prepare features.
     X_train, X_test, y_train, y_test = prepare_features(csv_path=args.input,
                                                         use_header=args.include_csv_header,
                                                         identifiers_col=args.csv_token,
@@ -203,39 +235,39 @@ def train_id_splitter(args: argparse.ArgumentParser, model: Callable) -> None:
                                                         test_ratio=args.test_ratio,
                                                         padding=args.padding)
 
-    # prepare train generator
+    # prepare train generator.
     steps_per_epoch, n_epochs = generator_parameters(batch_size=args.batch_size,
                                                      samples_per_epoch=args.samples_before_report,
                                                      n_samples=X_train.shape[0],
                                                      epochs=args.epochs)
-    train_gen = prepare_train_generator(X=X_train, y=y_train, batch_size=args.batch_size)
+    train_gen = build_train_generator(X=X_train, y=y_train, batch_size=args.batch_size)
 
-    # prepare test generator
+    # prepare test generator.
     validation_steps, _ = generator_parameters(batch_size=args.val_batch_size,
                                                samples_per_epoch=X_test.shape[0],
                                                n_samples=X_test.shape[0],
                                                epochs=args.epochs)
-    test_gen = prepare_train_generator(X=X_test, y=y_test, batch_size=args.val_batch_size)
+    test_gen = build_train_generator(X=X_test, y=y_test, batch_size=args.val_batch_size)
 
-    # initialize model
+    # initialize model.
     model = model(args)
     log.info("Model summary:")
     model.summary(print_fn=log.info)
 
-    # callbacks
-    callbacks = prepare_callbacks(args.output)
+    # callbacks.
+    callbacks = build_callbacks(args.output)
     lr_scheduler = make_lr_scheduler(lr=args.lr, final_lr=args.final_lr, n_epochs=n_epochs)
     callbacks.append(lr_scheduler)
 
-    # train
+    # train.
     history = model.fit_generator(train_gen, steps_per_epoch=steps_per_epoch,
                                   validation_data=test_gen, validation_steps=validation_steps,
                                   callbacks=callbacks, epochs=n_epochs)
 
-    # report quality on test dataset
+    # report quality on test dataset.
     report(model, X=X_test, y=y_test, batch_size=args.val_batch_size)
 
-    # save model & history
+    # save model & history.
     with open(os.path.join(args.output, "model_history.pickle"), "wb") as f:
         pickle.dump(history.history, f)
     model.save(os.path.join(args.output, "last.model"))
