@@ -3,21 +3,17 @@ import tempfile
 import unittest
 import warnings
 
-import numpy as np
-try:
-    from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint
-    from keras.backend.tensorflow_backend import get_session
-except ImportError as e:
-    warnings.warn("Tensorflow or/and Keras are not installed, dependent functionality is "
-                  "unavailable.")
+import numpy
+from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint
+from keras.backend.tensorflow_backend import get_session
 
-from sourced.ml.cmd_entries.args import ArgumentDefaultsHelpFormatterNoNone
-from sourced.ml.cmd_entries.id_splitter import add_id_splitter_arguments
-from sourced.ml.algorithms.id_splitter.pipeline import prepare_schedule, \
-    prepare_callbacks, prepare_devices, prepare_train_generator, to_binary, \
-    generator_parameters, config_keras, pipeline
-from sourced.ml.algorithms.id_splitter.nn_model import register_metric, \
-    METRICS, prepare_cnn_model, prepare_rnn_model
+from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
+from sourced.ml.cmd_entries.id_splitter import add_train_id_splitter_args
+from sourced.ml.algorithms.id_splitter import build_schedule, \
+    prepare_callbacks, build_train_generator, to_binary, \
+    generator_parameters, config_keras, train_id_splitter
+from sourced.ml.algorithms.id_splitter import register_metric, METRICS, \
+    build_cnn_from_args, build_rnn_from_args, prepare_devices
 from sourced.ml.tests.models import IDENTIFIERS
 
 
@@ -31,46 +27,42 @@ class IdSplitterPipelineTest(unittest.TestCase):
         n_pos = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 
         for th, n_p in zip(thresholds, n_pos):
-            vals = np.arange(10) / 10
+            vals = numpy.arange(10) / 10
             res = to_binary(vals, th)
             self.assertEqual(sum(to_binary(vals, th)), n_p)
             if th in (0, 0.99):
-                self.assertTrue(np.unique(res).shape[0] == 1)
+                self.assertTrue(numpy.unique(res).shape[0] == 1)
             else:
-                self.assertTrue(np.unique(res).shape[0] == 2)
+                self.assertTrue(numpy.unique(res).shape[0] == 2)
 
-        vals = np.arange(10) / 10
+        vals = numpy.arange(10) / 10
         old_vals = vals.copy()
         for th, n_p in zip(thresholds, n_pos):
             res = to_binary(vals, th, inplace=False)
             self.assertEqual(sum(res), n_p)
-            self.assertTrue(np.array_equal(old_vals, vals))
+            self.assertTrue(numpy.array_equal(old_vals, vals))
             if th in (0, 0.99):
-                self.assertTrue(np.unique(res).shape[0] == 1)
+                self.assertTrue(numpy.unique(res).shape[0] == 1)
             else:
-                self.assertTrue(np.unique(res).shape[0] == 2)
+                self.assertTrue(numpy.unique(res).shape[0] == 2)
 
     def test_prepare_devices(self):
         correct_args = ["1", "0,1", "-1"]
         resulted_dev = [("/gpu:1", "/gpu:1"), ("/gpu:0", "/gpu:1"), ("/cpu:0", "/cpu:0")]
         for res, arg in zip(resulted_dev, correct_args):
-            args = Fake()
-            args.devices = arg
-            self.assertEquals(res, prepare_devices(args))
+            self.assertEqual(res, prepare_devices(arg))
 
         bad_args = ["", "1,2,3"]
         for arg in bad_args:
             with self.assertRaises(ValueError):
-                args = Fake()
-                args.devices = arg
-                prepare_devices(args)
+                prepare_devices(arg)
 
-    def test_prepare_schedule(self):
+    def test_build_schedule(self):
         start_lr = 10
         end_lr = 1
         n_epochs = 9
 
-        lr_schedule = prepare_schedule(lr=start_lr, final_lr=end_lr, n_epochs=n_epochs)
+        lr_schedule = build_schedule(lr=start_lr, final_lr=end_lr, n_epochs=n_epochs)
 
         for i in range(n_epochs):
             self.assertEqual(start_lr - i, lr_schedule(epoch=i))
@@ -80,21 +72,21 @@ class IdSplitterPipelineTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             lr_schedule(n_epochs + 1)
 
-    def test_prepare_train_generator(self):
+    def test_build_train_generator(self):
         batch_size = 3
         # mismatch number of samples
-        bad_x = np.zeros(3)
-        bad_y = np.zeros(4)
+        bad_x = numpy.zeros(3)
+        bad_y = numpy.zeros(4)
         with self.assertRaises(AssertionError):
-            prepare_train_generator(bad_x, bad_y, batch_size=batch_size)
+            build_train_generator(bad_x, bad_y, batch_size=batch_size)
 
         # check generator with correct inputs
-        x = np.zeros(5)
-        gen = prepare_train_generator(x, x, batch_size=batch_size)
+        x = numpy.zeros(5)
+        gen = build_train_generator(x, x, batch_size=batch_size)
         expected_n_samples = [3, 2]
         for n_samples in expected_n_samples:
             x_gen, y_gen = next(gen)
-            self.assertEquals(x_gen.shape, y_gen.shape)
+            self.assertEqual(x_gen.shape, y_gen.shape)
             self.assertEqual(n_samples, x_gen.shape[0])
 
     def test_train_parameters(self):
@@ -104,7 +96,7 @@ class IdSplitterPipelineTest(unittest.TestCase):
         epochs = 10
 
         steps_per_epoch_ = samples_per_epoch // batch_size
-        n_epochs_ = np.ceil(epochs * n_samples / samples_per_epoch)
+        n_epochs_ = numpy.ceil(epochs * n_samples / samples_per_epoch)
 
         steps_per_epoch, n_epochs = generator_parameters(batch_size, samples_per_epoch, n_samples,
                                                          epochs)
@@ -132,18 +124,18 @@ class IdSplitterPipelineTest(unittest.TestCase):
             self.assertIsInstance(callbacks[2], ModelCheckpoint)
             self.assertTrue(callbacks[2].filepath.startswith(tmpdir))
 
-    def test_pipeline(self):
+    def test_train_id_splitter(self):
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
                 parser = argparse \
                     .ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
-                output_loc = tmpdir
-                add_id_splitter_arguments(parser)
+                output_path = tmpdir
+                add_train_id_splitter_args(parser)
                 arguments = "-i {} -o {} -e 1 --val-batch-size 10 --batch-size 10 --devices -1 " \
-                            "--samples-before-report 20 cnn".format(IDENTIFIERS, output_loc)
+                            "--samples-before-report 20 cnn".format(IDENTIFIERS, output_path)
                 args = parser.parse_args(arguments.split())
 
-                pipeline(args, prepare_model=prepare_cnn_model)
+                train_id_splitter(args, model=build_cnn_from_args)
         except Exception as e:
             self.fail("cnn training raised {} with log {}".format(type(e), str(e)))
 
@@ -151,12 +143,12 @@ class IdSplitterPipelineTest(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmpdir:
                 parser = argparse \
                     .ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
-                output_loc = tmpdir
-                add_id_splitter_arguments(parser)
+                output_path = tmpdir
+                add_train_id_splitter_args(parser)
                 arguments = "-i {} -o {} -e 1 --val-batch-size 10 --batch-size 10 --devices -1 " \
-                            "--samples-before-report 20 rnn".format(IDENTIFIERS, output_loc)
+                            "--samples-before-report 20 rnn".format(IDENTIFIERS, output_path)
                 args = parser.parse_args(arguments.split())
 
-                pipeline(args, prepare_model=prepare_rnn_model)
+                train_id_splitter(args, model=build_rnn_from_args)
         except Exception as e:
             self.fail("rnn training raised {} with log {}".format(type(e), str(e)))

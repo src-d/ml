@@ -7,15 +7,9 @@ import numpy
 from keras.preprocessing.sequence import pad_sequences
 from modelforge.progress_bar import progress_bar
 
-from sourced.ml.cmd_entries.id_splitter import DEFAULT_MAX_IDENTIFIER_LEN, PADDING, \
-    DEFAULT_TEST_RATIO, CSV_IDENTIFIER_COL, CSV_SPLIT_IDENTIFIER_COL, DEFAULT_SHUFFLE_VALUE
 
-
-def read_identifiers(csv_path: str, use_header: bool=True,
-                     max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
-                     identifier_col: int=CSV_IDENTIFIER_COL,
-                     split_identifier_col: int=CSV_SPLIT_IDENTIFIER_COL,
-                     shuffle: bool=True) -> List[str]:
+def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, identifier_col: int,
+                     split_identifier_col: int, shuffle: bool=True) -> List[str]:
     """
     Reads and filters too long identifiers from CSV file.
 
@@ -31,8 +25,8 @@ def read_identifiers(csv_path: str, use_header: bool=True,
     log = logging.getLogger("read_identifiers")
     log.info("Reading data from the CSV file %s", csv_path)
     identifiers = []
-    # TODO: Update dataset loading as soon as https://github.com/src-d/backlog/issues/1212 done.
-    # Think about dataset download step.
+    # TODO: Update dataset loading as soon as https://github.com/src-d/backlog/issues/1212 done
+    # Think about dataset download step
     with tarfile.open(csv_path, encoding="utf-8") as f:
         assert len(f.members) == 1, "One archived file is expected, got: %s" % len(f.members)
         content = f.extractfile(f.members[0])
@@ -48,12 +42,9 @@ def read_identifiers(csv_path: str, use_header: bool=True,
     return identifiers
 
 
-def prepare_features(csv_path: str, use_header: bool=True,
-                     max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
-                     identifier_col: int=CSV_IDENTIFIER_COL,
-                     split_identifier_col: int=CSV_SPLIT_IDENTIFIER_COL,
-                     shuffle: bool=DEFAULT_SHUFFLE_VALUE, test_ratio: float=DEFAULT_TEST_RATIO,
-                     padding: str=PADDING) -> Tuple[numpy.array]:
+def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
+                     identifier_col: int, split_identifier_col: int, test_ratio: float,
+                     padding: str, shuffle: bool=True) -> Tuple[numpy.array]:
     """
     Prepare the features for training the identifier splitting task.
 
@@ -70,13 +61,13 @@ def prepare_features(csv_path: str, use_header: bool=True,
     """
     log = logging.getLogger("prepare_features")
 
-    # read data from file.
+    # read data from file
     identifiers = read_identifiers(csv_path=csv_path, use_header=use_header,
                                    max_identifier_len=max_identifier_len,
                                    identifier_col=identifier_col,
                                    split_identifier_col=split_identifier_col, shuffle=shuffle)
 
-    # convert identifiers into character indices and labels.
+    # convert identifiers into character indices and labels
     log.info("Converting identifiers to character indices")
     log.info("Number of identifiers: %d, Average length: %d characters" %
              (len(identifiers), numpy.mean([len(i) for i in identifiers])))
@@ -86,7 +77,7 @@ def prepare_features(csv_path: str, use_header: bool=True,
     char_id_seq = []
     splits = []
     for identifier in identifiers:
-        # iterate through identifier and convert to array of char indices & boolean split array.
+        # iterate through identifier and convert to array of char indices & boolean split array
         index_arr = []
         split_arr = []
         skip_char = False
