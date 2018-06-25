@@ -145,28 +145,6 @@ def make_lr_scheduler(lr=0.001, final_lr=0.00001, n_epochs=10, verbose=1):
     return LearningRateScheduler(schedule=schedule, verbose=verbose)
 
 
-def prepare_devices(args: argparse.ArgumentParser):
-    """
-    Extract devices from arguments.
-
-    :param args: arguments
-    :return: splitted devices
-    """
-    devices = args.devices.split(",")
-    if len(devices) == 2:
-        dev0, dev1 = ("/gpu:" + dev for dev in devices)
-    elif len(devices) == 1:
-        if int(devices[0]) != -1:
-            dev0 = dev1 = "/gpu:" + args.devices
-        else:
-            dev0 = dev1 = "/cpu:0"
-    else:
-        raise ValueError("Expected 1 or 2 devices but got {} from args.devices argument {}"
-                         .format(len(devices), args.devices))
-
-    return dev0, dev1
-
-
 def prepare_callbacks(output_dir: str):
     """
     Prepare logging, tensorboard, model checkpoint callbacks and store their outputs in output_dir.

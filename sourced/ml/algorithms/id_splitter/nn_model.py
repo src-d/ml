@@ -1,4 +1,5 @@
 import argparse
+import string
 import warnings
 
 import numpy
@@ -13,10 +14,11 @@ except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 from typing import Callable, List, Tuple, Union
 
+from sourced.ml.cmd_entries.id_splitter import DEFAULT_RNN_TYPE
+
 
 LOSS = "binary_crossentropy"
 METRICS = ["accuracy"]
-DEFAULT_RNN_TYPE = "LSTM"
 # Number of unique characters and dimension of the embedding layer.
 NUM_CHARS = len(string.ascii_lowercase)
 
@@ -81,7 +83,7 @@ def add_output_layer(hidden_layer: tf.Tensor) -> keras.layers.wrappers.TimeDistr
     return TimeDistributed(Dense(1, activation="sigmoid"))(norm_input)
 
 
-def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
+def add_rnn(X: tf.Tensor, units: int, rnn_layer: str=None, dev0: str="/gpu:0",
             dev1: str="/gpu:1") -> tf.Tensor:
     """
     Adds a bidirectional RNN layer with the specified parameters.
@@ -160,8 +162,8 @@ def build_rnn_from_args(args: argparse.ArgumentParser):
     return build_rnn(maxlen, units, stack, optimizer, rnn_layer, dev0, dev1)
 
 
-def add_conv(X: tf.Tensor, filters: List[int]=[64, 32, 16, 8],
-             kernel_sizes: List[int]=[2, 4, 8, 16], output_n_filters: int=32) -> tf.Tensor:
+def add_conv(X: tf.Tensor, filters: List[int], kernel_sizes: List[int],
+             output_n_filters: int) -> tf.Tensor:
     """
     Builds a single convolutional layer.
 

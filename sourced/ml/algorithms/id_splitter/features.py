@@ -6,29 +6,22 @@ import numpy
 from keras.preprocessing.sequence import pad_sequences
 from modelforge.progress_bar import progress_bar
 
-
-DEFAULT_MAX_IDENTIFIER_LEN = 40  # default max length of sequence
-PADDING = "post"  # add padding values after input
-DEFAULT_TEST_RATIO = 0.2
-DEFAULT_SHUFFLE_VALUE = True
-
-# In the CSV file, columns 0,1,2 contain statistics about the identifier.
-CSV_IDENTIFIERS_COL = 3  # Column 3 contains the input identifier e.g. "FooBar".
-CSV_SPLIT_IDENTIFIERS_COL = 4  # Column 4 contains the identifier lowercase and spitted "foo bar".
+from sourced.ml.cmd_entries.id_splitter import DEFAULT_MAX_IDENTIFIER_LEN, PADDING, \
+    DEFAULT_TEST_RATIO, CSV_IDENTIFIER_COL, CSV_SPLIT_IDENTIFIER_COL, DEFAULT_SHUFFLE_VALUE
 
 
 def read_identifiers(csv_path: str, use_header: bool=True,
                      max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
-                     identifiers_col: int=CSV_IDENTIFIERS_COL,
-                     split_identifiers_col: int=CSV_SPLIT_IDENTIFIERS_COL,
+                     identifier_col: int=CSV_IDENTIFIER_COL,
+                     split_identifier_col: int=CSV_SPLIT_IDENTIFIER_COL,
                      shuffle: bool=True):
     """
     Reads and filters too long identifiers from CSV file.
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
-    :param identifiers_col: column in CSV file for the raw identifier.
-    :param split_identifiers_col: column in CSV file for the splitted identifier.
+    :param identifier_col: column name in the CSV file for the raw identifier.
+    :param split_identifier_col: column name in the CSV file for the splitted identifier.
     :param shuffle: indicates whether to reorder the list of identifiers
         at random after reading it.
     :return: list of splitted identifiers.
@@ -45,8 +38,8 @@ def read_identifiers(csv_path: str, use_header: bool=True,
             content.readline()
         for line in progress_bar(content.readlines(), log):
             row = line.decode("utf-8").strip().split(",")
-            if len(row[identifiers_col]) <= max_identifier_len:
-                identifiers.append(row[split_identifiers_col])
+            if len(row[identifier_col]) <= max_identifier_len:
+                identifiers.append(row[split_identifier_col])
     if shuffle:
         numpy.random.shuffle(identifiers)
     log.info("Number of identifiers after filtering: %s." % len(identifiers))
@@ -55,8 +48,8 @@ def read_identifiers(csv_path: str, use_header: bool=True,
 
 def prepare_features(csv_path: str, use_header: bool=True,
                      max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
-                     identifiers_col: int=CSV_IDENTIFIERS_COL,
-                     split_identifiers_col: int=CSV_SPLIT_IDENTIFIERS_COL,
+                     identifier_col: int=CSV_IDENTIFIER_COL,
+                     split_identifier_col: int=CSV_SPLIT_IDENTIFIER_COL,
                      shuffle: bool=DEFAULT_SHUFFLE_VALUE, test_ratio: float=DEFAULT_TEST_RATIO,
                      padding: str=PADDING):
     """
@@ -64,8 +57,8 @@ def prepare_features(csv_path: str, use_header: bool=True,
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
-    :param identifiers_col: column in CSV file for the raw identifier.
-    :param split_identifiers_col: column in CSV file for the splitted identifier.
+    :param identifier_col: column in the CSV file for the raw identifier.
+    :param split_identifier_col: column in the CSV file for the splitted identifier.
     :param shuffle: indicates whether to reorder the list of identifiers at random after reading it
     :param test_ratio: Proportion of test samples used for evaluation.
     :param padding: position where to add padding values:
@@ -77,8 +70,8 @@ def prepare_features(csv_path: str, use_header: bool=True,
     # read data from file
     identifiers = read_identifiers(csv_path=csv_path, use_header=use_header,
                                    max_identifier_len=max_identifier_len,
-                                   identifiers_col=identifiers_col,
-                                   split_identifiers_col=split_identifiers_col, shuffle=shuffle)
+                                   identifier_col=identifier_col,
+                                   split_identifier_col=split_identifier_col, shuffle=shuffle)
 
     # convert identifiers into character indices and labels
     log.info("Converting identifiers to character indices")
