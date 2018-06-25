@@ -1,4 +1,4 @@
-from pyspark import Row, RDD
+from pyspark import Row
 
 from sourced.ml.algorithms import log_tf_log_idf
 from sourced.ml.models import DocumentFrequencies

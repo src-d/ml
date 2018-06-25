@@ -1,3 +1,4 @@
+# flake8: noqa
 from sourced.ml.algorithms.tf_idf import log_tf_log_idf
 from sourced.ml.algorithms.token_parser import TokenParser, NoopTokenParser
 from sourced.ml.algorithms.uast_ids_to_bag import UastIds2Bag, uast2sequence

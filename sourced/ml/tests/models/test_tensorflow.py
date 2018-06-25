@@ -6,7 +6,7 @@ from sourced.ml.models.tensorflow import TensorFlowModel
 
 def has_tensorflow():
     try:
-        import tensorflow
+        import tensorflow  # noqa
         return True
     except ImportError:
         return False

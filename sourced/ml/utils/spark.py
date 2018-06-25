@@ -6,8 +6,8 @@ import zipfile
 
 os.environ["PYSPARK_PYTHON"] = sys.executable
 
-import pyspark  # nopep8
-from pyspark.sql import SparkSession  # nopep8
+import pyspark  # noqa
+from pyspark.sql import SparkSession  # noqa
 
 
 class SparkDefault:

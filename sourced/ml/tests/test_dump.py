@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import sys
 import unittest
 from contextlib import contextmanager
@@ -56,7 +55,7 @@ Number of words: 982
  'version': [1, 0, 15]}
 Shape: (5, 20)
 First 10 documents: ['repo1', 'repo2', 'repo3', 'repo4', 'repo5']
-First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 'i.Arrays', 'i.Bundle', 'i.EditText', 'i.Exception', 'i.False']\n"""  # nopep8
+First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 'i.Arrays', 'i.Bundle', 'i.EditText', 'i.Exception', 'i.False']\n"""  # noqa
 
     COOCC_DUMP = """{'created_at': datetime.datetime(2018, 1, 24, 16, 0, 2, 591553),
  'dependencies': [{'created_at': datetime.datetime(2018, 1, 24, 15, 59, 24, 129470),

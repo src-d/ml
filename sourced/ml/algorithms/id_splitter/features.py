@@ -1,7 +1,6 @@
 import logging
 import string
 import tarfile
-import warnings
 
 import numpy
 from keras.preprocessing.sequence import pad_sequences

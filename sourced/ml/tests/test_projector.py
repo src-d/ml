@@ -59,7 +59,7 @@ class ProjectorTests(unittest.TestCase):
             attempts, result = self.wait_for_web_server()
             self.assertTrue(attempts < self.MAX_ATTEMPTS or result == 0)
             self.assertTrue(web_server.running)
-        except:  # nopep8
+        except:  # noqa
             web_server.stop()
             raise
         os.environ["PROJECTOR_SERVER_TIME"] = "0"

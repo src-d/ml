@@ -1,5 +1,4 @@
 import os
-import logging
 import argparse
 import tempfile
 import unittest
