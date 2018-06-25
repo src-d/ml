@@ -1,6 +1,7 @@
 import logging
 import string
 import tarfile
+from typing import List, Tuple
 
 import numpy
 from keras.preprocessing.sequence import pad_sequences
@@ -14,9 +15,10 @@ def read_identifiers(csv_path: str, use_header: bool=True,
                      max_identifier_len: int=DEFAULT_MAX_IDENTIFIER_LEN,
                      identifier_col: int=CSV_IDENTIFIER_COL,
                      split_identifier_col: int=CSV_SPLIT_IDENTIFIER_COL,
-                     shuffle: bool=True):
+                     shuffle: bool=True) -> List[str]:
     """
     Reads and filters too long identifiers from CSV file.
+    
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
@@ -51,9 +53,10 @@ def prepare_features(csv_path: str, use_header: bool=True,
                      identifier_col: int=CSV_IDENTIFIER_COL,
                      split_identifier_col: int=CSV_SPLIT_IDENTIFIER_COL,
                      shuffle: bool=DEFAULT_SHUFFLE_VALUE, test_ratio: float=DEFAULT_TEST_RATIO,
-                     padding: str=PADDING):
+                     padding: str=PADDING) -> Tuple[numpy.array]:
     """
     Prepare the features for training the identifier splitting task.
+
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
@@ -111,18 +114,18 @@ def prepare_features(csv_path: str, use_header: bool=True,
     # train/test splitting
     log.info("Train/test splitting...")
     n_train = int((1 - test_ratio) * len(char_id_seq))
-    x_train = char_id_seq[:n_train]
-    x_test = char_id_seq[n_train:]
+    X_train = char_id_seq[:n_train]
+    X_test = char_id_seq[n_train:]
     y_train = splits[:n_train]
     y_test = splits[n_train:]
-    log.info("Number of train samples: %s, number of test samples: %s" % (len(x_train),
-                                                                          len(x_test)))
+    log.info("Number of train samples: %s, number of test samples: %s" % (len(X_train),
+                                                                          len(X_test)))
 
     # pad sequence
     log.info("Padding of the sequences...")
-    x_train = pad_sequences(x_train, maxlen=max_identifier_len, padding=padding)
-    x_test = pad_sequences(x_test, maxlen=max_identifier_len, padding=padding)
+    X_train = pad_sequences(X_train, maxlen=max_identifier_len, padding=padding)
+    X_test = pad_sequences(X_test, maxlen=max_identifier_len, padding=padding)
     y_train = pad_sequences(y_train, maxlen=max_identifier_len, padding=padding)
     y_test = pad_sequences(y_test, maxlen=max_identifier_len, padding=padding)
 
-    return x_train, x_test, y_train[:, :, None], y_test[:, :, None]
+    return X_train, X_test, y_train[:, :, None], y_test[:, :, None]

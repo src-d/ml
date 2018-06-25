@@ -1,5 +1,6 @@
 import argparse
 import string
+from typing import List, Tuple
 import warnings
 
 import numpy
@@ -12,7 +13,6 @@ try:
     import tensorflow as tf
 except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
-from typing import Callable, List, Tuple, Union
 
 from sourced.ml.cmd_entries.id_splitter import DEFAULT_RNN_TYPE
 
@@ -35,24 +35,24 @@ def register_metric(metric: Union[str, Callable]) -> Union[str, Callable]:
     return metric
 
 
-def prepare_devices(args: argparse.ArgumentParser) -> Tuple[str]:
+def prepare_devices(devices: str) -> Tuple[str]:
     """
     Extract devices from arguments.
 
     :param args: arguments
     :return: splitted devices
     """
-    devices = args.devices.split(",")
+    devices = devices.split(",")
     if len(devices) == 2:
         dev0, dev1 = ("/gpu:" + dev for dev in devices)
     elif len(devices) == 1:
         if int(devices[0]) != -1:
-            dev0 = dev1 = "/gpu:" + args.devices
+            dev0 = dev1 = "/gpu:" + devices[0]
         else:
             dev0 = dev1 = "/cpu:0"
     else:
-        raise ValueError("Expected 1 or 2 devices but got %d from args.devices argument %s" %
-                         (len(devices), args.devices))
+        raise ValueError("Expected 1 or 2 devices but got %d from the devices argument %s" %
+                         (len(devices), devices))
     return dev0, dev1
 
 
@@ -93,7 +93,6 @@ def add_rnn(X: tf.Tensor, units: int, rnn_layer: str=None, dev0: str="/gpu:0",
     :param rnn_layer: type of cell in the RNN.
     :param dev0: device that will be used for forward pass of RNN and concatenation.
     :param dev1: device that will be used for backward pass.
-
     :return: output bidirectional RNN layer.
     """
     # select the RNN layer
@@ -143,13 +142,13 @@ def build_rnn(maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
     return model
 
 
-def build_rnn_from_args(args: argparse.ArgumentParser):
+def build_rnn_from_args(args: argparse.ArgumentParser) -> keras.engine.training.Model:
     """
     Construct a RNN model from parsed arguments.
 
     :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
                  kernel_sizes, optimizer, devices.
-    :return: compiled model.
+    :return: compiled RNN model.
     """
     # extract required arguments
     maxlen = args.length
@@ -157,7 +156,7 @@ def build_rnn_from_args(args: argparse.ArgumentParser):
     stack = args.stack
     optimizer = args.optimizer
     rnn_layer = args.type
-    dev0, dev1 = prepare_devices(args)
+    dev0, dev1 = prepare_devices(args.devices)
 
     return build_rnn(maxlen, units, stack, optimizer, rnn_layer, dev0, dev1)
 
@@ -223,21 +222,23 @@ def build_cnn(maxlen: int, filters: List[int], output_n_filters: int, stack: int
     return model
 
 
-def build_cnn_from_args(args: argparse.ArgumentParser):
+def build_cnn_from_args(args: argparse.ArgumentParser) -> keras.engine.training.Model:
     """
     Construct a CNN model from parsed arguments.
+
     :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
-                 kernel_sizes, optimizer, devices
-    :return: compiled model
+                 kernel_sizes, optimizer, devices.
+    :return: compiled CNN model.
     """
     # extract required arguments
     maxlen = args.length
 
     def to_list(params):
         """
-        Convert string parameters to list.
-        :param params: string that contains integer parameters separated by comma
-        :return: list of integers
+        Convert a string with integer parameters to a list of integers.
+
+        :param params: string that contains integer parameters separated by commas.
+        :return: list of integers.
         """
         return list(map(int, params.split(",")))
 
@@ -246,7 +247,7 @@ def build_cnn_from_args(args: argparse.ArgumentParser):
     stack = args.stack
     kernel_sizes = to_list(args.kernel_sizes)
     optimizer = args.optimizer
-    device, _ = prepare_devices(args)
+    device, _ = prepare_devices(args.devices)
 
     return build_cnn(maxlen, filters, output_n_filters, stack, kernel_sizes, optimizer,
                      device)

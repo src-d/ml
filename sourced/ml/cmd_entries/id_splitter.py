@@ -1,4 +1,5 @@
 import argparse
+from typing import Callable
 
 from sourced.ml.cmd_entries import ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.algorithms.id_splitter.nn_model import build_rnn_from_args, build_cnn_from_args
@@ -38,19 +39,19 @@ DEFAULT_CNN_STACK = 3
 
 
 @pause
-def train_id_splitter_bidirnn(args):
-    return train_id_splitter(args, model=build_rnn_from_args)
+def train_id_splitter_bidirnn(args: argparse.ArgumentParser):
+    return train_id_splitter(args: argparse.ArgumentParser, model: Callable=build_rnn_from_args)
 
 
 @pause
-def train_id_splitter_cnn(args):
-    return train_is_splitter(args, model=build_cnn_from_args)
+def train_id_splitter_cnn(args: argparse.ArgumentParser):
+    return train_id_splitter(args: argparse.ArgumentParser, model: Callable=build_cnn_from_args)
 
 
 def add_train_id_splitter_args(parser: argparse.ArgumentParser):
     subparsers = parser.add_subparsers(help="Identifier splitter", dest="id-splitter")
 
-    def add_parser(name, help_message):
+    def add_parser(name: str, help_message: str):
         return subparsers.add_parser(
             name, help=help_message, formatter_class=ArgumentDefaultsHelpFormatterNoNone)
     # common arguments for CNN/RNN models
