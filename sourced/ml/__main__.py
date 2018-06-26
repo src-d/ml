@@ -53,6 +53,20 @@ def get_parser() -> argparse.ArgumentParser:
     args.add_feature_args(repos2bow_parser)
     args.add_bow_args(repos2bow_parser)
     args.add_repartitioner_arg(repos2bow_parser)
+    repos2bow_parser.add_argument(
+        "--cached-index-path", default=None,
+        help="[IN] Path to the docfreq model holding the document's index.")
+    # ------------------------------------------------------------------------
+    repos2bow_index_parser = add_parser(
+        "repos2bow_index", "Creates the index, quant and docfreq model of the bag-of-words model.")
+    repos2bow_index_parser.set_defaults(handler=cmd.repos2bow_index)
+    args.add_df_args(repos2bow_index_parser)
+    args.add_repo2_args(repos2bow_index_parser)
+    args.add_feature_args(repos2bow_index_parser)
+    args.add_repartitioner_arg(repos2bow_index_parser)
+    repos2bow_index_parser.add_argument(
+        "--cached-index-path", default=None,
+        help="[OUT] Path to the docfreq model holding the document's index.")
     # ------------------------------------------------------------------------
     repos2df_parser = add_parser(
         "repos2df", "Calculate document frequencies of features extracted from source code.")

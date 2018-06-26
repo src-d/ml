@@ -52,7 +52,7 @@ Number of documents: %d""" % (
             len(self._df), dict(islice(self._df.items(), 10)), self.docs)
 
     @property
-    def docs(self):
+    def docs(self) -> int:
         """
         Returns the number of documents.
         """

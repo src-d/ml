@@ -47,3 +47,11 @@ class QuantizationLevels(Model):
         return """Schemes: %s""" % (
             sorted((v[0], "%d@%d" % (len(v[1]), len(next(iter(v[1].values()))) - 1))
                    for v in self.levels.items()))
+
+    def apply_quantization(self, extractors):
+        for extractor in extractors:
+            try:
+                extractor.quantize
+            except AttributeError:
+                continue
+            extractor.uast_to_bag.levels = self._levels[extractor.NAME]

@@ -1,12 +1,12 @@
-import os
 import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import create_extractors_from_args
-from sourced.ml.models import OrderedDocumentFrequencies, QuantizationLevels
+from sourced.ml.models import OrderedDocumentFrequencies
 from sourced.ml.transformers import UastDeserializer, BagFeatures2DocFreq, Uast2BagFeatures, \
-    Counter, Cacher, Uast2Quant, UastRow2Document, create_uast_source
+    Counter, Cacher, UastRow2Document, create_uast_source
 from sourced.ml.utils.engine import pipeline_graph, pause
+from sourced.ml.utils.quant import create_or_apply_quant
 
 
 @pause
@@ -23,11 +23,8 @@ def repos2df(args):
     ndocs = uast_extractor.link(Counter()).execute()
     log.info("Number of documents: %d", ndocs)
     uast_extractor = uast_extractor.link(UastDeserializer())
-    quant = Uast2Quant(extractors)
-    uast_extractor.link(quant).execute()
-    if quant.levels:
-        log.info("Writing quantization levels to %s", args.quant)
-        QuantizationLevels().construct(quant.levels).save(args.quant)
+    if args.quant:
+        create_or_apply_quant(args.quant, extractors, uast_extractor)
     df = uast_extractor \
         .link(Uast2BagFeatures(extractors)) \
         .link(BagFeatures2DocFreq()) \
