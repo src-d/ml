@@ -27,7 +27,7 @@ def repos2bow_template(args, select=HeadFiles, cache_hook=None, save_hook=None):
     log.info("Extracting UASTs and indexing documents...")
     document_indexer = Indexer(Uast2BagFeatures.Columns.document,
                                cached_index_path=args.cached_index_path)
-    if args.index_in is None:
+    if args.cached_index_path is None:
         uast_extractor.link(document_indexer).execute()
     ndocs = len(document_indexer)
     log.info("Number of documents: %d", ndocs)
