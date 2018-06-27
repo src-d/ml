@@ -1,6 +1,7 @@
 import logging
 from typing import Union
 
+from sourced.engine.engine import BlobsDataFrame
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
 
@@ -212,8 +213,17 @@ class LanguageSelector(Transformer):
         self.blacklist = blacklist
 
     def __call__(self, files: DataFrame) -> DataFrame:
-        files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
-        classified = files.classify_languages()
+        if not isinstance(files, BlobsDataFrame):
+            self._log.warning("Argument type is not BlobsDataFrame. "
+                              "LanguageSelector will be skipped.")
+            return files
+        if "lang" not in files.columns:
+            files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
+            classified = files.classify_languages()
+        else:
+            # Assume that files were already classified.
+            # Most likely you use parquet files as input
+            classified = files
         if not self.blacklist:
             lang_filter = classified.lang == self.languages[0]
             for lang in self.languages[1:]:
@@ -326,8 +336,13 @@ def create_uast_source(args, session_name, select=HeadFiles, language_selector=N
         parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
         start_point = create_parquet_loader(session_name, **parquet_loader_args)
         root = start_point
-        if extract_uast and "uast" not in [col.name for col in start_point.execute().schema]:
+        fields = [col.name for col in start_point.execute().schema]
+        if extract_uast and "uast" not in fields:
             raise ValueError("The parquet files do not contain UASTs.")
+        if language_selector is not None:
+            start_point = start_point.link(language_selector)
+        elif args.languages is not None:
+            start_point = start_point.link(LanguageSelector(languages=args.languages))
     else:
         engine_args = filter_kwargs(args.__dict__, create_engine)
         root = create_engine(session_name, **engine_args)
