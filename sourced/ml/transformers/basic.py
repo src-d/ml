@@ -1,5 +1,6 @@
 import logging
-from typing import Union
+import random
+from typing import Union, Callable
 
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
@@ -26,6 +27,49 @@ class Repartitioner(Transformer):
             return Repartitioner(partitions * multiplier, shuffle)
         else:
             return Identity()
+
+
+class PartitionBy(Transformer):
+    def __init__(self, partitions: int, column_name: str,
+                 custom_hash: Callable[[str, int], int], **kwargs):
+        super().__init__(**kwargs)
+        self.partitions = partitions
+        self.column_name = column_name
+        self.custom_hash = custom_hash
+
+    def __call__(self, head: RDD):
+        column_name = self.column_name
+        partitions = self.partitions
+        custom_hash = self.custom_hash
+        return head \
+            .map(lambda x: (x[column_name], x)) \
+            .partitionBy(partitions, partitionFunc=custom_hash) \
+            .map(lambda x: x[1])
+
+    @staticmethod
+    def maybe(partitions: int, column_name: str, salt: bool=False):
+        if partitions > 1:
+            def custom_hash(x):
+                return hash(x) + salt * random.randint(0, 100000)
+            return PartitionBy(partitions, column_name, custom_hash)
+        else:
+            return Identity()
+
+
+class PartitionSelector(Transformer):
+    def __init__(self, partition_index: int, **kwargs):
+        super().__init__(**kwargs)
+        self.partition_index = partition_index
+
+    def __call__(self, head: RDD):
+        index = self.partition_index
+
+        def partition_filter(split_index, part):
+            if split_index == index:
+                for row in part:
+                    yield row
+        return head \
+            .mapPartitionsWithIndex(partition_filter, True)
 
 
 class CsvSaver(Transformer):
