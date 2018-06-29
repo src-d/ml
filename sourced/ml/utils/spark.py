@@ -23,7 +23,7 @@ class SparkDefault:
         # to skip broken siva files
         "spark.tech.sourced.engine.skip.read.errors=true",
     )
-    PACKAGES = tuple()
+    JAR_PACKAGES = tuple()
     MEMORY = ""
     STORAGE_LEVEL = "MEMORY_AND_DISK"
     DEP_ZIP = False
@@ -44,7 +44,7 @@ def add_spark_args(my_parser, default_packages=None):
              "--config spark.driver.maxResultSize=2G."
              "Numbers are floats separated by commas.")
     if default_packages is None:
-        default_packages = SparkDefault.PACKAGES
+        default_packages = SparkDefault.JAR_PACKAGES
     my_parser.add_argument(
         "--package", nargs="+", default=default_packages, dest="packages",
         help="Additional Spark packages.")
@@ -71,7 +71,7 @@ def create_spark(session_name,
                  spark=SparkDefault.MASTER_ADDRESS,
                  spark_local_dir=SparkDefault.LOCAL_DIR,
                  config=SparkDefault.CONFIG,
-                 packages=SparkDefault.PACKAGES,
+                 packages=SparkDefault.JAR_PACKAGES,
                  spark_log_level=SparkDefault.LOG_LEVEL,
                  memory=SparkDefault.MEMORY,
                  dep_zip=SparkDefault.DEP_ZIP):

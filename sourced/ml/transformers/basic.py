@@ -261,7 +261,7 @@ class UastDeserializer(Transformer):
 
 def create_parquet_loader(session_name, repositories,
                           config=SparkDefault.CONFIG,
-                          packages=SparkDefault.PACKAGES,
+                          packages=SparkDefault.JAR_PACKAGES,
                           spark=SparkDefault.MASTER_ADDRESS,
                           spark_local_dir=SparkDefault.LOCAL_DIR,
                           spark_log_level=SparkDefault.LOG_LEVEL,
