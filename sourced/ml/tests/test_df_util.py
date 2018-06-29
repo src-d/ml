@@ -34,3 +34,15 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
             df_model = create_or_load_ordered_df(args, ndocs, uast_extractor)
             self.assertEqual(df_model.docs, ndocs)
             self.assertTrue(os.path.exists(tmp_path))
+
+    def test_error(self):
+        with self.assertRaises(ValueError):
+            create_or_load_ordered_df(argparse.Namespace(docfreq_in=None), 10, None)
+
+        with self.assertRaises(ValueError):
+            session = create_spark("test_df_util")
+            uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
+                .link(UastRow2Document()) \
+                .link(UastDeserializer()) \
+                .link(Uast2BagFeatures([IdentifiersBagExtractor()]))
+            create_or_load_ordered_df(argparse.Namespace(docfreq_in=None), None, uast_extractor)

@@ -1,6 +1,5 @@
 import logging
-import random
-from typing import Union, Callable
+from typing import Union
 
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
@@ -8,8 +7,8 @@ from pyspark.sql import DataFrame, functions
 from sourced.ml.extractors.helpers import filter_kwargs
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
-from sourced.ml.utils import EngineConstants, get_spark_memory_config, \
-    create_engine, create_spark, SparkDefault
+from sourced.ml.utils import EngineConstants, get_spark_memory_config, create_engine, \
+    create_spark, SparkDefault
 
 
 class Repartitioner(Transformer):
@@ -29,29 +28,24 @@ class Repartitioner(Transformer):
             return Identity()
 
 
-class PartitionBy(Transformer):
-    def __init__(self, partitions: int, column_name: str,
-                 custom_hash: Callable[[str, int], int], **kwargs):
+class Partitioner(Transformer):
+    def __init__(self, partitions: int, custom_mapping, **kwargs):
         super().__init__(**kwargs)
         self.partitions = partitions
-        self.column_name = column_name
-        self.custom_hash = custom_hash
+        self.custom_mapping = custom_mapping
 
     def __call__(self, head: RDD):
-        column_name = self.column_name
+        custom_mapping = self.custom_mapping
         partitions = self.partitions
-        custom_hash = self.custom_hash
         return head \
-            .map(lambda x: (x[column_name], x)) \
-            .partitionBy(partitions, partitionFunc=custom_hash) \
+            .map(lambda x: (custom_mapping(x), x)) \
+            .partitionBy(partitions) \
             .map(lambda x: x[1])
 
     @staticmethod
-    def maybe(partitions: int, column_name: str, salt: bool=False):
+    def maybe(partitions: int, custom_mapping):
         if partitions > 1:
-            def custom_hash(x):
-                return hash(x) + salt * random.randint(0, 100000)
-            return PartitionBy(partitions, column_name, custom_hash)
+            return Partitioner(partitions, custom_mapping)
         else:
             return Identity()
 
@@ -115,6 +109,11 @@ class Collector(Transformer):
         return head.collect()
 
 
+class Distinct(Transformer):
+    def __call__(self, head: RDD):
+        return head.distinct()
+
+
 class First(Transformer):
     def __call__(self, head: RDD):
         return head.first()
@@ -150,6 +149,9 @@ class Cacher(Transformer):
             return Cacher(persistence)
         else:
             return Identity()
+
+    def unpersist(self):
+        self.head.unpersist()
 
 
 class Ignition(Transformer):

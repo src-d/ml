@@ -45,9 +45,8 @@ class BOWWriter(Transformer):
         nparts = int(numpy.ceil(
             len(self.document_indexer) * (avglen * (4 + 4) + avgdocnamelen) / self.chunk_size))
         self._log.info("Estimated number of partitions: %d", nparts)
-        doc_index_to_name = [None] * len(self.document_indexer)
-        for k, i in self.document_indexer.value_to_index.items():
-            doc_index_to_name[i] = k
+        doc_index_to_name = {
+            index: name for name, index in self.document_indexer.value_to_index.items()}
         tokens = self.df.tokens()
         it = head \
             .map(lambda x: (x[c.document], (x[c.token], x[c.value]))) \

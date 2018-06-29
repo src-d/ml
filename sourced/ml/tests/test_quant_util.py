@@ -34,6 +34,10 @@ class MyTestCase(unittest.TestCase):
             self.assertListEqual(list(model_levels[key]), list(extractor.levels[key]))
         os.remove(path)
 
+    def test_error(self):
+        with self.assertRaises(ValueError):
+            create_or_apply_quant("", [], None)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -58,6 +58,14 @@ Number of documents: %d""" % (
         """
         return self._docs
 
+    @property
+    def df(self) -> dict:
+        """
+        Returns the document frequency dict.
+        To use with care, as this exposes the dictionary !!!
+        """
+        return self._df
+
     def prune(self, threshold: int) -> "DocumentFrequencies":
         """
         Removes tokens which occur less than `threshold` times.

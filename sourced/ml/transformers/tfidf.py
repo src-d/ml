@@ -14,7 +14,7 @@ class TFIDF(Transformer):
     def __init__(self, df: dict, ndocs: int, sc: SparkContext, **kwargs):
         """
         :param df: dict containing document frequencies calculated for the given stream.
-        :param ndocs: total umber of documents
+        :param ndocs: total number of documents
         :param sc: spark context used to broadcast `df
         """
         super().__init__(**kwargs)
@@ -33,7 +33,7 @@ class TFIDF(Transformer):
         c = self.Columns
         df = self.sc.broadcast(self.df)
         ndocs = self.ndocs
-        head =  head \
+        head = head \
             .filter(lambda x: df.value.get(x[c.token]) is not None) \
             .map(lambda x: Row(**{
                 c.token: x[c.token],

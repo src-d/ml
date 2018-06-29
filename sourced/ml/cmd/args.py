@@ -126,6 +126,20 @@ def add_bow_args(my_parser: argparse.ArgumentParser):
     my_parser.add_argument(
         "--batch", default=BOWWriter.DEFAULT_CHUNK_SIZE, type=int,
         help="The maximum size of a single BOW file in bytes.")
+    my_parser.add_argument(
+        "--num-iterations", default=1, type=int,
+        help="The number of iterations required to parse the data.")
+
+
+def add_cached_index_arg(my_parser: argparse.ArgumentParser, create: bool = False):
+    if create:
+        my_parser.add_argument(
+            "--cached-index-path", default=None, required=True,
+            help="[OUT] Path to the docfreq model holding the document's index.")
+    else:
+        my_parser.add_argument(
+            "--cached-index-path", default=None, required=True,
+            help="[IN] Path to the docfreq model holding the document's index.")
 
 
 def add_dzhigurda_arg(my_parser):
