@@ -38,7 +38,6 @@ class BasicTransformerTest(unittest.TestCase):
         self.assertEqual(data.count(), 6)
 
     def test_dzhigurda(self):
-
         self.assertEqual(DzhigurdaFiles(0)(self.engine).count(), 325)
         self.assertEqual(DzhigurdaFiles(10)(self.engine).count(), 3490)
         self.assertEqual(DzhigurdaFiles(-1)(self.engine).count(), 27745)

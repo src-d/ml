@@ -1,18 +1,18 @@
 import unittest
 
-from sourced.ml.utils.spark import assemble_spark_config, create_spark
+from sourced.ml.utils.spark import get_spark_memory_config, create_spark
 from sourced.ml.tests.models import PARQUET_DIR
 
 
 class SparkTests(unittest.TestCase):
-    @unittest.skip("Until assemble_spark_config alter Spark default values.")
     def test_assemble_spark_config(self):
-        config = assemble_spark_config()
+        config = get_spark_memory_config()
         self.assertEqual(len(config), 0)
-        config = assemble_spark_config(memory="1,2,3")
-        self.assertListEqual(config, ["spark.executor.memory=1",
-                                      "spark.driver.memory=2",
-                                      "spark.driver.maxResultSize=3"])
+        config = get_spark_memory_config(memory="1,2,3")
+        self.assertEqual(config, ("spark.executor.memory=1",
+                                  "spark.driver.memory=2",
+                                  "spark.driver.maxResultSize=3"))
+        self.assertRaises(ValueError, get_spark_memory_config, memory="1,2,3,4")
 
     def test_create_spark(self):
         spark = create_spark("test_1")

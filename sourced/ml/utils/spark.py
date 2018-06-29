@@ -17,10 +17,16 @@ class SparkDefault:
     MASTER_ADDRESS = "local[*]"
     LOCAL_DIR = "/tmp/spark"
     LOG_LEVEL = "WARN"
-    CONFIG = []
-    PACKAGES = []
+    CONFIG = (
+        # to clean up unpacked Siva files, see https://github.com/src-d/engine/issues/348
+        "spark.tech.sourced.engine.cleanup.skip=false",
+        # to skip broken siva files
+        "spark.tech.sourced.engine.skip.read.errors=true",
+    )
+    PACKAGES = tuple()
     MEMORY = ""
     STORAGE_LEVEL = "MEMORY_AND_DISK"
+    DEP_ZIP = False
 
 
 def add_spark_args(my_parser, default_packages=None):
@@ -45,11 +51,11 @@ def add_spark_args(my_parser, default_packages=None):
     my_parser.add_argument(
         "--spark-local-dir", default=SparkDefault.LOCAL_DIR,
         help="Spark local directory.")
-    my_parser.add_argument("--spark-log-level", default=SparkDefault.LOG_LEVEL, choices=(
-        "ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN"),
-                           help="Spark log level")
-    my_parser.add_argument("--dep-zip", default=False, dest="dep_zip", action="store_true",
-                           help="Adds ml and engine to the spark context.")
+    spark_log_levels = ("ALL", "DEBUG", "ERROR", "FATAL", "INFO", "OFF", "TRACE", "WARN")
+    my_parser.add_argument("--spark-log-level", default=SparkDefault.LOG_LEVEL,
+                           choices=spark_log_levels, help="Spark log level")
+    my_parser.add_argument("--dep-zip", default=SparkDefault.DEP_ZIP,
+                           action="store_true", help="Adds ml and engine to the spark context.")
     persistences = [att for att in pyspark.StorageLevel.__dict__.keys() if "__" not in att]
     my_parser.add_argument(
         "--persist", default=SparkDefault.STORAGE_LEVEL, choices=persistences,
@@ -67,9 +73,13 @@ def create_spark(session_name,
                  config=SparkDefault.CONFIG,
                  packages=SparkDefault.PACKAGES,
                  spark_log_level=SparkDefault.LOG_LEVEL,
-                 dep_zip=False):
+                 memory=SparkDefault.MEMORY,
+                 dep_zip=SparkDefault.DEP_ZIP):
     log = logging.getLogger("spark")
     log.info("Starting %s on %s", session_name, spark)
+    # Hide py4j verbose logging (It appears in travis mostly)
+    logging.getLogger("py4j").setLevel(logging.WARNING)
+    config += get_spark_memory_config(memory)
     builder = SparkSession.builder.master(spark).appName(session_name)
     builder = builder.config("spark.jars.packages", ",".join(packages))
     builder = builder.config("spark.local.dir", spark_local_dir)
@@ -77,38 +87,38 @@ def create_spark(session_name,
         builder = builder.config(*cfg.split("=", 1))
     session = builder.getOrCreate()
     session.sparkContext.setLogLevel(spark_log_level)
-    # Hide py4j verbose logging (It appears in travis mostly)
-    logging.getLogger("py4j").setLevel(logging.WARNING)
     if dep_zip:
-        zip_path = os.path.expanduser("~/.cache/sourced/ml/sourced.zip")
-        if not os.path.exists(zip_path):
-            os.makedirs(zip_path.split("sourced.zip")[0])
-            working_dir = os.getcwd()
-            os.chdir(pkg_resources.working_set.by_key["sourced-ml"].location)
-            with zipfile.PyZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-                zf.write("sourced")
-                zf.writepy("sourced/ml", "sourced")
-                zf.writepy("sourced/engine", "sourced")
-            os.chdir(working_dir)
+        zip_path = zip_sourced()
         session.sparkContext.addPyFile(zip_path)
     return session
 
 
-def assemble_spark_config(config=SparkDefault.CONFIG, memory=SparkDefault.MEMORY):
+def zip_sourced():
+    zip_path = os.path.expanduser("~/.cache/sourced/ml/sourced.zip")
+    if not os.path.exists(zip_path):
+        os.makedirs(zip_path.split("sourced.zip")[0])
+        working_dir = os.getcwd()
+        os.chdir(pkg_resources.working_set.by_key["sourced-ml"].location)
+        with zipfile.PyZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write("sourced")
+            zf.writepy("sourced/ml", "sourced")
+            zf.writepy("sourced/engine", "sourced")
+        os.chdir(working_dir)
+    return zip_path
+
+
+def get_spark_memory_config(memory=SparkDefault.MEMORY):
     """
-    Assemble configuration for a Spark session
-    :param config: configuration to send to spark session
+    Assemble memory configuration for a Spark session
     :param memory: string with memory configuration for spark
-    :return: config, packages
+    :return: memory configuration
     """
-    memory_conf = []
-    if memory:
-        memory = memory.split(",")
-        err = "Expected 3 memory parameters but got {}. " \
-              "Please check --help to see how -m/--memory should be used."
-        assert len(memory) == 3, err.format(len(memory))
-        memory_conf.append("spark.executor.memory=" + memory[0])
-        memory_conf.append("spark.driver.memory=" + memory[1])
-        memory_conf.append("spark.driver.maxResultSize=" + memory[2])
-        config = config + memory_conf
-    return config
+    if not memory:
+        return tuple()
+    memory = memory.split(",")
+    if len(memory) != 3:
+        raise ValueError("Expected 3 memory parameters but got %s. Please check --help "
+                         "to see how -m/--memory should be used." % len(memory))
+    return ("spark.executor.memory=" + memory[0],
+            "spark.driver.memory=" + memory[1],
+            "spark.driver.maxResultSize=" + memory[2])
