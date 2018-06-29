@@ -11,13 +11,13 @@ from modelforge.progress_bar import progress_bar
 def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, identifier_col: int,
                      split_identifier_col: int, shuffle: bool=True) -> List[str]:
     """
-    Reads and filters too long identifiers from CSV file.
+    Reads and filters too long identifiers in the CSV file.
 
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
-    :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
+    :param max_identifier_len: maximum length of raw identifiers. Skip identifiers that are longer.
     :param identifier_col: column name in the CSV file for the raw identifier.
-    :param split_identifier_col: column name in the CSV file for the splitted identifier.
+    :param split_identifier_col: column name in the CSV file for the splitted identifier lowercase.
     :param shuffle: indicates whether to reorder the list of identifiers
         at random after reading it.
     :return: list of splitted identifiers.
@@ -46,14 +46,15 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
                      identifier_col: int, split_identifier_col: int, test_ratio: float,
                      padding: str, shuffle: bool=True) -> Tuple[numpy.array]:
     """
-    Prepare the features for training the identifier splitting task.
+    Prepare the features to train the identifier splitting task.
 
     :param csv_path: path to the CSV file.
     :param use_header: uses header as normal line (True) or treat as header line with column names.
-    :param max_identifier_len: maximum length of raw identifier. Skip identifier if longer.
+    :param max_identifier_len: maximum length of raw identifiers. Skip identifiers that are longer.
     :param identifier_col: column in the CSV file for the raw identifier.
     :param split_identifier_col: column in the CSV file for the splitted identifier.
-    :param shuffle: indicates whether to reorder the list of identifiers at random after reading it
+    :param shuffle: indicates whether to reorder the list of identifiers
+        at random after reading it.
     :param test_ratio: Proportion of test samples used for evaluation.
     :param padding: position where to add padding values:
         after the intput sequence if "post", before if "pre".
@@ -61,7 +62,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     """
     log = logging.getLogger("prepare_features")
 
-    # read data from file
+    # read data from the input file
     identifiers = read_identifiers(csv_path=csv_path, use_header=use_header,
                                    max_identifier_len=max_identifier_len,
                                    identifier_col=identifier_col,
@@ -77,7 +78,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     char_id_seq = []
     splits = []
     for identifier in identifiers:
-        # iterate through identifier and convert to array of char indices & boolean split array
+        # iterate through the identifier and convert to array of char indices & boolean split array
         index_arr = []
         split_arr = []
         skip_char = False
@@ -113,7 +114,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
                                                                           len(X_test)))
 
     # pad sequence
-    log.info("Padding of the sequences...")
+    log.info("Padding the sequences...")
     X_train = pad_sequences(X_train, maxlen=max_identifier_len, padding=padding)
     X_test = pad_sequences(X_test, maxlen=max_identifier_len, padding=padding)
     y_train = pad_sequences(y_train, maxlen=max_identifier_len, padding=padding)

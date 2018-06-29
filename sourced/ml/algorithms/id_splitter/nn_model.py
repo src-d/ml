@@ -1,4 +1,3 @@
-import argparse
 import string
 from typing import Callable, List, Tuple, Union
 import warnings
@@ -37,7 +36,7 @@ def prepare_devices(devices: str) -> Tuple[str]:
     """
     Extract devices from arguments.
 
-    :param args: arguments.
+    :param devices: devices to use passed as one string argument.
     :return: splitted devices.
     """
     devices = devices.split(",")
@@ -60,7 +59,7 @@ def prepare_input_emb(maxlen: int) -> Tuple[tf.Tensor]:
 
     :param maxlen: maximum length of the input sequence.
     :param n_uniq: number of unique characters.
-    :return: tensor for input, one-hot character embeddings.
+    :return: input and one-hot character embedding layer.
     """
     char_seq = Input((maxlen,))
     emb = Embedding(input_dim=NUM_CHARS + 1, output_dim=NUM_CHARS + 1, input_length=maxlen,
@@ -89,8 +88,8 @@ def add_rnn(X: tf.Tensor, units: int, rnn_layer: str, dev0: str="/gpu:0",
     :param X: input layer.
     :param units: number of neurons in the output layer.
     :param rnn_layer: type of cell in the RNN.
-    :param dev0: device that will be used for forward pass of RNN and concatenation.
-    :param dev1: device that will be used for backward pass.
+    :param dev0: device that will be used as forward pass of RNN and concatenation.
+    :param dev1: device that will be used as backward pass.
     :return: output bidirectional RNN layer.
     """
     # select the type of RNN layer
@@ -127,7 +126,7 @@ def build_rnn(maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
         char_seq, hidden_layer = prepare_input_emb(maxlen)
 
         # stack the BiDi-RNN layers
-        for i in range(stack):
+        for _ in range(stack):
             hidden_layer = add_rnn(hidden_layer, units=units, rnn_layer=rnn_layer,
                                    dev0=dev0, dev1=dev1)
         output = add_output_layer(hidden_layer)
@@ -136,26 +135,6 @@ def build_rnn(maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
     model = Model(inputs=char_seq, outputs=output)
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
-
-
-def build_rnn_from_args(args: argparse.ArgumentParser) -> keras.engine.training.Model:
-    """
-    Construct a RNN model from parsed arguments.
-
-    :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
-                 kernel_sizes, optimizer, devices.
-    :return: compiled RNN model.
-    """
-    dev0, dev1 = prepare_devices(args.devices)
-
-    return build_rnn(
-        maxlen=args.length,
-        units=args.neurons,
-        stack=args.stack,
-        optimizer=args.optimizer,
-        rnn_layer=args.type,
-        dev0=dev0,
-        dev1=dev1)
 
 
 def add_conv(X: tf.Tensor, filters: List[int], kernel_sizes: List[int],
@@ -175,8 +154,9 @@ def add_conv(X: tf.Tensor, filters: List[int], kernel_sizes: List[int],
     # add convolutions
     convs = []
 
-    for n_filters, kern_size in zip(filters, kernel_sizes):
-        conv = Conv1D(filters=n_filters, kernel_size=kern_size, padding="same", activation="relu")
+    for n_filters, kernel_size in zip(filters, kernel_sizes):
+        conv = Conv1D(filters=n_filters, kernel_size=kernel_size, padding="same",
+                      activation="relu")
         convs.append(conv(X))
 
     # concatenate all convolutions
@@ -193,7 +173,6 @@ def build_cnn(maxlen: int, filters: List[int], output_n_filters: int, stack: int
     """
     Builds a CNN model with the parameters specified as arguments.
 
-    :param n_uniq: number of unique items/characters.
     :param maxlen: maximum length of the input sequence.
     :param filters: number of output filters in the convolution.
     :param output_n_filters: number of 1d output filters.
@@ -217,37 +196,6 @@ def build_cnn(maxlen: int, filters: List[int], output_n_filters: int, stack: int
     model = Model(inputs=char_seq, outputs=output)
     model.compile(optimizer=optimizer, loss=LOSS, metrics=METRICS)
     return model
-
-
-def build_cnn_from_args(args: argparse.ArgumentParser) -> keras.engine.training.Model:
-    """
-    Construct a CNN model from parsed arguments.
-
-    :param args: arguments should contain: num_chars, length, filters, dim_reduction, stack,
-                 kernel_sizes, optimizer, devices.
-    :return: compiled CNN model.
-    """
-    def to_list(params):
-        """
-        Convert a string with integer parameters to a list of integers.
-
-        :param params: string that contains integer parameters separated by commas.
-        :return: list of integers.
-        """
-        return list(map(int, params.split(",")))
-
-    filters = to_list(args.filters)
-    kernel_sizes = to_list(args.kernel_sizes)
-    device, _ = prepare_devices(args.devices)
-
-    return build_cnn(
-        maxlen=args.length,
-        filters=filters,
-        output_n_filters=args.dim_reduction,
-        stack=args.stack,
-        kernel_sizes=kernel_sizes,
-        optimizer=args.optimizer,
-        device=device)
 
 
 @register_metric

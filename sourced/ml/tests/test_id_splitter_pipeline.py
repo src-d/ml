@@ -7,13 +7,8 @@ import numpy
 from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint
 from keras.backend.tensorflow_backend import get_session
 
-from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
-from sourced.ml.cmd_entries.id_splitter import add_train_id_splitter_args
-from sourced.ml.algorithms.id_splitter import build_schedule, \
-    prepare_callbacks, build_train_generator, to_binary, \
-    generator_parameters, config_keras, train_id_splitter
-from sourced.ml.algorithms.id_splitter import register_metric, METRICS, \
-    build_cnn_from_args, build_rnn_from_args, prepare_devices
+from sourced.ml.algorithms.id_splitter import build_schedule, prepare_callbacks, \
+    build_train_generator, binarize, generator_parameters, config_keras, prepare_devices
 from sourced.ml.tests.models import IDENTIFIERS
 
 
@@ -22,14 +17,14 @@ class Fake:
 
 
 class IdSplitterPipelineTest(unittest.TestCase):
-    def test_to_binary(self):
+    def test_binarize(self):
         thresholds = [0, 0.09, 0.19, 0.29, 0.39, 0.49, 0.59, 0.69, 0.79, 0.89, 0.99]
         n_pos = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
 
         for th, n_p in zip(thresholds, n_pos):
             vals = numpy.arange(10) / 10
-            res = to_binary(vals, th)
-            self.assertEqual(sum(to_binary(vals, th)), n_p)
+            res = binarize(vals, th)
+            self.assertEqual(sum(binarize(vals, th)), n_p)
             if th in (0, 0.99):
                 self.assertTrue(numpy.unique(res).shape[0] == 1)
             else:
@@ -38,7 +33,7 @@ class IdSplitterPipelineTest(unittest.TestCase):
         vals = numpy.arange(10) / 10
         old_vals = vals.copy()
         for th, n_p in zip(thresholds, n_pos):
-            res = to_binary(vals, th, inplace=False)
+            res = binarize(vals, th, inplace=False)
             self.assertEqual(sum(res), n_p)
             self.assertTrue(numpy.array_equal(old_vals, vals))
             if th in (0, 0.99):
@@ -123,32 +118,3 @@ class IdSplitterPipelineTest(unittest.TestCase):
             # ModelCheckpoint
             self.assertIsInstance(callbacks[2], ModelCheckpoint)
             self.assertTrue(callbacks[2].filepath.startswith(tmpdir))
-
-    def test_train_id_splitter(self):
-        try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                parser = argparse \
-                    .ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
-                output_path = tmpdir
-                add_train_id_splitter_args(parser)
-                arguments = "-i {} -o {} -e 1 --val-batch-size 10 --batch-size 10 --devices -1 " \
-                            "--samples-before-report 20 cnn".format(IDENTIFIERS, output_path)
-                args = parser.parse_args(arguments.split())
-
-                train_id_splitter(args, model=build_cnn_from_args)
-        except Exception as e:
-            self.fail("cnn training raised {} with log {}".format(type(e), str(e)))
-
-        try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                parser = argparse \
-                    .ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatterNoNone)
-                output_path = tmpdir
-                add_train_id_splitter_args(parser)
-                arguments = "-i {} -o {} -e 1 --val-batch-size 10 --batch-size 10 --devices -1 " \
-                            "--samples-before-report 20 rnn".format(IDENTIFIERS, output_path)
-                args = parser.parse_args(arguments.split())
-
-                train_id_splitter(args, model=build_rnn_from_args)
-        except Exception as e:
-            self.fail("rnn training raised {} with log {}".format(type(e), str(e)))

@@ -27,6 +27,7 @@ class MainTests(unittest.TestCase):
             "repos2roleids": "repos2roles_and_ids",
             "repos2id_distance": "repos2id_distance",
             "repos2idseq": "repos2id_sequence",
+            "train-id-split": "train_id_split",
             "preprocrepos": "preprocess_repos",
             "merge-df": "merge_df",
             "merge-coocc": "merge_coocc",
