@@ -17,7 +17,7 @@ class TopicsTests(unittest.TestCase):
         self.assertEqual(res, """320 topics, 1000 tokens
 First 10 tokens: ['ulcancel', 'domainlin', 'trudi', 'fncreateinstancedbaselin', 'wbnz', 'lmultiplicand', 'otronumero', 'qxln', 'gvgq', 'polaroidish']
 Topics: unlabeled
-non-zero elements: 6211  (0.019409)""")  # nopep8
+non-zero elements: 6211  (0.019409)""")  # noqa
 
     def test_props(self):
         self.assertEqual(len(self.model), 320)

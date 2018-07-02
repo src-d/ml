@@ -1,7 +1,6 @@
 import logging
 import multiprocessing
 import os
-from pathlib import Path
 from typing import Union, List
 
 from modelforge import Model
@@ -106,7 +105,7 @@ class Model2Base(PickleableLogger):
                     if dirs:
                         os.makedirs(dirs, exist_ok=True)
                     model_to.save(model_path, deps=model_to.meta["dependencies"])
-            except:  # nopep8
+            except:  # noqa
                 self._log.exception("%s failed", filepath)
                 queue_out.put((filepath, False))
             else:

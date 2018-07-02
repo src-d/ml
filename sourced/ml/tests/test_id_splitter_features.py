@@ -124,7 +124,7 @@ class IdSplitterTest(unittest.TestCase):
             with tarfile.open(None, "w", fileobj=tmp, encoding="utf-8") as tmp_tar:
                 write_fake_identifiers(tmp_tar, n_lines=10, char_sizes=char_sizes, n_cols=2)
 
-            with self.assertRaises(IndexError) as cm:
+            with self.assertRaises(IndexError):
                 read_identifiers(csv_path=tmp.name, max_identifier_len=10, identifiers_col=3,
                                  split_identifiers_col=4)
 

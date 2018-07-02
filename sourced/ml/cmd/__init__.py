@@ -1,3 +1,4 @@
+# flake8: noqa
 from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd.bigartm2asdf import bigartm2asdf
 from sourced.ml.cmd.bow_converters import bow2vw

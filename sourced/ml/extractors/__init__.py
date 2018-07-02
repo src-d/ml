@@ -1,3 +1,4 @@
+# flake8: noqa
 from sourced.ml.extractors.helpers import __extractors__, get_names_from_kwargs, \
     register_extractor, filter_kwargs, create_extractors_from_args
 from sourced.ml.extractors.bags_extractor import BagsExtractor

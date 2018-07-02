@@ -1,4 +1,3 @@
-from collections import namedtuple
 from typing import Iterable, Tuple, Union
 from itertools import combinations
 

@@ -1,3 +1,4 @@
+# flake8: noqa
 from sourced.ml.utils.bigartm import install_bigartm
 from sourced.ml.utils.bblfsh_roles import IDENTIFIER, QUALIFIED, LITERAL, FUNCTION, DECLARATION, \
     NAME

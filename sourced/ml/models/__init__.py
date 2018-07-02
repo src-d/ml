@@ -1,3 +1,4 @@
+# flake8: noqa
 from sourced.ml.models.bow import BOW
 from sourced.ml.models.coocc import Cooccurrences
 from sourced.ml.models.df import DocumentFrequencies

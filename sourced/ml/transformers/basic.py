@@ -253,7 +253,7 @@ class UastDeserializer(Transformer):
         for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
             try:
                 row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
-            except:  # nopep8
+            except:  # noqa
                 self._log.error("\nBabelfish Error: Failed to parse uast for document %s for uast "
                                 "#%s" % (row[Uast2BagFeatures.Columns.document], i))
         yield Row(**row_dict)
