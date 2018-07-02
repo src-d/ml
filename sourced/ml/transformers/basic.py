@@ -207,7 +207,7 @@ class Counter(Transformer):
 
 
 class LanguageSelector(Transformer):
-    def __init__(self, languages: Union[list, tuple], blacklist=False, **kwargs):
+    def __init__(self, languages: list, blacklist=False, **kwargs):
         super().__init__(**kwargs)
         self.languages = languages
         self.blacklist = blacklist
@@ -215,25 +215,13 @@ class LanguageSelector(Transformer):
     def __call__(self, files: DataFrame) -> DataFrame:
         if not isinstance(files, BlobsDataFrame):
             self._log.warning("Argument type is not BlobsDataFrame. "
-                              "LanguageSelector will be skipped.")
-            return files
-        if "lang" not in files.columns:
-            files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
-            classified = files.classify_languages()
-        else:
-            # Assume that files were already classified.
-            # Most likely you use parquet files as input
-            classified = files
-        if not self.blacklist:
-            lang_filter = classified.lang == self.languages[0]
-            for lang in self.languages[1:]:
-                lang_filter |= classified.lang == lang
-        else:
-            lang_filter = classified.lang != self.languages[0]
-            for lang in self.languages[1:]:
-                lang_filter &= classified.lang != lang
-        filtered_by_lang = classified.filter(lang_filter)
-        return filtered_by_lang
+                              "Language classification will be skipped.")
+        elif "lang" not in files.columns:
+            files = files \
+                .dropDuplicates(("blob_id",)) \
+                .filter("is_binary = 'false'") \
+                .classify_languages()
+        return files[files.lang.isin(self.languages) != self.blacklist]
 
 
 class UastExtractor(Transformer):
@@ -330,27 +318,24 @@ def create_parquet_loader(session_name, repositories,
     return parquet
 
 
-def create_uast_source(args, session_name, select=HeadFiles, language_selector=None,
-                       extract_uast=True):
+def create_uast_source(args, session_name, select=HeadFiles, extract_uast=True):
     if args.parquet:
         parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
         start_point = create_parquet_loader(session_name, **parquet_loader_args)
         root = start_point
+        if args.languages is not None:
+            start_point = start_point.link(LanguageSelector(languages=args.languages,
+                                                            blacklist=args.blacklist))
         fields = [col.name for col in start_point.execute().schema]
         if extract_uast and "uast" not in fields:
             raise ValueError("The parquet files do not contain UASTs.")
-        if language_selector is not None:
-            start_point = start_point.link(language_selector)
-        elif args.languages is not None:
-            start_point = start_point.link(LanguageSelector(languages=args.languages))
     else:
         engine_args = filter_kwargs(args.__dict__, create_engine)
-        root = create_engine(session_name, **engine_args)
-        if language_selector is None:
-            language_selector = LanguageSelector(languages=args.languages)
-        start_point = Ignition(root, explain=args.explain) \
-            .link(select()) \
-            .link(language_selector)
+        root = Ignition(create_engine(session_name, **engine_args), explain=args.explain)
+        start_point = root.link(select())
+        if args.languages is not None:
+            start_point = start_point.link(LanguageSelector(languages=args.languages,
+                                                            blacklist=args.blacklist))
         if extract_uast:
             start_point = start_point.link(UastExtractor())
     return root, start_point

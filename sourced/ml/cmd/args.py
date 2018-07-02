@@ -84,8 +84,13 @@ def add_repo2_args(my_parser: argparse.ArgumentParser, default_packages=None):
     # https://github.com/bblfsh/client-scala/issues/98 resolved
     languages = ["Java", "Python", "Go", "JavaScript", "TypeScript", "Ruby", "Bash", "Php"]
     my_parser.add_argument(
-        "-l", "--languages", nargs="+", choices=languages, default=languages,
+        "-l", "--languages", nargs="+", choices=languages,
+        default=None,  # Default value for --languages arg should be None.
+                       # Otherwise if you process parquet files without 'lang' column, you will
+                       # fail to process it with any --languages argument.
         help="The programming languages to analyse.")
+    my_parser.add_argument("--blacklist", action="store_true",
+                           help="Exclude languages from `--languages` list from analysis.")
     add_engine_args(my_parser, default_packages)
 
 
