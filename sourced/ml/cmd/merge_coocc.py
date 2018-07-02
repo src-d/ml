@@ -102,16 +102,8 @@ def merge_coocc_no_spark(df, filepaths, log, args):
     shape = (len(df) + 1,) * 2
     result = coo_matrix(shape, dtype=np.uint32)
     for path, coocc in load_and_check(filepaths, log):
-        negative_values = np.where(coocc.matrix.data < 0)
-        if negative_values[0].size > 0:
-            log.warning("Model %s corrupted will be skipped. It contains negative elements.")
-            continue
-        too_big_values = np.where(coocc.matrix.data > MAX_INT32)
-        if too_big_values[0].size > 0:
-            log.warning("Model %s contains elements with values more than MAX_INT32. "
-                        "They will be saturated to MAX_INT32" % path)
-            coocc.matrix.data[too_big_values] = MAX_INT32
-        index = [df.order.get(x, len(df) + 1) for x in coocc.tokens]
+        coocc._matrix = coo_matrix(coocc._matrix)
+        index = [df.order.get(x, len(df)) for x in coocc.tokens]
         rows = [index[x] for x in coocc.matrix.row]
         cols = [index[x] for x in coocc.matrix.col]
         result += coo_matrix(
