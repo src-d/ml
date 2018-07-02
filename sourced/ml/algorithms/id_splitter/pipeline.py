@@ -183,7 +183,7 @@ def make_lr_scheduler(lr: float, final_lr: float, n_epochs: int,
     return LearningRateScheduler(schedule=schedule, verbose=verbose)
 
 
-def prepare_callbacks(output_dir: str) -> List[Callable]:
+def prepare_callbacks(output_dir: str) -> Tuple[Callable]:
     """
     Prepares logging, tensorboard, model checkpoint callbacks and stores the outputs in output_dir.
 
@@ -202,11 +202,11 @@ def prepare_callbacks(output_dir: str) -> List[Callable]:
     filepath = os.path.join(output_dir, "best_" + time + ".model")
     model_saver = ModelCheckpoint(filepath, monitor='val_recall', verbose=1, save_best_only=True,
                                   mode='max')
-    return [tensorboard, csv_logger, model_saver]
+    return tensorboard, csv_logger, model_saver
 
 
-def generator_parameters(batch_size: int, samples_per_epoch: int, n_samples: int,
-                         epochs: int) -> Tuple[int]:
+def create_generator_params(batch_size: int, samples_per_epoch: int, n_samples: int,
+                            epochs: int) -> Tuple[int]:
     """
     Helper function to split a huge dataset into smaller ones to enable more frequent reports.
 

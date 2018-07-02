@@ -1,19 +1,12 @@
-import argparse
 import tempfile
 import unittest
-import warnings
 
 import numpy
 from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint
 from keras.backend.tensorflow_backend import get_session
 
 from sourced.ml.algorithms.id_splitter import build_schedule, prepare_callbacks, \
-    build_train_generator, binarize, generator_parameters, config_keras, prepare_devices
-from sourced.ml.tests.models import IDENTIFIERS
-
-
-class Fake:
-    pass
+    build_train_generator, binarize, create_generator_params, config_keras, prepare_devices
 
 
 class IdSplitterPipelineTest(unittest.TestCase):
@@ -93,8 +86,8 @@ class IdSplitterPipelineTest(unittest.TestCase):
         steps_per_epoch_ = samples_per_epoch // batch_size
         n_epochs_ = numpy.ceil(epochs * n_samples / samples_per_epoch)
 
-        steps_per_epoch, n_epochs = generator_parameters(batch_size, samples_per_epoch, n_samples,
-                                                         epochs)
+        steps_per_epoch, n_epochs = create_generator_params(batch_size, samples_per_epoch,
+                                                            n_samples, epochs)
         self.assertEqual(steps_per_epoch, steps_per_epoch_)
         self.assertEqual(n_epochs, n_epochs_)
 
