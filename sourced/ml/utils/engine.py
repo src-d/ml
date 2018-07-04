@@ -3,7 +3,7 @@ import logging
 import requests
 from pkg_resources import get_distribution, DistributionNotFound
 from sourced.engine import Engine
-from sourced.ml.utils import add_spark_args, get_spark_memory_config, create_spark, SparkDefault
+from sourced.ml.utils import add_spark_args, create_spark, SparkDefault
 
 
 def get_engine_version():

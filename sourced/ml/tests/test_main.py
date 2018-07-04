@@ -18,7 +18,6 @@ class MainTests(unittest.TestCase):
             "bigartm2asdf": "bigartm2asdf",
             "bow2vw": "bow2vw",
             "bigartm": "install_bigartm",
-            "dump": "dump_model",
             "repos2coocc": "repos2coocc",
             "repos2df": "repos2df",
             "repos2ids": "repos2ids",
