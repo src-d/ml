@@ -7,9 +7,11 @@ from sourced.ml.transformers import create_uast_source
 
 class LoaderTest(unittest.TestCase):
     def test_parquet(self):
-        args = argparse.Namespace(parquet=True, repositories=PARQUET_DIR, languages=None)
+        args = argparse.Namespace(parquet=True,
+                                  repositories=PARQUET_DIR,
+                                  languages=None,
+                                  blacklist=False)
         root, start_point = create_uast_source(args, "test_parquet")
-        self.assertEqual(root, start_point)
         df = start_point.execute()
         self.assertEqual(df.count(), 6)
         row = df.rdd.first()

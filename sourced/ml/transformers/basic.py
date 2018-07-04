@@ -1,7 +1,8 @@
+import argparse
 import logging
 from typing import Union
 
-from sourced.engine.engine import BlobsDataFrame
+from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
 
@@ -178,6 +179,7 @@ class DzhigurdaFiles(Transformer):
             chosen = head_ref.all_reference_commits
         elif self.dzhigurda == 0:
             # Use only the first commit on a reference.
+            # This case is completely the same with HeadFiles Transformer
             chosen = head_ref.commits
         else:
             commits = head_ref.all_reference_commits
@@ -223,12 +225,20 @@ class LanguageSelector(Transformer):
                 .classify_languages()
         return files[files.lang.isin(self.languages) != self.blacklist]
 
+    @staticmethod
+    def maybe(languages, blacklist):
+        if languages is None:
+            return Identity()
+        return LanguageSelector(languages, blacklist)
+
 
 class UastExtractor(Transformer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def __call__(self, files: DataFrame) -> DataFrame:
+    def __call__(self, files: Union[BlobsDataFrame, BlobsWithLanguageDataFrame]) -> DataFrame:
+        if not isinstance(files, (BlobsDataFrame, BlobsWithLanguageDataFrame)):
+            raise TypeError("Argument type should be BlobsDataFrame or BlobsWithLanguageDataFrame")
         # if UAST is not extracted, returns an empty list that we filter out here
         return files.extract_uasts().where(functions.size(functions.col("uast")) > 0)
 
@@ -318,24 +328,24 @@ def create_parquet_loader(session_name, repositories,
     return parquet
 
 
-def create_uast_source(args, session_name, select=HeadFiles, extract_uast=True):
+def create_file_source(args: argparse.Namespace, session_name: str):
     if args.parquet:
         parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
-        start_point = create_parquet_loader(session_name, **parquet_loader_args)
-        root = start_point
-        if args.languages is not None:
-            start_point = start_point.link(LanguageSelector(languages=args.languages,
-                                                            blacklist=args.blacklist))
-        fields = [col.name for col in start_point.execute().schema]
-        if extract_uast and "uast" not in fields:
-            raise ValueError("The parquet files do not contain UASTs.")
+        root = create_parquet_loader(session_name, **parquet_loader_args)
+        file_source = root
     else:
         engine_args = filter_kwargs(args.__dict__, create_engine)
         root = Ignition(create_engine(session_name, **engine_args), explain=args.explain)
-        start_point = root.link(select())
-        if args.languages is not None:
-            start_point = start_point.link(LanguageSelector(languages=args.languages,
-                                                            blacklist=args.blacklist))
-        if extract_uast:
-            start_point = start_point.link(UastExtractor())
-    return root, start_point
+        file_source = root.link(DzhigurdaFiles(args.dzhigurda))
+    file_source = file_source.link(LanguageSelector.maybe(languages=args.languages,
+                                                          blacklist=args.blacklist))
+    return root, file_source
+
+
+def create_uast_source(args: argparse.Namespace, session_name: str):
+    root, file_source = create_file_source(args, session_name)
+    if args.parquet:
+        # Assume that we already have uast column inside, because we cannot convert parquet files
+        # back to sourced-engine format to extract UASTs.
+        return root, file_source
+    return root, file_source.link(UastExtractor())

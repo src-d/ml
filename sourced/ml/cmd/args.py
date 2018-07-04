@@ -90,7 +90,9 @@ def add_repo2_args(my_parser: argparse.ArgumentParser, default_packages=None):
                        # fail to process it with any --languages argument.
         help="The programming languages to analyse.")
     my_parser.add_argument("--blacklist", action="store_true",
-                           help="Exclude languages from `--languages` list from analysis.")
+                           help="Exclude the languages in --languages from the analysis "
+                                "instead of filtering by default.")
+    add_dzhigurda_arg(my_parser)
     add_engine_args(my_parser, default_packages)
 
 
