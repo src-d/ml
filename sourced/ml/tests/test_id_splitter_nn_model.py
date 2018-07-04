@@ -1,9 +1,10 @@
+import string
 import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter.nn_model import build_rnn, build_cnn, \
-    register_metric, METRICS
+from sourced.ml.algorithms.id_splitter import build_rnn, build_cnn, register_metric, \
+    METRICS
 
 
 class MetricsTests(unittest.TestCase):
@@ -23,12 +24,12 @@ class MetricsTests(unittest.TestCase):
 
 class ModelsTests(unittest.TestCase):
     def setUp(self):
-        self.n_uniq = 10
-        self.model_rnn = build_rnn(n_uniq=self.n_uniq, maxlen=5, units=24, stack=2,
+        self.n_uniq = len(string.ascii_lowercase)
+        self.model_rnn = build_rnn(maxlen=5, units=24, stack=2, rnn_layer="LSTM",
                                    optimizer="Adam", dev0="/cpu:0", dev1="/cpu:0")
-        self.model_cnn = build_cnn(n_uniq=self.n_uniq, maxlen=5, filters=[64, 32, 16, 8],
-                                   output_n_filters=32, stack=2, kernel_sizes=[2, 4, 8, 16],
-                                   optimizer="Adam", device="/cpu:0")
+        self.model_cnn = build_cnn(maxlen=5, filters=[64, 32, 16, 8], output_n_filters=32,
+                                   stack=2, kernel_sizes=[2, 4, 8, 16], optimizer="Adam",
+                                   device="/cpu:0")
 
     def test_build_rnn(self):
         self.assertTrue(self.model_rnn.built)

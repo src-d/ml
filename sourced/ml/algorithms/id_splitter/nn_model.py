@@ -1,3 +1,5 @@
+import string
+from typing import Callable, List, Tuple, Union
 import warnings
 
 import numpy
@@ -8,14 +10,14 @@ from keras.layers import BatchNormalization, Concatenate, Conv1D, Dense, Embeddi
 from keras.models import Model
 try:
     import tensorflow as tf
-except ImportError as e:
+except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
-from typing import Callable, List, Tuple, Union
 
 
 LOSS = "binary_crossentropy"
 METRICS = ["accuracy"]
-DEFAULT_RNN_TYPE = "LSTM"
+# Number of unique characters and dimension of the embedding layer
+NUM_CHARS = len(string.ascii_lowercase)
 
 
 def register_metric(metric: Union[str, Callable]) -> Union[str, Callable]:
@@ -30,17 +32,38 @@ def register_metric(metric: Union[str, Callable]) -> Union[str, Callable]:
     return metric
 
 
-def prepare_input_emb(maxlen: int, n_uniq: int) -> Tuple[tf.Tensor]:
+def prepare_devices(devices: str) -> Tuple[str]:
+    """
+    Extract devices from arguments.
+
+    :param devices: devices to use passed as one string argument.
+    :return: splitted devices.
+    """
+    devices = devices.split(",")
+    if len(devices) == 2:
+        dev0, dev1 = ("/gpu:" + dev for dev in devices)
+    elif len(devices) == 1:
+        if int(devices[0]) != -1:
+            dev0 = dev1 = "/gpu:" + devices[0]
+        else:
+            dev0 = dev1 = "/cpu:0"
+    else:
+        raise ValueError("Expected 1 or 2 devices but got %d from the devices argument %s" %
+                         (len(devices), devices))
+    return dev0, dev1
+
+
+def prepare_input_emb(maxlen: int) -> Tuple[tf.Tensor]:
     """
     Builds character embeddings, a dense representation of characters to feed the RNN with.
 
     :param maxlen: maximum length of the input sequence.
     :param n_uniq: number of unique characters.
-    :return: tensor for input, one-hot character embeddings.
+    :return: input and one-hot character embedding layer.
     """
     char_seq = Input((maxlen,))
-    emb = Embedding(input_dim=n_uniq + 1, output_dim=n_uniq + 1, input_length=maxlen,
-                    mask_zero=False, weights=[numpy.eye(n_uniq + 1)], trainable=False)(char_seq)
+    emb = Embedding(input_dim=NUM_CHARS + 1, output_dim=NUM_CHARS + 1, input_length=maxlen,
+                    mask_zero=False, weights=[numpy.eye(NUM_CHARS + 1)], trainable=False)(char_seq)
     return char_seq, emb
 
 
@@ -57,7 +80,7 @@ def add_output_layer(hidden_layer: tf.Tensor) -> keras.layers.wrappers.TimeDistr
     return TimeDistributed(Dense(1, activation="sigmoid"))(norm_input)
 
 
-def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
+def add_rnn(X: tf.Tensor, units: int, rnn_layer: str, dev0: str="/gpu:0",
             dev1: str="/gpu:1") -> tf.Tensor:
     """
     Adds a bidirectional RNN layer with the specified parameters.
@@ -65,14 +88,11 @@ def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
     :param X: input layer.
     :param units: number of neurons in the output layer.
     :param rnn_layer: type of cell in the RNN.
-    :param dev0: device that will be used for forward pass of RNN and concatenation.
-    :param dev1: device that will be used for backward pass.
-
+    :param dev0: device that will be used as forward pass of RNN and concatenation.
+    :param dev1: device that will be used as backward pass.
     :return: output bidirectional RNN layer.
     """
-    # select the RNN layer
-    if rnn_layer is None:
-        rnn_layer = DEFAULT_RNN_TYPE
+    # select the type of RNN layer
     rnn_layer = getattr(keras.layers, rnn_layer)
 
     # add the forward & backward RNN
@@ -87,27 +107,26 @@ def add_rnn(X: tf.Tensor, units=128, rnn_layer: str=None, dev0: str="/gpu:0",
     return bidi
 
 
-def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
-              dev1: str, rnn_layer: str=None) -> keras.engine.training.Model:
+def build_rnn(maxlen: int, units: int, stack: int, optimizer: str, dev0: str,
+              dev1: str, rnn_layer: str) -> keras.engine.training.Model:
     """
     Builds a RNN model with the parameters specified as arguments.
 
-    :param n_uniq: number of unique items/characters.
     :param maxlen: maximum length of the input sequence.
     :param units: number of neurons or dimensionality of the output RNN.
     :param stack: number of RNN layers to stack.
     :param optimizer: algorithm to use as an optimizer for the RNN.
-    :param rnn_layer: recurrent layer type to use..
+    :param rnn_layer: recurrent layer type to use.
     :param dev0: first device to use when running specific operations.
     :param dev1: second device to use when running specific operations.
     :return: compiled RNN model.
     """
     # prepare the model
     with tf.device(dev0):
-        char_seq, hidden_layer = prepare_input_emb(maxlen, n_uniq)
+        char_seq, hidden_layer = prepare_input_emb(maxlen)
 
         # stack the BiDi-RNN layers
-        for i in range(stack):
+        for _ in range(stack):
             hidden_layer = add_rnn(hidden_layer, units=units, rnn_layer=rnn_layer,
                                    dev0=dev0, dev1=dev1)
         output = add_output_layer(hidden_layer)
@@ -118,8 +137,8 @@ def build_rnn(n_uniq: int, maxlen: int, units: int, stack: int, optimizer: str, 
     return model
 
 
-def add_conv(X: tf.Tensor, filters: List[int]=[64, 32, 16, 8],
-             kernel_sizes: List[int]=[2, 4, 8, 16], output_n_filters: int=32) -> tf.Tensor:
+def add_conv(X: tf.Tensor, filters: List[int], kernel_sizes: List[int],
+             output_n_filters: int) -> tf.Tensor:
     """
     Builds a single convolutional layer.
 
@@ -135,8 +154,9 @@ def add_conv(X: tf.Tensor, filters: List[int]=[64, 32, 16, 8],
     # add convolutions
     convs = []
 
-    for n_filters, kern_size in zip(filters, kernel_sizes):
-        conv = Conv1D(filters=n_filters, kernel_size=kern_size, padding="same", activation="relu")
+    for n_filters, kernel_size in zip(filters, kernel_sizes):
+        conv = Conv1D(filters=n_filters, kernel_size=kernel_size, padding="same",
+                      activation="relu")
         convs.append(conv(X))
 
     # concatenate all convolutions
@@ -148,12 +168,11 @@ def add_conv(X: tf.Tensor, filters: List[int]=[64, 32, 16, 8],
     return conv(conc)
 
 
-def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: int, stack: int,
+def build_cnn(maxlen: int, filters: List[int], output_n_filters: int, stack: int,
               kernel_sizes: List[int], optimizer: str, device: str) -> keras.engine.training.Model:
     """
     Builds a CNN model with the parameters specified as arguments.
 
-    :param n_uniq: number of unique items/characters.
     :param maxlen: maximum length of the input sequence.
     :param filters: number of output filters in the convolution.
     :param output_n_filters: number of 1d output filters.
@@ -165,7 +184,7 @@ def build_cnn(n_uniq: int, maxlen: int, filters: List[int], output_n_filters: in
     """
     # prepare the model
     with tf.device(device):
-        char_seq, hidden_layer = prepare_input_emb(maxlen, n_uniq)
+        char_seq, hidden_layer = prepare_input_emb(maxlen)
 
         # stack the CNN layers
         for _ in range(stack):

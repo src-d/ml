@@ -183,6 +183,73 @@ def get_parser() -> argparse.ArgumentParser:
     id2vec_project_parser.add_argument("--no-browser", action="store_true",
                                        help="Do not open the browser.")
     # ------------------------------------------------------------------------
+    train_id_split_parser = add_parser(
+        "train-id-split", "Train a neural network to split identifiers.")
+    train_id_split_parser.set_defaults(handler=cmd.train_id_split)
+    # common arguments for CNN/RNN models
+    train_id_split_parser.add_argument("-i", "--input", required=True,
+                                       help="Path to the input data in CSV format:"
+                                            "num_files,num_occ,num_repos,token,token_split")
+    train_id_split_parser.add_argument("-e", "--epochs", type=int, default=10,
+                                       help="Number of training epochs. The more the better"
+                                            "but the training time is proportional.")
+    train_id_split_parser.add_argument("-b", "--batch-size", type=int, default=500,
+                                       help="Batch size. Higher values better utilize GPUs"
+                                            "but may harm the convergence.")
+    train_id_split_parser.add_argument("-l", "--length", type=int, default=40,
+                                       help="RNN sequence length.")
+    train_id_split_parser.add_argument("-o", "--output", required=True,
+                                       help="Path to store the trained model.")
+    train_id_split_parser.add_argument("-t", "--test-ratio", type=float, default=0.2,
+                                       help="Fraction of the dataset to use for evaluation.")
+    train_id_split_parser.add_argument("-p", "--padding", default="post", choices=("pre", "post"),
+                                       help="Wether to pad before or after each sequence.")
+    train_id_split_parser.add_argument("--optimizer", default="Adam", choices=("RMSprop", "Adam"),
+                                       help="Algorithm to use as an optimizer for the neural net.")
+    train_id_split_parser.add_argument("--lr", default=0.001, type=float,
+                                       help="Initial learning rate.")
+    train_id_split_parser.add_argument("--final-lr", default=0.00001, type=float,
+                                       help="Final learning rate. The decrease from "
+                                            "the initial learning rate is done linearly.")
+    train_id_split_parser.add_argument("--samples-before-report", type=int, default=5*10**6,
+                                       help="Number of samples between each validation report"
+                                            "and training updates.")
+    train_id_split_parser.add_argument("--val-batch-size", type=int, default=2000,
+                                       help="Batch size for validation."
+                                            "It can be increased to speed up the pipeline but"
+                                            "it proportionally increases the memory consumption.")
+    train_id_split_parser.add_argument("--seed", type=int, default=1989,
+                                       help="Random seed.")
+    train_id_split_parser.add_argument("--devices", default="0",
+                                       help="Device(s) to use. '-1' means CPU.")
+    train_id_split_parser.add_argument("--csv-identifier", default=3,
+                                       help="Column name in the CSV file for the raw identifier.")
+    train_id_split_parser.add_argument("--csv-identifier-split", default=4,
+                                       help="Column name in the CSV file for the splitted"
+                                            "identifier.")
+    train_id_split_parser.add_argument("--include-csv-header", action="store_true",
+                                       help="Treat the first line of the input CSV as a regular"
+                                            "line.")
+    train_id_split_parser.add_argument("--model", type=str, choices=("RNN", "CNN"), required=True,
+                                       help="Neural Network model to use to learn the identifier"
+                                            "splitting task.")
+    train_id_split_parser.add_argument("-s", "--stack", default=2, type=int,
+                                       help="Number of layers stacked on each other.")
+    # RNN specific arguments
+    train_id_split_parser.add_argument("--type-cell", default="LSTM",
+                                       choices=("GRU", "LSTM", "CuDNNLSTM", "CuDNNGRU"),
+                                       help="Recurrent layer type to use.")
+    train_id_split_parser.add_argument("-n", "--neurons", default=256, type=int,
+                                       help="Number of neurons on each layer.")
+    # CNN specific arguments
+    train_id_split_parser.add_argument("-f", "--filters", default="64,32,16,8",
+                                       help="Number of filters for each kernel size.")
+    train_id_split_parser.add_argument("-k", "--kernel-sizes", default="2,4,8,16",
+                                       help="Sizes for sliding windows.")
+    train_id_split_parser.add_argument("--dim-reduction", default=32, type=int,
+                                       help="Number of 1-d kernels to reduce dimensionality"
+                                            "after each layer.")
+    # ------------------------------------------------------------------------
     bow2vw_parser = add_parser(
         "bow2vw", "Convert a bag-of-words model to the dataset in Vowpal Wabbit format.")
     bow2vw_parser.set_defaults(handler=cmd.bow2vw)

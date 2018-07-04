@@ -14,6 +14,7 @@ from sourced.ml.cmd.repos2bow import repos2bow, repos2bow_template, repos2bow_in
 from sourced.ml.cmd.repos2coocc import repos2coocc
 from sourced.ml.cmd.repos2df import repos2df
 from sourced.ml.cmd.repos2ids import repos2ids
+from sourced.ml.cmd.train_id_split import train_id_split
 from sourced.ml.cmd.run_swivel import run_swivel
 from sourced.ml.cmd.repos2roles_and_ids import repos2roles_and_ids
 from sourced.ml.cmd.repos2id_distance import repos2id_distance

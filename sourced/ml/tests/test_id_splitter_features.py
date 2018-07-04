@@ -5,7 +5,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter.features import prepare_features, read_identifiers
+from sourced.ml.algorithms.id_splitter import prepare_features, read_identifiers
 from sourced.ml.tests.models import IDENTIFIERS
 
 
@@ -46,11 +46,11 @@ class IdSplitterTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as tmp:
             with tarfile.open(None, "w", fileobj=tmp, encoding="utf-8") as tmp_tar:
                 write_fake_identifiers(tmp_tar, n_lines=n_lines, char_sizes=1, n_cols=2, text=text)
-            feat = prepare_features(csv_path=tmp.name, use_header=True, identifiers_col=0,
-                                    max_identifier_len=max_identifier_len, split_identifiers_col=1,
-                                    shuffle=True, test_size=0.5, padding="post")
+            feat = prepare_features(csv_path=tmp.name, use_header=True, identifier_col=0,
+                                    max_identifier_len=max_identifier_len, split_identifier_col=1,
+                                    shuffle=True, test_ratio=0.5, padding="post")
             x_train, x_test, y_train, y_test = feat
-            # because of test_size=0.5 - shapes should be equal
+            # because of test_ratio=0.5 - shapes should be equal
             self.assertEqual(x_test.shape, x_train.shape)
             self.assertEqual(y_test.shape, y_train.shape)
             # each line contains only one split -> so it should be only 5 nonzero for train/test
@@ -76,9 +76,11 @@ class IdSplitterTest(unittest.TestCase):
 
         # normal file
         try:
-            prepare_features(csv_path=IDENTIFIERS)
+            prepare_features(csv_path=IDENTIFIERS, use_header=True, identifier_col=0,
+                             max_identifier_len=max_identifier_len, split_identifier_col=1,
+                             shuffle=True, test_ratio=0.5, padding="post")
         except Exception as e:
-            self.fail("prepare_features raised %s with log %s",  type(e), str(e))
+            self.fail("prepare_features raised %s with log %s" % (type(e), str(e)))
 
     def test_read_identifiers(self):
         # read with header
@@ -86,7 +88,8 @@ class IdSplitterTest(unittest.TestCase):
             with tarfile.open(None, "w", fileobj=tmp, encoding="utf-8") as tmp_tar:
                 write_fake_identifiers(tmp_tar, n_lines=10, char_sizes=1, n_cols=5)
 
-            res = read_identifiers(csv_path=tmp.name, use_header=True)
+            res = read_identifiers(csv_path=tmp.name, use_header=True, max_identifier_len=10,
+                                   identifier_col=3, split_identifier_col=4)
             self.assertEqual(len(res), 10)
 
         # read without header
@@ -94,7 +97,8 @@ class IdSplitterTest(unittest.TestCase):
             with tarfile.open(None, "w", fileobj=tmp, encoding="utf-8") as tmp_tar:
                 write_fake_identifiers(tmp_tar, n_lines=10, char_sizes=1, n_cols=5)
 
-            res = read_identifiers(csv_path=tmp.name, use_header=False)
+            res = read_identifiers(csv_path=tmp.name, use_header=False, max_identifier_len=10,
+                                   identifier_col=3, split_identifier_col=4)
             self.assertEqual(len(res), 9)
 
         # read with max_identifier_len equal to 0 -> expect empty list
@@ -102,7 +106,8 @@ class IdSplitterTest(unittest.TestCase):
             with tarfile.open(None, "w", fileobj=tmp, encoding="utf-8") as tmp_tar:
                 write_fake_identifiers(tmp_tar, n_lines=10, char_sizes=1, n_cols=5)
 
-            res = read_identifiers(csv_path=tmp.name, max_identifier_len=0)
+            res = read_identifiers(csv_path=tmp.name, use_header=True, max_identifier_len=0,
+                                   identifier_col=3, split_identifier_col=4)
             self.assertEqual(len(res), 0)
 
         # generate temporary file with identifiers of specific lengths and filter by length
@@ -115,8 +120,8 @@ class IdSplitterTest(unittest.TestCase):
             # check filtering
             # read last two columns as identifiers
             for i in range(11):
-                res = read_identifiers(csv_path=tmp.name, max_identifier_len=i, identifiers_col=3,
-                                       split_identifiers_col=4)
+                res = read_identifiers(csv_path=tmp.name, use_header=True, max_identifier_len=i,
+                                       identifier_col=3, split_identifier_col=4)
                 self.assertEqual(len(res), i)
 
         # read wrong columns
@@ -125,11 +130,12 @@ class IdSplitterTest(unittest.TestCase):
                 write_fake_identifiers(tmp_tar, n_lines=10, char_sizes=char_sizes, n_cols=2)
 
             with self.assertRaises(IndexError):
-                read_identifiers(csv_path=tmp.name, max_identifier_len=10, identifiers_col=3,
-                                 split_identifiers_col=4)
+                read_identifiers(csv_path=tmp.name, use_header=True, max_identifier_len=10,
+                                 identifier_col=3, split_identifier_col=4)
 
         # normal file
         try:
-            read_identifiers(csv_path=IDENTIFIERS)
+            read_identifiers(csv_path=IDENTIFIERS, use_header=True, max_identifier_len=10,
+                             identifier_col=3, split_identifier_col=4)
         except Exception as e:
-            self.fail("read_identifiers raised %s with log %s", type(e), str(e))
+            self.fail("read_identifiers raised %s with log %s" % (type(e), str(e)))
