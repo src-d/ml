@@ -7,8 +7,8 @@ from pyspark.sql import DataFrame, functions
 from sourced.ml.extractors.helpers import filter_kwargs
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
-from sourced.ml.utils import EngineConstants, assemble_spark_config, create_engine, create_spark, \
-    SparkDefault
+from sourced.ml.utils import EngineConstants, EngineDefault, get_spark_memory_config, \
+    create_engine, create_spark, SparkDefault
 
 
 class Repartitioner(Transformer):
@@ -261,13 +261,13 @@ class UastDeserializer(Transformer):
 
 def create_parquet_loader(session_name, repositories,
                           config=SparkDefault.CONFIG,
-                          packages=SparkDefault.PACKAGES,
+                          packages=SparkDefault.JAR_PACKAGES,
                           spark=SparkDefault.MASTER_ADDRESS,
                           spark_local_dir=SparkDefault.LOCAL_DIR,
                           spark_log_level=SparkDefault.LOG_LEVEL,
                           memory=SparkDefault.MEMORY,
-                          dep_zip=False):
-    config = assemble_spark_config(config=config, memory=memory)
+                          dep_zip=SparkDefault.DEP_ZIP):
+    config += get_spark_memory_config(memory)
     session = create_spark(session_name, spark=spark, spark_local_dir=spark_local_dir,
                            config=config, packages=packages, spark_log_level=spark_log_level,
                            dep_zip=dep_zip)
