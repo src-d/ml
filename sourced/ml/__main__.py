@@ -272,13 +272,7 @@ def get_parser() -> argparse.ArgumentParser:
     bigartm_parser.add_argument(
         "--tmpdir", help="Store intermediate files in this directory instead of /tmp.")
     bigartm_parser.add_argument("--output", default=os.getcwd(), help="Output directory.")
-    # ------------------------------------------------------------------------
-    dump_parser = add_parser("dump", "Dump a model to stdout.")
-    dump_parser.set_defaults(handler=cmd.dump_model)
-    dump_parser.add_argument(
-        "input", help="Path to the model file, URL or UUID.")
-    dump_parser.add_argument("--gcs", default=None, dest="gcs_bucket",
-                             help="GCS bucket to use.")
+
     # ------------------------------------------------------------------------
     merge_df = add_parser("merge-df", "Merge DocumentFrequencies models to a singe one.")
     merge_df.set_defaults(handler=cmd.merge_df)

@@ -7,7 +7,7 @@ from pyspark.sql import DataFrame, functions
 from sourced.ml.extractors.helpers import filter_kwargs
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
-from sourced.ml.utils import EngineConstants, EngineDefault, get_spark_memory_config, \
+from sourced.ml.utils import EngineConstants, get_spark_memory_config, \
     create_engine, create_spark, SparkDefault
 
 

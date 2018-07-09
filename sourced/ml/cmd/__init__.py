@@ -2,7 +2,6 @@
 from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
 from sourced.ml.cmd.bigartm2asdf import bigartm2asdf
 from sourced.ml.cmd.bow_converters import bow2vw
-from sourced.ml.cmd.dump_model import dump_model
 from sourced.ml.cmd.merge_df import merge_df
 from sourced.ml.cmd.merge_coocc import merge_coocc
 from sourced.ml.cmd.id2vec_postprocess import id2vec_postprocess
