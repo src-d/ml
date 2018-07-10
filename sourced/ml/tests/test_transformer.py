@@ -1,6 +1,6 @@
 import unittest
 
-from sourced.ml.transformers import Transformer
+from sourced.ml.transformers import Transformer, LeafTransformer
 
 
 class DumpTransformer(Transformer):
@@ -8,7 +8,6 @@ class DumpTransformer(Transformer):
 
     def __init__(self, id, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        global transformer_id
         self.id = id
 
     def __call__(self, *args, **kwargs):
@@ -74,6 +73,51 @@ class TransformerTest(unittest.TestCase):
         t2.unlink(t)
         self.assertIsNone(t.parent)
         self.assertEqual(t2.children, tuple())
+
+    def test_link(self):
+        t = Transformer(False)
+        t2 = Transformer(True)
+        t2.link(t)
+        self.assertEqual(t.parent, t2)
+        self.assertEqual(t2.children, (t,))
+
+    def test_lshift(self):
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+        t3 >> t2 >> t1
+        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.parent, t2)
+        self.assertEqual(t2.children, (t1,))
+        self.assertEqual(t2.parent, t3)
+        self.assertEqual(t3.children, (t2,))
+        self.assertEqual(t3.parent, None)
+
+        t2 << t1
+        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.parent, None)
+        self.assertEqual(t2.children, tuple())
+        self.assertEqual(t2.parent, t3)
+        self.assertEqual(t3.children, (t2,))
+        self.assertEqual(t3.parent, None)
+
+    def test_rshift(self):
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+        t3 >> t2 >> t1
+        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.parent, t2)
+        self.assertEqual(t2.children, (t1,))
+        self.assertEqual(t2.parent, t3)
+        self.assertEqual(t3.children, (t2,))
+        self.assertEqual(t3.parent, None)
+
+    def test_leaf_transformer(self):
+        lt = LeafTransformer()
+        t = Transformer()
+        with self.assertRaises(Exception):
+            lt >> t
 
     def test_path(self):
         self.assertEqual(self.pipeline_linear.path(), self.transformers_linear)

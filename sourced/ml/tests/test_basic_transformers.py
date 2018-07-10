@@ -5,9 +5,10 @@ import unittest
 from pyspark.sql import Row
 
 from sourced.ml.utils import create_engine
-from sourced.ml.transformers.basic import ParquetSaver, ParquetLoader, Collector, First, \
-     Identity, FieldsSelector, Repartitioner, DzhigurdaFiles
+from sourced.ml.transformers import ParquetSaver, ParquetLoader, Collector, First, \
+     Identity, FieldsSelector, Repartitioner, DzhigurdaFiles, Execute, Explode
 from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
+from sourced.ml.tests.test_transformer import DumpTransformer
 
 
 class BasicTransformerTest(unittest.TestCase):
@@ -91,6 +92,30 @@ class BasicTransformerTest(unittest.TestCase):
         row = FieldsSelector(fields=["name", "age"])(df.rdd).first()
         self.assertTrue(hasattr(row, "age"))
         self.assertTrue(hasattr(row, "name"))
+
+    def test_execute(self):
+        DumpTransformer.call_ids = []
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+
+        t1 >> t2 >> t3 >> Execute()
+        self.assertEqual(DumpTransformer.call_ids, [1, 2, 3])
+
+    def test_explode(self):
+        DumpTransformer.call_ids = []
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t31 = DumpTransformer(31)
+        t32 = DumpTransformer(32)
+
+        t1 >> t2 >> (t31, t32)
+        t1 >> Explode()
+        self.assertEqual(DumpTransformer.call_ids, [1, 2, 31, 32])
+
+        DumpTransformer.call_ids = []
+        t32 >> Explode()
+        self.assertEqual(DumpTransformer.call_ids, [1, 2, 32])
 
 
 if __name__ == '__main__':

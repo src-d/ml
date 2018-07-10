@@ -1,4 +1,5 @@
 from io import StringIO
+from typing import Iterable, Union, List
 
 from sourced.ml.utils import PickleableLogger  # nopep8
 
@@ -41,7 +42,13 @@ class Transformer(PickleableLogger):
         path.reverse()
         return path
 
-    def link(self, transformer):
+    def link(self, transformer: Union[Iterable, "Transformer"]) -> Union[List, "Transformer"]:
+        if isinstance(transformer, Execute):
+            return self.execute()
+        if isinstance(transformer, Explode):
+            return self.explode()
+        if isinstance(transformer, Iterable):
+            return [self.link(t) for t in transformer]
         self._children.append(transformer)
         transformer._parent = self
         return transformer
@@ -50,6 +57,14 @@ class Transformer(PickleableLogger):
         self._children.remove(transformer)
         transformer._parent = None
         return self
+
+    def __rshift__(self, other):
+        """Shortcut for link"""
+        return self.link(other)
+
+    def __lshift__(self, other):
+        """Shortcut for unlink"""
+        return self.unlink(other)
 
     def _explode(self, head, context):
         if context[-1] is not self:
@@ -128,3 +143,30 @@ class Transformer(PickleableLogger):
 
     def __call__(self, head):
         raise NotImplementedError()
+
+
+class LeafTransformer(Transformer):
+    """
+    End-point transformer.
+    You can not link other transformers to it.
+    """
+    def link(self, transformer: Union[Iterable, "Transformer"]):
+        raise Exception("It is not possible to link anything to LeafTransformer.")
+
+
+class Execute(LeafTransformer):
+    """
+    Special transformer to execute all the pipeline.
+    As soon as one links anything to this Transformer it call execute() for the pipeline.
+    It is not possible to link anything to this transformer.
+    """
+    pass
+
+
+class Explode(LeafTransformer):
+    """
+    Special transformer to execute all the branches going from last Transformer.
+    As soon as one links anything to this Transformer it call explode().
+    It is not possible to link anything to this transformer.
+    """
+    pass
