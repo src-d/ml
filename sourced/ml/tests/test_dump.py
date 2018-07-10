@@ -26,7 +26,6 @@ def captured_output():
         logging.getLogger().removeHandler(log_handler)
 
 
-@unittest.skip  # TODO: when dulwich is fixed, update
 class DumpTests(unittest.TestCase):
     ID2VEC_DUMP = """{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
  'dependencies': [],
@@ -77,38 +76,26 @@ Matrix: shape: (304, 304) non-zero: 16001
         if os.path.exists("/tmp/ml-test-dump"):
             shutil.rmtree("/tmp/ml-test-dump")
 
-    def setUp(self):
-        self.maxDiff = None
-
     def test_id2vec(self):
-        with captured_output() as (out, err, log):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=paths.ID2VEC))
-        self.assertEqual(err.getvalue(), "")
-        self.assertEqual(log.getvalue(), "")
         self.assertEqual(out.getvalue(), self.ID2VEC_DUMP)
 
     def test_docfreq(self):
-        with captured_output() as (out, err, log):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=paths.DOCFREQ))
-        self.assertEqual(err.getvalue(), "")
-        self.assertEqual(log.getvalue(), "")
         self.assertEqual(out.getvalue()[:len(self.DOCFREQ_DUMP)], self.DOCFREQ_DUMP)
         ending = "\nNumber of documents: 1000\n"
         self.assertEqual(out.getvalue()[-len(ending):], ending)
 
     def test_bow(self):
-        with captured_output() as (out, err, log):
+        with captured_output() as (out, _, _):
             dump_model(self._get_args(input=paths.BOW))
-        self.assertEqual(err.getvalue(), "")
-        self.assertEqual(log.getvalue(), "")
         self.assertEqual(out.getvalue(), self.BOW_DUMP)
 
     def test_coocc(self):
-        self.assertEqual("", paths.BOW)
-        with captured_output() as (out, err, log):
-            dump_model(self._get_args(input=paths.COOC))
-        self.assertEqual(err.getvalue(), "")
-        self.assertEqual(log.getvalue(), "")
+        with captured_output() as (out, _, _):
+            dump_model(self._get_args(input=paths.COOCC))
         self.assertEqual(out.getvalue(), self.COOCC_DUMP)
 
     @staticmethod
