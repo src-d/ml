@@ -10,9 +10,6 @@ from sourced.ml.transformers import BOWWriter, Moder
 from sourced.ml.utils import add_engine_args
 
 
-DEFAULT_FILTER_ARG = "**/*.asdf"
-
-
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
     """
     Pretty formatter of help message for arguments.
@@ -135,8 +132,3 @@ def add_dzhigurda_arg(my_parser):
              "commits. 0 corresponds to HEAD only commits, 1 to HEAD and HEAD~1, 2 to HEAD, HEAD~1"
              " and HEAD~2, etc. With `--dzhigurda -1` we keep all possible commits for each "
              "document.")
-
-
-def add_filter_arg(my_parser: argparse.ArgumentParser):
-    my_parser.add_argument(
-        "--filter", default=DEFAULT_FILTER_ARG, help="File name glob selector.")

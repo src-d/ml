@@ -5,7 +5,7 @@ import sys
 
 from modelforge.logs import setup_logging
 
-from sourced.ml.extractors import IdentifierDistance
+from sourced.ml import extractors
 from sourced.ml.transformers import Moder
 from sourced.ml import cmd
 from sourced.ml.cmd import args
@@ -121,10 +121,10 @@ def get_parser() -> argparse.ArgumentParser:
     args.add_repo2_args(repos2identifier_distance)
     args.add_split_stem_arg(repos2identifier_distance)
     repos2identifier_distance.add_argument(
-        "-t", "--type", required=True, choices=IdentifierDistance.DistanceType.All,
+        "-t", "--type", required=True, choices=extractors.IdentifierDistance.DistanceType.All,
         help="Distance type.")
     repos2identifier_distance.add_argument(
-        "--max-distance", default=IdentifierDistance.DEFAULT_MAX_DISTANCE, type=int,
+        "--max-distance", default=extractors.IdentifierDistance.DEFAULT_MAX_DISTANCE, type=int,
         help="Maximum distance to save.")
     repos2identifier_distance.add_argument(
         "-o", "--output", required=True,
@@ -274,9 +274,8 @@ def get_parser() -> argparse.ArgumentParser:
     bigartm_parser.add_argument("--output", default=os.getcwd(), help="Output directory.")
 
     # ------------------------------------------------------------------------
-    merge_df = add_parser("merge-df", "Merge DocumentFrequencies models to a singe one.")
+    merge_df = add_parser("merge-df", "Merge DocumentFrequencies models to a single one.")
     merge_df.set_defaults(handler=cmd.merge_df)
-    args.add_filter_arg(merge_df)
     args.add_min_docfreq(merge_df)
     args.add_vocabulary_size_arg(merge_df)
     merge_df.add_argument(
@@ -294,7 +293,6 @@ def get_parser() -> argparse.ArgumentParser:
     merge_coocc = add_parser("merge-coocc", "Merge several Cooccurrences models together.")
     merge_coocc.set_defaults(handler=cmd.merge_coocc)
     add_spark_args(merge_coocc)
-    args.add_filter_arg(merge_coocc)
     merge_coocc.add_argument(
         "-o", "--output", required=True,
         help="Path to the merged Cooccurrences model.")
@@ -310,6 +308,20 @@ def get_parser() -> argparse.ArgumentParser:
         "--no-spark", action="store_true", default=False,
         help="Use the local reduction instead of PySpark. "
              "Can be faster and consume less memory if the data fits into RAM.")
+    # ------------------------------------------------------------------------
+    merge_bow = add_parser("merge-bow", "Merge BOW models to a single one.")
+    merge_bow.set_defaults(handler=cmd.merge_bow)
+    merge_bow.add_argument(
+        "-i", "--input", required=True, nargs="+",
+        help="BOW models input files."
+             "Use `-i -` to read input files from stdin.")
+    merge_bow.add_argument(
+        "-o", "--output", required=True,
+        help="Path to the merged BOW model.")
+    merge_bow.add_argument(
+        "-f", "--features", nargs="+",
+        choices=[ex.NAME for ex in extractors.__extractors__.values()],
+        default=None, help="To keep only specific features, if not specified all will be kept.")
     return parser
 
 
