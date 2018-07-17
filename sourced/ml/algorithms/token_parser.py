@@ -11,14 +11,19 @@ class TokenParser:
     STEM_THRESHOLD = 6  #: We do not stem splitted parts shorter than or equal to this size.
     MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than this value.
     MIN_SPLIT_LENGTH = 3  #: We do not split source code identifiers shorter than this value.
+    DEFAULT_SINGLE_SHOT = False  #: True if we do not want to join small identifiers to next one.
+    # Example: 'sourced.ml.algorithms' -> ["sourc", "sourcedml", "algorithm", "mlalgorithm"].
+    # if True we have only ["sourc", "algorithm"].
+    # if you do not want to filter small tokens set min_split_length=1.
 
     def __init__(self, stem_threshold=STEM_THRESHOLD, max_token_length=MAX_TOKEN_LENGTH,
-                 min_split_length=MIN_SPLIT_LENGTH):
+                 min_split_length=MIN_SPLIT_LENGTH, single_shot=DEFAULT_SINGLE_SHOT):
         self._stemmer = Stemmer.Stemmer("english")
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = stem_threshold
         self._max_token_length = max_token_length
         self._min_split_length = min_split_length
+        self._single_shot = single_shot
 
     @property
     def stem_threshold(self):
@@ -76,13 +81,13 @@ class TokenParser:
             if len(name) >= self.min_split_length:
                 ret.last_subtoken = r
                 yield r
-                if ret.prev_p:
+                if ret.prev_p and not self._single_shot:
                     yield ret.prev_p + r
                     ret.prev_p = ""
-            else:
-                ret.prev_p = r
-                yield ret.last_subtoken + r
-                ret.last_subtoken = ""
+            elif not self._single_shot:
+                    ret.prev_p = r
+                    yield ret.last_subtoken + r
+                    ret.last_subtoken = ""
         ret.prev_p = ""
         ret.last_subtoken = ""
 
