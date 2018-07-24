@@ -66,7 +66,7 @@ Number of documents: %d""" % (
 
     """
     WE DO NOT ADD THIS
-    
+
     def df(self) -> dict:
     """
 

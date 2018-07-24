@@ -14,6 +14,7 @@ import sourced.ml.tests.models as paths
 
 cache_dir = os.path.join(tempfile.gettempdir(), "ml-test-dump")
 
+
 @contextmanager
 def captured_output():
     log = StringIO()

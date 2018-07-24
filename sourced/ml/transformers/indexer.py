@@ -1,6 +1,6 @@
 from typing import Union, Dict
 from pyspark.rdd import RDD
-from pyspark import Row, SparkContext
+from pyspark import Row
 
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.models import DocumentFrequencies
