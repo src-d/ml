@@ -14,7 +14,7 @@ class TFIDFTests(unittest.TestCase):
 
         df = DocumentFrequencies().construct(10, {str(i): i for i in range(1, 5)})
         self.docs = df.docs
-        self.tfidf = TFIDF(df.df, df.docs, self.session.sparkContext)
+        self.tfidf = TFIDF(df, df.docs, self.session.sparkContext)
 
         class Columns:
             """

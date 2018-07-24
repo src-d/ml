@@ -23,7 +23,7 @@ class MyTestCase(unittest.TestCase):
     def test_create(self):
         session = create_spark("test_quant_util")
         extractor = ChildrenBagExtractor()
-        with tempfile.NamedTemporaryFile(suffix="-quant.asdf") as tmp:
+        with tempfile.NamedTemporaryFile(mode="r+b", suffix="-quant.asdf") as tmp:
             path = tmp.name
             uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
                 .link(UastRow2Document()) \
