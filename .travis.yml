@@ -39,7 +39,7 @@ matrix:
       env: *_coverage
       install: *_install
     - python: 3.6
-      env: SCRIPT="flake8 ."
+      env: SCRIPT="flake8 . && (! grep -R /tmp sourced/ml/tests)"
       install: pip install flake8
     - python: 3.6
       env: *_coverage
