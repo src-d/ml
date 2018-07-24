@@ -32,6 +32,12 @@ class DocumentFrequencies(Model):
         self._df = df
         return self
 
+    """
+    WE DO NOT ADD THIS
+
+    def df(self) -> dict:
+    """
+
     def _load_tree(self, tree: dict, tokens=None):
         if tokens is None:
             tokens = split_strings(tree["tokens"])
@@ -58,13 +64,11 @@ Number of documents: %d""" % (
         """
         return self._docs
 
-    @property
+    """
+    WE DO NOT ADD THIS
+    
     def df(self) -> dict:
-        """
-        Returns the document frequency dict.
-        To use with care, as this exposes the dictionary !!!
-        """
-        return self._df
+    """
 
     def prune(self, threshold: int) -> "DocumentFrequencies":
         """
@@ -156,3 +160,9 @@ Number of documents: %d""" % (
         Returns the list of tokens.
         """
         return list(self._df)
+
+    """
+    WE DO NOT ADD THIS
+
+    def df(self) -> dict:
+    """

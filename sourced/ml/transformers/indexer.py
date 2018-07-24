@@ -12,18 +12,16 @@ class Indexer(Transformer):
     index. The mapping is created by collecting all the unique values, sorting them and finally
     enumerating. Use value_to_index or [] to get index value.
     """
-    def __init__(self, column: Union[int, str], sc: SparkContext,
-                 column2id: Union[Dict[str, int], None]=None, **kwargs):
+    def __init__(self, column: Union[int, str], column2id: Dict[str, int]=None, **kwargs):
         """
         :param column: column index or its name in pyspark.RDD for indexing.
-        :param sc: spark context used to broadcast _value_to_index
-        :param column2id: precomputed mapping
+        :param column2id: precomputed mapping between column values to integers.
         :param kwargs:
         """
         super().__init__(**kwargs)
         self.column = column
         self._value_to_index = column2id
-        self.sc = sc
+        self._values = None
 
     def __getitem__(self, key: Union[int, str]):
         """
@@ -51,10 +49,11 @@ class Indexer(Transformer):
         return self._value_to_index
 
     def values(self):
-        arr = [None] * len(self)
-        for k, v in self.value_to_index.items():
-            arr[v] = k
-        return arr
+        if self._values is None:
+            self._values = [None] * len(self)
+            for k, v in self.value_to_index.items():
+                self._values[v] = k
+        return self._values
 
     def calculate_value_to_index(self, rdd: RDD):
         column_name = self.column
@@ -82,7 +81,7 @@ class Indexer(Transformer):
         column_name = self.column
         if self._value_to_index is None:
             self.calculate_value_to_index(rdd)
-        column2id = self.sc.broadcast(self._value_to_index)
+        column2id = rdd.context.broadcast(self._value_to_index)
 
         def index_column(row):
             """

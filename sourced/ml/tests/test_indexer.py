@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 
 from pyspark import Row
@@ -18,7 +19,7 @@ class IndexerTests(unittest.TestCase):
             .map(lambda x: data[x])
 
     def test_call(self):
-        indexer = Indexer("to_index", self.session.sparkContext)
+        indexer = Indexer("to_index")
         res = indexer(self.data_rdd)
         values = indexer.values()
         data_reverse = res \
@@ -27,16 +28,15 @@ class IndexerTests(unittest.TestCase):
         self.assertEqual(self.data, data_reverse)
 
     def test_save_load(self):
-        indexer = Indexer("to_index", self.session.sparkContext)
+        indexer = Indexer("to_index")
         res = indexer(self.data_rdd)
-        cached_index_path = "/tmp/index.asdf"
-        indexer.save_index(cached_index_path)
-        document_index = DocumentFrequencies().load(source=cached_index_path).df
-        document_index = {key: int(document_index[key]) for key in document_index}
-        indexer = Indexer("to_index", column2id=document_index,
-                          sc=self.session.sparkContext)
-        self.assertEqual(res.collect(), indexer(self.data_rdd).collect())
-        os.remove(cached_index_path)
+        with tempfile.NamedTemporaryFile(suffix="-index.asdf") as tmp:
+            cached_index_path = tmp.name
+            indexer.save_index(cached_index_path)
+            docfreq = DocumentFrequencies().load(source=cached_index_path)
+            document_index = {key: int(val) for (key, val) in docfreq}
+            indexer = Indexer("to_index", column2id=document_index)
+            self.assertEqual(res.collect(), indexer(self.data_rdd).collect())
 
 
 if __name__ == "__main__":

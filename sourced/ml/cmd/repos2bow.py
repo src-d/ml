@@ -4,7 +4,7 @@ from uuid import uuid4
 from sourced.ml.extractors import create_extractors_from_args
 from sourced.ml.transformers import UastDeserializer, BagFeatures2TermFreq, Uast2BagFeatures, \
     HeadFiles, TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, \
-    Repartitioner, Partitioner, PartitionSelector, Transformer, Distinct, Collector, FieldsSelector
+    Repartitioner, PartitionSelector, Transformer, Distinct, Collector, FieldsSelector
 from sourced.ml.utils import EngineConstants
 from sourced.ml.utils.engine import pipeline_graph, pause
 from sourced.ml.utils.docfreq import create_or_load_ordered_df
@@ -21,8 +21,8 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
     session_name = "repos2bow-%s" % uuid4()
     root, start_point = create_uast_source(args, session_name, select=select)
     log.info("Loading the document index from %s ...", args.cached_index_path)
-    document_index = DocumentFrequencies().load(source=args.cached_index_path).df
-    document_index = {key: int(document_index[key]) for key in document_index}
+    docfreq = DocumentFrequencies().load(source=args.cached_index_path)
+    document_index = {key: int(val) for (key, val) in docfreq}
 
     try:
         if args.quant is not None:
@@ -33,16 +33,16 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
     ec = EngineConstants.Columns
 
     if args.mode == Moder.Options.repo:
-        def custom_mapping(r):
+        def keymap(r):
             return r[ec.RepositoryId]
     else:
-        def custom_mapping(r):
+        def keymap(r):
             return r[ec.RepositoryId] + UastRow2Document.REPO_PATH_SEP + \
                 r[ec.Path] + UastRow2Document.PATH_BLOB_SEP + r[ec.BlobId]
 
     log.info("Caching UASTs to disk after partitioning by document ...")
     start_point = start_point.link(Moder(args.mode)) \
-        .link(Partitioner.maybe(args.num_iterations, custom_mapping)) \
+        .link(Repartitioner.maybe(args.num_iterations, keymap=keymap)) \
         .link(Cacher.maybe("DISK_ONLY"))
     for num_part in range(args.num_iterations):
         log.info("Running job %s of %s", num_part + 1, args.num_iterations)
@@ -65,8 +65,7 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
         documents = set(row.document for row in documents)
         reduced_doc_index = {
             key: document_index[key] for key in document_index if key in documents}
-        document_indexer = Indexer(Uast2BagFeatures.Columns.document, root.session.sparkContext,
-                                   reduced_doc_index)
+        document_indexer = Indexer(Uast2BagFeatures.Columns.document, reduced_doc_index)
         log.info("Processing %s distinct documents", len(documents))
         bags = uast_extractor \
             .link(UastDeserializer()) \
@@ -88,16 +87,15 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
         bags_writer = bags \
             .link(TFIDF(reduced_token_freq, df_model.docs, root.session.sparkContext)) \
             .link(document_indexer) \
-            .link(Indexer(Uast2BagFeatures.Columns.token, root.session.sparkContext,
-                          reduced_token_index))
+            .link(Indexer(Uast2BagFeatures.Columns.token, reduced_token_index))
         if save_hook is not None:
             bags_writer = bags_writer \
                 .link(Repartitioner.maybe(args.partitions, args.shuffle, multiplier=10)) \
                 .link(save_hook())
         bow = args.bow.split(".asdf")[0] + "_" + str(num_part + 1) + ".asdf"
         bags_writer \
-            .link(Partitioner.maybe(
-                args.partitions, lambda x: x[Uast2BagFeatures.Columns.document])) \
+            .link(Repartitioner.maybe(
+                args.partitions, keymap=lambda x: x[Uast2BagFeatures.Columns.document])) \
             .link(BOWWriter(document_indexer, df_model, bow, args.batch)) \
             .execute()
         bags.unpersist()
@@ -118,7 +116,7 @@ def repos2bow_index_template(args, select=HeadFiles):
         .link(UastRow2Document()) \
         .link(Cacher.maybe(args.persist))
     log.info("Extracting UASTs and indexing documents ...")
-    document_indexer = Indexer(Uast2BagFeatures.Columns.document, root.session.sparkContext)
+    document_indexer = Indexer(Uast2BagFeatures.Columns.document)
     uast_extractor.link(document_indexer).execute()
     document_indexer.save_index(args.cached_index_path)
     ndocs = len(document_indexer)

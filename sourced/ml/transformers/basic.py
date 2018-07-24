@@ -12,45 +12,42 @@ from sourced.ml.utils import EngineConstants, get_spark_memory_config, create_en
 
 
 class Repartitioner(Transformer):
-    def __init__(self, partitions: int, shuffle: bool=False, **kwargs):
+    """
+    Repartitioner uses one of the three ways to split an RDD into partitions:
+    1. coalesce() if shuffle=False, keymap=None
+    2. repartition() if shuffle=True, keymap=None
+    3. partitionBy() if keymap is not None
+    """
+    def __init__(self, partitions: int, shuffle: bool=False, keymap: callable=None, **kwargs):
         super().__init__(**kwargs)
         self.partitions = partitions
         self.shuffle = shuffle
+        self.keymap = keymap
 
     def __call__(self, head: RDD):
-        return head.coalesce(self.partitions, self.shuffle)
-
-    @staticmethod
-    def maybe(partitions: Union[int, None], shuffle: bool=False, multiplier: int=1):
-        if partitions is not None:
-            return Repartitioner(partitions * multiplier, shuffle)
-        else:
-            return Identity()
-
-
-class Partitioner(Transformer):
-    def __init__(self, partitions: int, custom_mapping, **kwargs):
-        super().__init__(**kwargs)
-        self.partitions = partitions
-        self.custom_mapping = custom_mapping
-
-    def __call__(self, head: RDD):
-        custom_mapping = self.custom_mapping
-        partitions = self.partitions
+        if self.keymap is None:
+            return head.coalesce(self.partitions, self.shuffle)
+        # partitionBy the key extracted using self.keymap
+        if self.keymap is not False:
+            # user knows what they are doing
+            head = head.map(lambda x: (self.keymap(x), x))
         return head \
-            .map(lambda x: (custom_mapping(x), x)) \
-            .partitionBy(partitions) \
+            .partitionBy(self.partitions) \
             .map(lambda x: x[1])
 
     @staticmethod
-    def maybe(partitions: int, custom_mapping):
-        if partitions > 1:
-            return Partitioner(partitions, custom_mapping)
+    def maybe(partitions: Union[int, None], shuffle: bool=False, keymap: callable=None,
+              multiplier: int=1):
+        if partitions is not None:
+            return Repartitioner(partitions * multiplier, shuffle=shuffle, keymap=keymap)
         else:
             return Identity()
 
 
 class PartitionSelector(Transformer):
+    """
+    PartitionSelector return the partition by specific index.
+    """
     def __init__(self, partition_index: int, **kwargs):
         super().__init__(**kwargs)
         self.partition_index = partition_index
@@ -62,8 +59,8 @@ class PartitionSelector(Transformer):
             if split_index == index:
                 for row in part:
                     yield row
-        return head \
-            .mapPartitionsWithIndex(partition_filter, True)
+
+        return head.mapPartitionsWithIndex(partition_filter, True)
 
 
 class CsvSaver(Transformer):
