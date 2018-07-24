@@ -1,6 +1,6 @@
 import unittest
 
-from sourced.ml.transformers import Transformer, LeafTransformer
+from sourced.ml.transformers.transformer import Transformer, Execute
 
 
 class DumpTransformer(Transformer):
@@ -10,9 +10,11 @@ class DumpTransformer(Transformer):
         super().__init__(*args, **kwargs)
         self.id = id
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, head):
         DumpTransformer.call_ids.append(self.id)
-        return self.id
+        if head is not None:
+            DumpTransformer.call_ids.append(head)
+        return None
 
 
 class TransformerTest(unittest.TestCase):
@@ -113,12 +115,6 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(t3.children, (t2,))
         self.assertEqual(t3.parent, None)
 
-    def test_leaf_transformer(self):
-        lt = LeafTransformer()
-        t = Transformer()
-        with self.assertRaises(Exception):
-            lt >> t
-
     def test_path(self):
         self.assertEqual(self.pipeline_linear.path(), self.transformers_linear)
         self.assertEqual([t.id for t in self.pipeline_tree.path()], [0, 2, 5, 6])
@@ -166,6 +162,15 @@ class TransformerTest(unittest.TestCase):
             DumpTransformer.call_ids = []
             t.execute()
             self.assertEqual(expected[t.id], set(DumpTransformer.call_ids))
+
+    def test_execute_link(self):
+        DumpTransformer.call_ids = []
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+
+        t1 >> t2 >> t3 >> Execute("A")
+        self.assertEqual(DumpTransformer.call_ids, [1, "A", 2, 3])
 
     def test_graph(self):
         import io
