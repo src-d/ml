@@ -5,7 +5,7 @@ import unittest
 from pyspark.sql import Row
 
 from sourced.ml.utils import create_engine
-from sourced.ml.transformers.basic import ParquetSaver, ParquetLoader, Collector, First, \
+from sourced.ml.transformers import ParquetSaver, ParquetLoader, Collector, First, \
      Identity, FieldsSelector, Repartitioner, DzhigurdaFiles
 from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
 

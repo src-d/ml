@@ -1,4 +1,5 @@
 from io import StringIO
+from typing import Union, Tuple
 
 from sourced.ml.utils import PickleableLogger  # nopep8
 
@@ -41,15 +42,33 @@ class Transformer(PickleableLogger):
         path.reverse()
         return path
 
-    def link(self, transformer):
-        self._children.append(transformer)
-        transformer._parent = self
-        return transformer
+    def link(self, *transformer: "Transformer") -> Union[Tuple["Transformer"], "Transformer"]:
+        def link_one(t: Transformer) -> Transformer:
+            self._children.append(t)
+            t._parent = self
+            return t
 
-    def unlink(self, transformer):
-        self._children.remove(transformer)
-        transformer._parent = None
+        if len(transformer) == 1:
+            return link_one(transformer[0])
+        return tuple(link_one(t) for t in transformer)
+
+    def unlink(self, *transformer: "Transformer"):
+        for t in transformer:
+            self._children.remove(t)
+            t._parent = None
         return self
+
+    def __rshift__(self, other):
+        """Shortcut for link"""
+        if isinstance(other, (list, tuple)):
+            return self.link(*other)
+        return self.link(other)
+
+    def __lshift__(self, other):
+        """Shortcut for unlink"""
+        if isinstance(other, (list, tuple)):
+            return self.unlink(*other)
+        return self.unlink(other)
 
     def _explode(self, head, context):
         if context[-1] is not self:
@@ -128,3 +147,32 @@ class Transformer(PickleableLogger):
 
     def __call__(self, head):
         raise NotImplementedError()
+
+
+class Execute(Transformer):
+    """
+    Special transformer to execute all the pipeline.
+    As soon as one links anything to this Transformer it call execute() for the pipeline.
+    It is not possible to link anything to this transformer.
+    """
+
+    def __init__(self, head=None, explain=None, **kwargs):
+        super().__init__(explain, **kwargs)
+        self.head = head
+        self._real_parent = None
+
+    @property
+    def _parent(self):
+        return self._real_parent
+
+    @_parent.setter
+    def _parent(self, value: Transformer):
+        self._real_parent = value
+        if value is not None:
+            value.execute(self.head)
+
+    def link(self, *transformer: "Transformer") -> Union[Tuple["Transformer"], "Transformer"]:
+        raise AssertionError("It is not possible to link anything after Leaf.")
+
+    def __call__(self, head):
+        return head

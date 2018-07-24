@@ -1,6 +1,6 @@
 import unittest
 
-from sourced.ml.transformers import Transformer
+from sourced.ml.transformers.transformer import Transformer, Execute
 
 
 class DumpTransformer(Transformer):
@@ -8,12 +8,13 @@ class DumpTransformer(Transformer):
 
     def __init__(self, id, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        global transformer_id
         self.id = id
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, head):
         DumpTransformer.call_ids.append(self.id)
-        return self.id
+        if head is not None:
+            DumpTransformer.call_ids.append(head)
+        return None
 
 
 class TransformerTest(unittest.TestCase):
@@ -75,6 +76,45 @@ class TransformerTest(unittest.TestCase):
         self.assertIsNone(t.parent)
         self.assertEqual(t2.children, tuple())
 
+    def test_link(self):
+        t = Transformer(False)
+        t2 = Transformer(True)
+        t2.link(t)
+        self.assertEqual(t.parent, t2)
+        self.assertEqual(t2.children, (t,))
+
+    def test_lshift(self):
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+        t3 >> t2 >> t1
+        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.parent, t2)
+        self.assertEqual(t2.children, (t1,))
+        self.assertEqual(t2.parent, t3)
+        self.assertEqual(t3.children, (t2,))
+        self.assertEqual(t3.parent, None)
+
+        t2 << t1
+        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.parent, None)
+        self.assertEqual(t2.children, tuple())
+        self.assertEqual(t2.parent, t3)
+        self.assertEqual(t3.children, (t2,))
+        self.assertEqual(t3.parent, None)
+
+    def test_rshift(self):
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+        t3 >> t2 >> t1
+        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.parent, t2)
+        self.assertEqual(t2.children, (t1,))
+        self.assertEqual(t2.parent, t3)
+        self.assertEqual(t3.children, (t2,))
+        self.assertEqual(t3.parent, None)
+
     def test_path(self):
         self.assertEqual(self.pipeline_linear.path(), self.transformers_linear)
         self.assertEqual([t.id for t in self.pipeline_tree.path()], [0, 2, 5, 6])
@@ -122,6 +162,15 @@ class TransformerTest(unittest.TestCase):
             DumpTransformer.call_ids = []
             t.execute()
             self.assertEqual(expected[t.id], set(DumpTransformer.call_ids))
+
+    def test_execute_link(self):
+        DumpTransformer.call_ids = []
+        t1 = DumpTransformer(1)
+        t2 = DumpTransformer(2)
+        t3 = DumpTransformer(3)
+
+        t1 >> t2 >> t3 >> Execute("A")
+        self.assertEqual(DumpTransformer.call_ids, [1, "A", 2, 3])
 
     def test_graph(self):
         import io
