@@ -3,12 +3,16 @@ import logging
 import sys
 import os
 import shutil
+import tempfile
 import unittest
 from contextlib import contextmanager
 from io import StringIO
 
 from modelforge.registry import dump_model
 import sourced.ml.tests.models as paths
+
+
+cache_dir = os.path.join(tempfile.gettempdir(), "ml-test-dump")
 
 
 @contextmanager
@@ -73,8 +77,8 @@ Matrix: shape: (304, 304) non-zero: 16001
 """
 
     def tearDown(self):
-        if os.path.exists("/tmp/ml-test-dump"):
-            shutil.rmtree("/tmp/ml-test-dump")
+        if os.path.exists(cache_dir):
+            shutil.rmtree(cache_dir)
 
     def test_id2vec(self):
         with captured_output() as (out, _, _):
@@ -102,7 +106,7 @@ Matrix: shape: (304, 304) non-zero: 16001
     def _get_args(input):
         return argparse.Namespace(input=input, backend=None, args=None, username="",
                                   password="", index_repo="https://github.com/src-d/models",
-                                  cache="/tmp/ml-test-dump", signoff=False, log_level="WARNING")
+                                  cache=cache_dir, signoff=False, log_level="WARNING")
 
 
 if __name__ == "__main__":

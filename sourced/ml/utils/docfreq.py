@@ -4,7 +4,7 @@ from sourced.ml.transformers import BagFeatures2DocFreq, Uast2BagFeatures
 from sourced.ml.models import OrderedDocumentFrequencies
 
 
-def create_or_load_ordered_df(args, ndocs: int, bag_features: Uast2BagFeatures):
+def create_or_load_ordered_df(args, ndocs: int=None, bag_features: Uast2BagFeatures=None):
     """
     Returns a preexisting OrderedDocumentFrequencies model from docfreq_in, or generates one
     from the flattened bags of features using args and saves it to docfreq_out.
@@ -21,6 +21,9 @@ def create_or_load_ordered_df(args, ndocs: int, bag_features: Uast2BagFeatures):
     if args.docfreq_in:
         log.info("Loading ordered docfreq model from %s ...", args.docfreq_in)
         return OrderedDocumentFrequencies().load(args.docfreq_in)
+    elif ndocs is None or bag_features is None:
+        log.error("[IN] only mode, please supply an ordered docfreq model")
+        raise ValueError
     log.info("Calculating the document frequencies, hold tight ...")
     df = bag_features \
         .link(BagFeatures2DocFreq()) \

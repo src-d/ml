@@ -7,25 +7,60 @@ from pyspark.sql import DataFrame, functions
 from sourced.ml.extractors.helpers import filter_kwargs
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
-from sourced.ml.utils import EngineConstants, get_spark_memory_config, \
-    create_engine, create_spark, SparkDefault
+from sourced.ml.utils import EngineConstants, get_spark_memory_config, create_engine, \
+    create_spark, SparkDefault
 
 
 class Repartitioner(Transformer):
-    def __init__(self, partitions: int, shuffle: bool=False, **kwargs):
+    """
+    Repartitioner uses one of the three ways to split an RDD into partitions:
+    1. coalesce() if shuffle=False, keymap=None
+    2. repartition() if shuffle=True, keymap=None
+    3. partitionBy() if keymap is not None
+    """
+    def __init__(self, partitions: int, shuffle: bool=False, keymap: callable=None, **kwargs):
         super().__init__(**kwargs)
         self.partitions = partitions
         self.shuffle = shuffle
+        self.keymap = keymap
 
     def __call__(self, head: RDD):
-        return head.coalesce(self.partitions, self.shuffle)
+        if self.keymap is None:
+            return head.coalesce(self.partitions, self.shuffle)
+        # partitionBy the key extracted using self.keymap
+        if self.keymap is not False:
+            # user knows what they are doing
+            head = head.map(lambda x: (self.keymap(x), x))
+        return head \
+            .partitionBy(self.partitions) \
+            .map(lambda x: x[1])
 
     @staticmethod
-    def maybe(partitions: Union[int, None], shuffle: bool=False, multiplier: int=1):
+    def maybe(partitions: Union[int, None], shuffle: bool=False, keymap: callable=None,
+              multiplier: int=1):
         if partitions is not None:
-            return Repartitioner(partitions * multiplier, shuffle)
+            return Repartitioner(partitions * multiplier, shuffle=shuffle, keymap=keymap)
         else:
             return Identity()
+
+
+class PartitionSelector(Transformer):
+    """
+    PartitionSelector return the partition by specific index.
+    """
+    def __init__(self, partition_index: int, **kwargs):
+        super().__init__(**kwargs)
+        self.partition_index = partition_index
+
+    def __call__(self, head: RDD):
+        index = self.partition_index
+
+        def partition_filter(split_index, part):
+            if split_index == index:
+                for row in part:
+                    yield row
+
+        return head.mapPartitionsWithIndex(partition_filter, True)
 
 
 class CsvSaver(Transformer):
@@ -71,6 +106,11 @@ class Collector(Transformer):
         return head.collect()
 
 
+class Distinct(Transformer):
+    def __call__(self, head: RDD):
+        return head.distinct()
+
+
 class First(Transformer):
     def __call__(self, head: RDD):
         return head.first()
@@ -106,6 +146,9 @@ class Cacher(Transformer):
             return Cacher(persistence)
         else:
             return Identity()
+
+    def unpersist(self):
+        self.head.unpersist()
 
 
 class Ignition(Transformer):

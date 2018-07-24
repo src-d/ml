@@ -10,10 +10,11 @@ from sourced.ml.transformers import TFIDF
 
 class TFIDFTests(unittest.TestCase):
     def setUp(self):
-        self.sc = create_spark_for_test()
+        self.session = create_spark_for_test()
 
         df = DocumentFrequencies().construct(10, {str(i): i for i in range(1, 5)})
-        self.tfidf = TFIDF(df=df)
+        self.docs = df.docs
+        self.tfidf = TFIDF(df, df.docs, self.session.sparkContext)
 
         class Columns:
             """
@@ -28,12 +29,12 @@ class TFIDFTests(unittest.TestCase):
     def test_call(self):
         baseline = {
             Row(d=dict(i)["d"], t=dict(i)["t"],
-                v=log_tf_log_idf(dict(i)["v"], int(dict(i)["t"]), self.tfidf.df.docs))
+                v=log_tf_log_idf(dict(i)["v"], int(dict(i)["t"]), self.docs))
             for i in tfidf_data.term_freq_result
         }
 
         result = self.tfidf(
-            self.sc.sparkContext
+            self.session.sparkContext
                 .parallelize(tfidf_data.term_freq_result)
                 .map(lambda x: Row(**dict(x)))).collect()
         self.assertEqual(set(result), baseline)

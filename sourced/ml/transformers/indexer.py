@@ -12,19 +12,16 @@ class Indexer(Transformer):
     index. The mapping is created by collecting all the unique values, sorting them and finally
     enumerating. Use value_to_index or [] to get index value.
     """
-    def __init__(self, column: Union[int, str], column2id: Union[Dict[str, int], None]=None,
-                 cached_index_path: str=None, **kwargs):
+    def __init__(self, column: Union[int, str], column2id: Dict[str, int]=None, **kwargs):
         """
         :param column: column index or its name in pyspark.RDD for indexing.
+        :param column2id: precomputed mapping between column values to integers.
         :param kwargs:
         """
         super().__init__(**kwargs)
         self.column = column
         self._value_to_index = column2id
-        self.cached_index_path = cached_index_path
-        if self.cached_index_path:
-            self._log.info("Loading the index from %s", self.cached_index_path)
-            self._value_to_index = DocumentFrequencies().load(source=self.cached_index_path)
+        self._values = None
 
     def __getitem__(self, key: Union[int, str]):
         """
@@ -52,10 +49,11 @@ class Indexer(Transformer):
         return self._value_to_index
 
     def values(self):
-        arr = [None] * len(self)
-        for k, v in self.value_to_index.items():
-            arr[v] = k
-        return arr
+        if self._values is None:
+            self._values = [None] * len(self)
+            for k, v in self.value_to_index.items():
+                self._values[v] = k
+        return self._values
 
     def calculate_value_to_index(self, rdd: RDD):
         column_name = self.column
@@ -83,7 +81,7 @@ class Indexer(Transformer):
         column_name = self.column
         if self._value_to_index is None:
             self.calculate_value_to_index(rdd)
-        column2id = self._value_to_index
+        column2id = rdd.context.broadcast(self._value_to_index)
 
         def index_column(row):
             """
@@ -96,8 +94,9 @@ class Indexer(Transformer):
             if isinstance(column_name, str):
                 assert isinstance(row, Row)
                 row_dict = row.asDict()
-                row_dict[column_name] = column2id[row_dict[column_name]]
+                row_dict[column_name] = column2id.value[row_dict[column_name]]
                 return Row(**row_dict)
-            return row[:column_name] + (column2id[row[column_name]],) + row[column_name + 1:]
-
-        return rdd.map(index_column)
+            return row[:column_name] + (column2id.value[row[column_name]],) + row[column_name + 1:]
+        indexed_rdd = rdd.map(index_column)
+        column2id.unpersist(blocking=True)
+        return indexed_rdd
