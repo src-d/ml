@@ -36,6 +36,7 @@ class Uast2BagFeatures(Transformer):
         token = "token"
         document = "document"
         value = "value"
+        repository_id = "repository_id"
 
     def __init__(self, extractors: Iterable[BagsExtractor], **kwargs):
         super().__init__(**kwargs)

@@ -58,7 +58,7 @@ matrix:
   fast_finish: true
 before_script:
   - docker run -d --privileged -p 9432:9432 --name bblfshd bblfsh/bblfshd
-  - docker exec -it bblfshd bblfshctl driver install python bblfsh/python-driver
+  - docker exec -it bblfshd bblfshctl driver install java bblfsh/java-driver
 script:
   - (eval "$SCRIPT")
 notifications:

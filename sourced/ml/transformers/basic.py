@@ -28,12 +28,12 @@ class Repartitioner(Transformer):
         if self.keymap is None:
             return head.coalesce(self.partitions, self.shuffle)
         # partitionBy the key extracted using self.keymap
-        if self.keymap is not False:
+        else:
             # user knows what they are doing
-            head = head.map(lambda x: (self.keymap(x), x))
-        return head \
-            .partitionBy(self.partitions) \
-            .map(lambda x: x[1])
+            return head \
+                .map(lambda x: (self.keymap(x), x)) \
+                .partitionBy(self.partitions) \
+                .map(lambda x: x[1])
 
     @staticmethod
     def maybe(partitions: Union[int, None], shuffle: bool=False, keymap: callable=None,
@@ -289,17 +289,21 @@ class UastDeserializer(Transformer):
         return rows.flatMap(self.deserialize_uast)
 
     def deserialize_uast(self, row: Row):
-        if not row[EngineConstants.Columns.Uast]:
-            return
-        row_dict = row.asDict()
-        row_dict[EngineConstants.Columns.Uast] = []
-        for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
-            try:
-                row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
-            except:  # noqa
-                self._log.error("\nBabelfish Error: Failed to parse uast for document %s for uast "
-                                "#%s" % (row[Uast2BagFeatures.Columns.document], i))
-        yield Row(**row_dict)
+        try:
+            if not row[EngineConstants.Columns.Uast]:
+                return
+            row_dict = row.asDict()
+            row_dict[EngineConstants.Columns.Uast] = []
+            for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
+                try:
+                    row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
+                    print("---.-.-.-.--..-.-.--.-.- : FINALLY PARSED !!")
+                except:  # noqa
+                    self._log.error("\nBabelfish Error: Failed to parse uast #%s for repository "
+                                    "%s" % (i, row[Uast2BagFeatures.Columns.repository_id]))
+            yield Row(**row_dict)
+        except ValueError:
+            self._log.error("The RDD provided does not include uasts.")
 
 
 def create_parquet_loader(session_name, repositories,
