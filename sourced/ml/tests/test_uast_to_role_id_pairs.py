@@ -15,9 +15,9 @@ class Uast2NodesBagTest(unittest.TestCase):
         correct = [('ModuleSpec', 'BODY | IF | THEN'),
                    ('ModuleSpec', 'IDENTIFIER | EXPRESSION | CALL | CALLEE'),
                    ('ModuleSpec', 'STATEMENT | INCOMPLETE'),
-                   ('__package__', 'BINARY | EXPRESSION | CONDITION'),
-                   ('__spec__', 'BINARY | EXPRESSION | CONDITION'),
+                   ('__package__', 'BOOLEAN | EXPRESSION | IF | CONDITION | INCOMPLETE'),
                    ('__spec__', 'BODY | IF | THEN'),
+                   ('__spec__', 'BOOLEAN | EXPRESSION | IF | CONDITION | INCOMPLETE'),
                    ('collections', 'IDENTIFIER | IMPORT | PATHNAME'),
                    ('modelforge.logs', 'IDENTIFIER | IMPORT | PATHNAME'),
                    ('modules', 'RIGHT | EXPRESSION | INCOMPLETE'),
@@ -28,9 +28,9 @@ class Uast2NodesBagTest(unittest.TestCase):
                    ('setup_logging', 'IDENTIFIER | IMPORT | PATHNAME'),
                    ('sys', 'IDENTIFIER | IMPORT | PATHNAME'),
                    ('sys', 'RIGHT | EXPRESSION | INCOMPLETE'),
-                   ('utmain', 'BINARY | EXPRESSION | CONDITION'),
-                   ('utmain', 'BINARY | EXPRESSION | CONDITION'),
                    ('utmain', 'BODY | IF | THEN'),
+                   ('utmain', 'BOOLEAN | EXPRESSION | IF | CONDITION | INCOMPLETE'),
+                   ('utmain', 'BOOLEAN | EXPRESSION | IF | CONDITION | INCOMPLETE'),
                    ('utmain', 'FILE | MODULE'),
                    ('utmain', 'STATEMENT | INCOMPLETE')]
         res = sorted(self.uast2role_id_pairs(self.uast))
