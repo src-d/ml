@@ -88,7 +88,6 @@ class DocumentFrequenciesTests(unittest.TestCase):
         df_greatest = df.greatest(506)
         self.assertEqual(df_greatest._df, df_greatest_true)
 
-
     def test_write(self):
         buffer = BytesIO()
         self.model.save(buffer)
