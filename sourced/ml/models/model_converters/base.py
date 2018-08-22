@@ -29,14 +29,13 @@ class Model2Base(PickleableLogger):
         self.num_processes = multiprocessing.cpu_count() if num_processes == 0 else num_processes
         self.overwrite_existing = overwrite_existing
 
-    def convert(self, models_path: List[str], destdir: str, pattern: str="**/*.asdf") -> int:
+    def convert(self, models_path: List[str], destdir: str) -> int:
         """
         Performs the model -> model conversion. Runs the conversions in a pool of processes.
 
-        :param srcdir: List of Models path.
+        :param models_path: List of Models path.
         :param destdir: The directory where to store the models. The directory structure is \
                         preserved.
-        :param pattern: glob pattern for the files.
         :return: The number of converted files.
         """
         files = list(models_path)
@@ -114,12 +113,3 @@ class Model2Base(PickleableLogger):
 
     def _get_log_name(self):
         return "%s2%s" % (self.MODEL_FROM_CLASS.NAME, self.MODEL_TO_CLASS.NAME)
-
-    def _get_model_path(self, path):
-        """
-        By default, we name the converted files exactly the same.
-
-        :param path: The path relative to ``srcdir``.
-        :return: The target path for the converted model.
-        """
-        return path

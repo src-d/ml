@@ -30,6 +30,7 @@ class MainTests(unittest.TestCase):
             "preprocrepos": "preprocess_repos",
             "merge-df": "merge_df",
             "merge-coocc": "merge_coocc",
+            "merge-bow": "merge_bow",
         }
         parser = main.get_parser()
         subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])

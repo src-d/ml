@@ -9,3 +9,4 @@ from sourced.ml.models.topics import Topics
 from sourced.ml.models.quant import QuantizationLevels
 
 from sourced.ml.models.model_converters.merge_df import MergeDocFreq
+from sourced.ml.models.model_converters.merge_bow import MergeBOW

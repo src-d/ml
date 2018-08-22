@@ -72,8 +72,7 @@ class Model2BaseTests(unittest.TestCase):
     def test_convert(self):
         converter = Model2Test(num_processes=2)
         with tempfile.TemporaryDirectory() as tmpdir:
-            status = converter.convert(os.listdir(os.path.dirname(__file__)), tmpdir,
-                                       pattern="**/*.py")
+            status = converter.convert(os.listdir(os.path.dirname(__file__)), tmpdir)
             self.assertGreater(status, 20)
 
     def test_process_entry(self):

@@ -297,7 +297,6 @@ class UastDeserializer(Transformer):
             for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
                 try:
                     row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
-                    print("---.-.-.-.--..-.-.--.-.- : FINALLY PARSED !!")
                 except:  # noqa
                     self._log.error("\nBabelfish Error: Failed to parse uast #%s for repository "
                                     "%s" % (i, row[Uast2BagFeatures.Columns.repository_id]))

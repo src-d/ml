@@ -134,14 +134,11 @@ class BasicTransformerTest(unittest.TestCase):
         self.assertIn("uast", df_uast.columns)
 
     def test_uast_deserializer(self):
-        from bblfsh import Node
         df = HeadFiles()(self.engine)
         df_uast = UastExtractor()(df)
-        print("-----------  0   ------------ :", Node.FromString(df_uast.first().uast[0]))
         uasts_empty = list(UastDeserializer().deserialize_uast(df.first()))
         uasts = list(UastDeserializer().deserialize_uast(df_uast.first()))
         self.assertTrue(len(uasts_empty) == 0)
-        print("---------   1   ---------- : ", uasts)
         self.assertTrue(len(uasts) > 0)
 
     def test_csv_saver(self):

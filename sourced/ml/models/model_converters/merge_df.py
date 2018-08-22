@@ -1,8 +1,5 @@
 from collections import defaultdict
 import os
-from typing import Union
-
-from modelforge import Model
 
 from sourced.ml.models.model_converters.base import Model2Base
 from sourced.ml.models.df import DocumentFrequencies
@@ -16,7 +13,8 @@ class MergeDocFreq(Model2Base):
     MODEL_FROM_CLASS = DocumentFrequencies
     MODEL_TO_CLASS = DocumentFrequencies
 
-    def __init__(self, min_docfreq, vocabulary_size, ordered=False, *args, **kwargs):
+    def __init__(self, min_docfreq: int, vocabulary_size: int, ordered: bool=False,
+                 *args, **kwargs):
         super().__init__(num_processes=1, *args, **kwargs)
         self.ordered = ordered
         self.min_docfreq = min_docfreq
@@ -24,7 +22,7 @@ class MergeDocFreq(Model2Base):
         self._df = defaultdict(int)
         self._docs = 0
 
-    def convert_model(self, model: Model) -> Union[Model, None]:
+    def convert_model(self, model: DocumentFrequencies) -> None:
         for word, freq in model:
             self._df[word] += freq
         self._docs += model.docs
