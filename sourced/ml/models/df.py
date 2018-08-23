@@ -120,7 +120,7 @@ Number of documents: %d""" % (
             border_freq_indexes = freqs == border_freq
             border_keys = keys[border_freq_indexes]
             border_keys.sort()
-            border_keys = border_keys[:len(border_keys) + max_size - freqs.shape[0]]
+            border_keys = border_keys[:max_size - freqs.shape[0]]
             df = dict(zip(keys[~border_freq_indexes], freqs[~border_freq_indexes]))
             df.update({key: border_freq for key in border_keys})
         else:
