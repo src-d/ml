@@ -103,31 +103,28 @@ Number of documents: %d""" % (
         self._log.info("Pruning to max %d size", max_size)
         pruned = type(self)()
         pruned._docs = self.docs
-        freqs = numpy.fromiter(self._df.values(), numpy.int32, len(self))
+        freqs = numpy.fromiter(self._df.values(), dtype=numpy.int32, count=len(self))
+        keys = numpy.array(list(self._df.keys()), dtype=object)
         chosen = numpy.argpartition(freqs, len(freqs) - max_size)[len(freqs) - max_size:]
+        border_freq = freqs[chosen].min()
+        chosen = freqs >= border_freq
+        # argpartition can leave some of the elements with freq == border_freq outside
+        # so next step ensures that we include everything.
+        freqs = freqs[chosen]
+        keys = keys[chosen]
         # we need to be deterministic at the cutoff frequency
         # argpartition returns random samples every time
         # so we treat words with the cutoff frequency separately
-        chosen.sort()
-        border_freq = freqs[chosen].min()
-        df = {}
-        border_keys = []
-        chosen_pos = 0
-        chosen_val = chosen[0]
-        for i, key in enumerate(self._df):
-            if i != chosen_val:
-                continue
-            if chosen_val > border_freq:
-                df[key] = chosen_val
-            else:
-                border_keys.append(key)
-            chosen_pos += 1
-            if chosen_pos >= len(chosen):
-                break
-            chosen_val = chosen[chosen_pos]
-        border_keys.sort()
-        for k in border_keys[:max_size - len(df)]:
-            df[k] = border_freq
+        if max_size != freqs.shape[0]:
+            assert max_size < freqs.shape[0]
+            border_freq_indexes = freqs == border_freq
+            border_keys = keys[border_freq_indexes]
+            border_keys.sort()
+            border_keys = border_keys[:len(border_keys) + max_size - freqs.shape[0]]
+            df = dict(zip(keys[~border_freq_indexes], freqs[~border_freq_indexes]))
+            df.update({key: border_freq for key in border_keys})
+        else:
+            df = dict(zip(keys, freqs))
         pruned._df = df
         self._log.info("Size: %d -> %d", len(self), len(pruned))
         pruned._meta = self.meta
