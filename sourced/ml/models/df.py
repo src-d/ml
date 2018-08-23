@@ -103,18 +103,20 @@ Number of documents: %d""" % (
         self._log.info("Pruning to max %d size", max_size)
         pruned = type(self)()
         pruned._docs = self.docs
-        keys, freqs = list(zip(*self._df.items()))
-        freqs = numpy.array(freqs, numpy.int32)
-        keys = numpy.array(keys)
+        freqs = numpy.fromiter(self._df.values(), dtype=numpy.int32, count=len(self))
+        keys = numpy.array(list(self._df.keys()), dtype=object)
         chosen = numpy.argpartition(freqs, len(freqs) - max_size)[len(freqs) - max_size:]
         border_freq = freqs[chosen].min()
-        indx = freqs >= border_freq
-        freqs = freqs[indx]
-        keys = keys[indx]
+        chosen = freqs >= border_freq
+        # argpartition can leave some of the elements with freq == border_freq outside
+        # so next step ensures that we include everything.
+        freqs = freqs[chosen]
+        keys = keys[chosen]
         # we need to be deterministic at the cutoff frequency
         # argpartition returns random samples every time
         # so we treat words with the cutoff frequency separately
         if max_size != freqs.shape[0]:
+            assert max_size < freqs.shape[0]
             border_freq_indexes = freqs == border_freq
             border_keys = keys[border_freq_indexes]
             border_keys.sort()
