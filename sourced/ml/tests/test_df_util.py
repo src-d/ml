@@ -26,7 +26,7 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
             .link(UastRow2Document())
         ndocs = uast_extractor.link(Counter()).execute()
         uast_extractor = uast_extractor.link(UastDeserializer()) \
-            .link(Uast2BagFeatures([IdentifiersBagExtractor()]))
+            .link(Uast2BagFeatures(IdentifiersBagExtractor()))
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = os.path.join(tmpdir, "df.asdf")
             args = argparse.Namespace(docfreq_in=None, docfreq_out=tmp_path, min_docfreq=1,
@@ -44,5 +44,5 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
             uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
                 .link(UastRow2Document()) \
                 .link(UastDeserializer()) \
-                .link(Uast2BagFeatures([IdentifiersBagExtractor()]))
+                .link(Uast2BagFeatures(IdentifiersBagExtractor()))
             create_or_load_ordered_df(argparse.Namespace(docfreq_in=None), None, uast_extractor)

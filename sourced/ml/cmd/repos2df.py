@@ -26,7 +26,7 @@ def repos2df(args):
     if args.quant:
         create_or_apply_quant(args.quant, extractors, uast_extractor)
     df = uast_extractor \
-        .link(Uast2BagFeatures(extractors)) \
+        .link(Uast2BagFeatures(*extractors)) \
         .link(BagFeatures2DocFreq()) \
         .execute()
     log.info("Writing docfreq model to %s", args.docfreq_out)

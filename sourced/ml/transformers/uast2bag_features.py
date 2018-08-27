@@ -1,4 +1,4 @@
-from typing import Iterable, Union
+from typing import Union
 
 from pyspark import RDD, Row
 from pyspark.sql import DataFrame
@@ -29,9 +29,9 @@ class UastRow2Document(Transformer):
 
 
 class Uast2Features(Transformer):
-    def __init__(self, extractors: Union[Extractor, Iterable[Extractor]], **kwargs):
+    def __init__(self, *extractors: Extractor, **kwargs):
         super().__init__(**kwargs)
-        self.extractors = [extractors] if isinstance(extractors, Extractor) else extractors
+        self.extractors = extractors
 
     def __call__(self, rows: RDD):
         return rows.flatMap(self.process_row)
