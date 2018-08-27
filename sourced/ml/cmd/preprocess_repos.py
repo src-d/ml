@@ -2,8 +2,7 @@ import os
 import logging
 from uuid import uuid4
 
-from sourced.ml.transformers import FieldsSelector, Moder, DzhigurdaFiles, ParquetSaver, \
-    create_uast_source
+from sourced.ml.transformers import FieldsSelector, Moder, ParquetSaver, create_uast_source
 from sourced.ml.utils.engine import pipeline_graph, pause
 
 
@@ -17,8 +16,7 @@ def preprocess_repos(args):
         return 1
     if not args.config:
         args.config = []
-    root, start_point = create_uast_source(args, session_name,
-                                           select=lambda: DzhigurdaFiles(args.dzhigurda))
+    root, start_point = create_uast_source(args, session_name)
 
     start_point \
         .link(Moder(args.mode)) \

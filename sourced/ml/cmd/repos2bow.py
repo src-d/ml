@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sourced.ml.extractors import create_extractors_from_args
 from sourced.ml.transformers import UastDeserializer, BagFeatures2TermFreq, Uast2BagFeatures, \
-    HeadFiles, TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, \
+    TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, \
     Repartitioner, PartitionSelector, Transformer, Distinct, Collector, FieldsSelector
 from sourced.ml.utils import EngineConstants
 from sourced.ml.utils.engine import pipeline_graph, pause
@@ -13,13 +13,13 @@ from sourced.ml.models import DocumentFrequencies
 
 
 @pause
-def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transformer=None,
+def repos2bow_template(args, cache_hook: Transformer=None,
                        save_hook: Transformer=None):
 
     log = logging.getLogger("repos2bow")
     extractors = create_extractors_from_args(args)
     session_name = "repos2bow-%s" % uuid4()
-    root, start_point = create_uast_source(args, session_name, select=select)
+    root, start_point = create_uast_source(args, session_name)
     log.info("Loading the document index from %s ...", args.cached_index_path)
     docfreq = DocumentFrequencies().load(source=args.cached_index_path)
     document_index = {key: int(val) for (key, val) in docfreq}
@@ -106,11 +106,11 @@ def repos2bow(args):
     return repos2bow_template(args)
 
 
-def repos2bow_index_template(args, select=HeadFiles):
+def repos2bow_index_template(args):
     log = logging.getLogger("repos2bow_index")
     extractors = create_extractors_from_args(args)
     session_name = "repos2bow_index_features-%s" % uuid4()
-    root, start_point = create_uast_source(args, session_name, select=select)
+    root, start_point = create_uast_source(args, session_name)
     uast_extractor = start_point.link(Moder(args.mode)) \
         .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
         .link(UastRow2Document()) \
