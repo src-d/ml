@@ -58,6 +58,36 @@ class DocumentFrequenciesTests(unittest.TestCase):
         df2 = self.model.greatest(100)._df
         self.assertEqual(df1, df2)
 
+    def test_greatest2(self):
+        df = DocumentFrequencies().construct(100, {str(x): x for x in range(1000)})
+        df_greatest_true = {str(x): x for x in range(500, 1000)}
+        df_greatest = df.greatest(500)
+        self.assertEqual(df_greatest._df, df_greatest_true)
+
+        df._df["500a"] = 500
+        df._df["500b"] = 500
+        df._df["500c"] = 500
+        df._df["500d"] = 500
+        df._df["500e"] = 500
+
+        df_greatest = df.greatest(500)
+        self.assertEqual(df_greatest._df, df_greatest_true)
+
+        df_greatest_true["500a"] = 500
+        df_greatest = df.greatest(501)
+        self.assertEqual(df_greatest._df, df_greatest_true)
+
+        df_greatest_true["500b"] = 500
+        df_greatest_true["500c"] = 500
+        df_greatest_true["500d"] = 500
+        df_greatest_true["500e"] = 500
+        df_greatest = df.greatest(505)
+        self.assertEqual(df_greatest._df, df_greatest_true)
+
+        df_greatest_true["499"] = 499
+        df_greatest = df.greatest(506)
+        self.assertEqual(df_greatest._df, df_greatest_true)
+
     def test_write(self):
         buffer = BytesIO()
         self.model.save(buffer)

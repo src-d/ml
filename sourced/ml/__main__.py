@@ -36,11 +36,10 @@ def get_parser() -> argparse.ArgumentParser:
     preprocessing_parser.add_argument("-x", "--mode", choices=Moder.Options.__all__,
                                       default="file", help="What to extract from repositories.")
     args.add_repo2_args(preprocessing_parser)
-    args.add_dzhigurda_arg(preprocessing_parser)
     preprocessing_parser.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the parquet files with bag batches.")
-    default_fields = ("blob_id", "repository_id", "content", "path", "commit_hash", "uast")
+    default_fields = ("blob_id", "repository_id", "content", "path", "commit_hash", "uast", "lang")
     preprocessing_parser.add_argument(
         "-f", "--fields", nargs="+", default=default_fields,
         help="Fields to save.")

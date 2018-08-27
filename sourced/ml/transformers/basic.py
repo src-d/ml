@@ -1,6 +1,8 @@
+import argparse
 import logging
 from typing import Union
 
+from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
 
@@ -177,6 +179,7 @@ class DzhigurdaFiles(Transformer):
             chosen = head_ref.all_reference_commits
         elif self.dzhigurda == 0:
             # Use only the first commit on a reference.
+            # This case is completely the same with HeadFiles Transformer
             chosen = head_ref.commits
         else:
             commits = head_ref.all_reference_commits
@@ -205,32 +208,40 @@ class Counter(Transformer):
         return head.countApproxDistinct()
 
 
+class LanguageExtractor(Transformer):
+    def __call__(self, files: BlobsDataFrame) -> DataFrame:
+        if not isinstance(files, BlobsDataFrame):
+            raise TypeError("Argument type is not BlobsDataFrame. "
+                            "Language extraction can not be performed.")
+        return files \
+            .dropDuplicates(("blob_id",)) \
+            .filter("is_binary = 'false'") \
+            .classify_languages()
+
+
 class LanguageSelector(Transformer):
-    def __init__(self, languages: Union[list, tuple], blacklist=False, **kwargs):
+    def __init__(self, languages: list, blacklist=False, **kwargs):
         super().__init__(**kwargs)
         self.languages = languages
         self.blacklist = blacklist
 
-    def __call__(self, files: DataFrame) -> DataFrame:
-        files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
-        classified = files.classify_languages()
-        if not self.blacklist:
-            lang_filter = classified.lang == self.languages[0]
-            for lang in self.languages[1:]:
-                lang_filter |= classified.lang == lang
-        else:
-            lang_filter = classified.lang != self.languages[0]
-            for lang in self.languages[1:]:
-                lang_filter &= classified.lang != lang
-        filtered_by_lang = classified.filter(lang_filter)
-        return filtered_by_lang
+    def __call__(self, files: BlobsWithLanguageDataFrame) -> DataFrame:
+        return files[files.lang.isin(self.languages) != self.blacklist]
+
+    @staticmethod
+    def maybe(languages, blacklist):
+        if languages is None:
+            return Identity()
+        return LanguageSelector(languages, blacklist)
 
 
 class UastExtractor(Transformer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def __call__(self, files: DataFrame) -> DataFrame:
+    def __call__(self, files: Union[BlobsDataFrame, BlobsWithLanguageDataFrame]) -> DataFrame:
+        if not isinstance(files, (BlobsDataFrame, BlobsWithLanguageDataFrame)):
+            raise TypeError("Argument type should be BlobsDataFrame or BlobsWithLanguageDataFrame")
         # if UAST is not extracted, returns an empty list that we filter out here
         return files.extract_uasts().where(functions.size(functions.col("uast")) > 0)
 
@@ -320,22 +331,28 @@ def create_parquet_loader(session_name, repositories,
     return parquet
 
 
-def create_uast_source(args, session_name, select=HeadFiles, language_selector=None,
-                       extract_uast=True):
+def create_file_source(args: argparse.Namespace, session_name: str):
     if args.parquet:
         parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
-        start_point = create_parquet_loader(session_name, **parquet_loader_args)
-        root = start_point
-        if extract_uast and "uast" not in [col.name for col in start_point.execute().schema]:
-            raise ValueError("The parquet files do not contain UASTs.")
+        root = create_parquet_loader(session_name, **parquet_loader_args)
+        file_source = root.link(LanguageSelector.maybe(languages=args.languages,
+                                                       blacklist=args.blacklist))
     else:
         engine_args = filter_kwargs(args.__dict__, create_engine)
-        root = create_engine(session_name, **engine_args)
-        if language_selector is None:
-            language_selector = LanguageSelector(languages=args.languages)
-        start_point = Ignition(root, explain=args.explain) \
-            .link(select()) \
-            .link(language_selector)
-        if extract_uast:
-            start_point = start_point.link(UastExtractor())
-    return root, start_point
+        root = Ignition(create_engine(session_name, **engine_args), explain=args.explain)
+        file_source = root.link(DzhigurdaFiles(args.dzhigurda))
+        if args.languages is not None:
+            file_source = file_source \
+                .link(LanguageExtractor()) \
+                .link(LanguageSelector(languages=args.languages, blacklist=args.blacklist))
+
+    return root, file_source
+
+
+def create_uast_source(args: argparse.Namespace, session_name: str):
+    root, file_source = create_file_source(args, session_name)
+    if args.parquet:
+        # Assume that we already have uast column inside, because we cannot convert parquet files
+        # back to sourced-engine format to extract UASTs.
+        return root, file_source
+    return root, file_source.link(UastExtractor())
