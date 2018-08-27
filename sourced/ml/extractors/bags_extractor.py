@@ -13,9 +13,6 @@ class Extractor(PickleableLogger):
     ALGORITHM = None  # algorithm class to extract from UAST
     OPTS = dict()  # cmdline args which are passed into __init__()
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def _get_log_name(self):
         return type(self).__name__
 
@@ -48,7 +45,7 @@ class BagsExtractor(Extractor):
         :param weight: TF-IDF will be multiplied by this weight to change importance of specific \
                       bag extractor
         """
-        super().__init__(algorithm=None, **kwargs)
+        super().__init__(**kwargs)
         if docfreq_threshold is None:
             docfreq_threshold = self.DEFAULT_DOCFREQ_THRESHOLD
         self.docfreq_threshold = docfreq_threshold
