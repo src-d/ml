@@ -36,7 +36,7 @@ class Uast2Features(Transformer):
     def __call__(self, rows: RDD):
         return rows.flatMap(self.process_row)
 
-    def _to_result(self, row: Row, name, feature):
+    def process_feature(self, row: Row, name, feature):
         new = row.asDict()
         new[name] = feature
         return new
@@ -45,7 +45,7 @@ class Uast2Features(Transformer):
         for uast in row[EngineConstants.Columns.Uast]:
             for extractor in self.extractors:
                 for feature in extractor.extract(uast):
-                    yield self._to_result(row, extractor.NAME, feature)
+                    yield self.process_feature(row, extractor.NAME, feature)
 
 
 class Uast2BagFeatures(Uast2Features):
@@ -57,5 +57,5 @@ class Uast2BagFeatures(Uast2Features):
         document = "document"
         value = "value"
 
-    def _to_result(self, row: Row, name, feature):
+    def process_feature(self, row: Row, name, feature):
         return (feature[0], row[self.Columns.document]), feature[1]

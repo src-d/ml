@@ -1,7 +1,6 @@
-from typing import Callable, Optional
-
 import bblfsh
 
+from sourced.ml.algorithms import Uast2RoleIdPairs, NoopTokenParser
 from sourced.ml.utils import PickleableLogger
 
 
@@ -11,13 +10,11 @@ class Extractor(PickleableLogger):
     It is a wrapper to use in `Uast2Features` Transformer in a pipeline.
     """
     NAME = None  # feature scheme name, should be overridden in the derived class.
+    ALGORITHM = None  # algorithm class to extract from UAST
     OPTS = dict()  # cmdline args which are passed into __init__()
 
-    def __init__(self, algorithm: Callable, name: Optional[str]=None, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if name is not None:
-            self.NAME = name
-        self.algorithm = algorithm
 
     def _get_log_name(self):
         return type(self).__name__
@@ -32,7 +29,7 @@ class Extractor(PickleableLogger):
         return result
 
     def extract(self, uast: bblfsh.Node):
-        yield from self.algorithm(uast)
+        yield from self.ALGORITHM(uast)
 
 
 class BagsExtractor(Extractor):
@@ -92,3 +89,8 @@ class BagsExtractor(Extractor):
 
     def uast_to_bag(self, uast):
         raise NotImplemented
+
+
+class RoleIdsExtractor(Extractor):
+    NAME = "roleids"
+    ALGORITHM = Uast2RoleIdPairs(token_parser=NoopTokenParser())

@@ -1,8 +1,7 @@
 import logging
 from uuid import uuid4
 
-from sourced.ml.algorithms import NoopTokenParser, Uast2RoleIdPairs
-from sourced.ml.extractors import Extractor
+from sourced.ml.extractors import RoleIdsExtractor
 from sourced.ml.transformers import UastDeserializer, Uast2Features, UastRow2Document, \
     CsvSaver, create_uast_source, Rower
 from sourced.ml.utils.engine import pipeline_graph, pause
@@ -12,8 +11,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 def repos2roles_and_ids(args):
     log = logging.getLogger("repos2roles_and_ids")
     session_name = "repos2roles_and_ids-%s" % uuid4()
-    token_parser = NoopTokenParser() if not args.split else None
-    extractor = Extractor(Uast2RoleIdPairs(None, token_parser), "roleids")
+    extractor = RoleIdsExtractor()
     root, start_point = create_uast_source(args, session_name)
 
     start_point \

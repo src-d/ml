@@ -1,7 +1,7 @@
 # flake8: noqa
 from sourced.ml.extractors.helpers import __extractors__, get_names_from_kwargs, \
     register_extractor, filter_kwargs, create_extractors_from_args
-from sourced.ml.extractors.bags_extractor import Extractor, BagsExtractor
+from sourced.ml.extractors.bags_extractor import Extractor, BagsExtractor, RoleIdsExtractor
 from sourced.ml.extractors.identifiers import IdentifiersBagExtractor
 from sourced.ml.extractors.literals import LiteralsBagExtractor
 from sourced.ml.extractors.uast_random_walk import UastRandomWalkBagExtractor
