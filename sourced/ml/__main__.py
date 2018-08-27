@@ -319,7 +319,7 @@ def get_parser() -> argparse.ArgumentParser:
         default=None, help="To keep only specific features, if not specified all will be kept.")
     # ------------------------------------------------------------------------
     id2role_eval = add_parser("id2role-eval",
-                              "Compare embedding quality on role prediction problem.")
+                              "Compare the embeddings quality on role prediction problem.")
     id2role_eval.set_defaults(handler=cmd.id2role_eval)
     id2role_eval.add_argument(
         "-m", "--models", required=True, nargs="+",

@@ -89,7 +89,7 @@ def id2role_eval(args):
     valid_tokens = list(set(df_ids) & common_tokens)
     df = df[df["identifier"].isin(valid_tokens)]
     # Count identifiers in dataset
-    log.info("Have embeddings only for {} tokens from {} in your dataset".format(
+    log.info("Have embeddings only for %d tokens from %d in your dataset" % (
         len(valid_tokens), len(df_ids)))
     df_unique = df.groupby("identifier").agg(lambda x: x.value_counts().index[0])
     df_unique["identifier"] = df_unique.index
@@ -97,14 +97,12 @@ def id2role_eval(args):
     vc = df["role"].value_counts()
     del df
     rare = set(vc[vc < 10].index)
-    log.info("{} rare roles excluded. ".format(len(rare)))
+    log.info("%d rare roles excluded. " % len(rare))
     df_unique = df_unique[~df_unique["role"].isin(rare)]
     log.debug("Convert words to its embeddings")
     Xs, y = identifiers_to_datasets(df_unique, models, log)
 
-    final_report.append("Pairs number: {}.\n".format(len(valid_tokens)))
-    final_report.append("| embedding name            | score            | best C value |")
-    final_report.append("|---------------------------|------------------|--------------|")
+    final_report = pd.DataFrame(columns=["embedding name", "score", "std", "best C value"])
     for name in tqdm(Xs):
         log.info("{}...".format(name))
         best_values = get_quality(Xs[name], y,
@@ -113,8 +111,11 @@ def id2role_eval(args):
                                   tuned_parameters=tuned_parameters,
                                   seed=args.seed,
                                   log=log)
-        final_report.append("| {:25} | {:5.3f} (+/-{:5.3f}) | {:12.0E} |".format(
-            name, best_values[0], best_values[1], best_values[2]["C"]))
-    final_report.append("\n")
+        final_report = final_report.append({"embedding name": name,
+                                            "score": best_values[0],
+                                            "std": best_values[1],
+                                            "best C value": best_values[2]["C"]},
+                                           ignore_index=True)
 
-    print("\n".join(final_report))
+    print("Pairs number: %d.\n" % len(valid_tokens))
+    print(final_report)
