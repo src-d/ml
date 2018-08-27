@@ -317,6 +317,20 @@ def get_parser() -> argparse.ArgumentParser:
         "-f", "--features", nargs="+",
         choices=[ex.NAME for ex in extractors.__extractors__.values()],
         default=None, help="To keep only specific features, if not specified all will be kept.")
+    # ------------------------------------------------------------------------
+    id2role_eval = add_parser("id2role-eval",
+                              "Compare embedding quality on role prediction problem.")
+    id2role_eval.set_defaults(handler=cmd.id2role_eval)
+    id2role_eval.add_argument(
+        "-m", "--models", required=True, nargs="+",
+        help="Id2Vec models to compare."
+             "Use `-i -` to read input files from stdin.")
+    id2role_eval.add_argument(
+        "-d", "--dataset", required=True,
+        help="Dataset directory. You can collect dataset via repos2roleids command.")
+    id2role_eval.add_argument(
+        "-s", "--seed", default=420,
+        help="Random seed for reproducible results.")
     return parser
 
 

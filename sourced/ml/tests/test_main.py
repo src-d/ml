@@ -31,6 +31,7 @@ class MainTests(unittest.TestCase):
             "merge-df": "merge_df",
             "merge-coocc": "merge_coocc",
             "merge-bow": "merge_bow",
+            "id2role-eval": "id2role_eval"
         }
         parser = main.get_parser()
         subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])
