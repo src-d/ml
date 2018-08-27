@@ -289,20 +289,17 @@ class UastDeserializer(Transformer):
         return rows.flatMap(self.deserialize_uast)
 
     def deserialize_uast(self, row: Row):
-        try:
-            if not row[EngineConstants.Columns.Uast]:
-                return
-            row_dict = row.asDict()
-            row_dict[EngineConstants.Columns.Uast] = []
-            for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
-                try:
-                    row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
-                except:  # noqa
-                    self._log.error("\nBabelfish Error: Failed to parse uast #%s for repository "
-                                    "%s" % (i, row[Uast2BagFeatures.Columns.repository_id]))
-            yield Row(**row_dict)
-        except ValueError:
-            self._log.error("The RDD provided does not include uasts.")
+        if EngineConstants.Columns.Uast not in row:
+            return
+        row_dict = row.asDict()
+        row_dict[EngineConstants.Columns.Uast] = []
+        for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
+            try:
+                row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
+            except:  # noqa
+                self._log.error("\nBabelfish Error: Failed to parse uast #%s for repository "
+                                "%s" % (i, row[Uast2BagFeatures.Columns.repository_id]))
+        yield Row(**row_dict)
 
 
 def create_parquet_loader(session_name, repositories,
