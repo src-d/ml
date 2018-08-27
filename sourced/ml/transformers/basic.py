@@ -208,21 +208,24 @@ class Counter(Transformer):
         return head.countApproxDistinct()
 
 
+class LanguageExtractor(Transformer):
+    def __call__(self, files: BlobsDataFrame) -> DataFrame:
+        if not isinstance(files, BlobsDataFrame):
+            raise TypeError("Argument type is not BlobsDataFrame. "
+                            "Language extraction can not be performed.")
+        return files \
+            .dropDuplicates(("blob_id",)) \
+            .filter("is_binary = 'false'") \
+            .classify_languages()
+
+
 class LanguageSelector(Transformer):
     def __init__(self, languages: list, blacklist=False, **kwargs):
         super().__init__(**kwargs)
         self.languages = languages
         self.blacklist = blacklist
 
-    def __call__(self, files: DataFrame) -> DataFrame:
-        if not isinstance(files, BlobsDataFrame):
-            self._log.warning("Argument type is not BlobsDataFrame. "
-                              "Language classification will be skipped.")
-        elif "lang" not in files.columns:
-            files = files \
-                .dropDuplicates(("blob_id",)) \
-                .filter("is_binary = 'false'") \
-                .classify_languages()
+    def __call__(self, files: BlobsWithLanguageDataFrame) -> DataFrame:
         return files[files.lang.isin(self.languages) != self.blacklist]
 
     @staticmethod
@@ -332,13 +335,17 @@ def create_file_source(args: argparse.Namespace, session_name: str):
     if args.parquet:
         parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
         root = create_parquet_loader(session_name, **parquet_loader_args)
-        file_source = root
+        file_source = root.link(LanguageSelector.maybe(languages=args.languages,
+                                                       blacklist=args.blacklist))
     else:
         engine_args = filter_kwargs(args.__dict__, create_engine)
         root = Ignition(create_engine(session_name, **engine_args), explain=args.explain)
         file_source = root.link(DzhigurdaFiles(args.dzhigurda))
-    file_source = file_source.link(LanguageSelector.maybe(languages=args.languages,
-                                                          blacklist=args.blacklist))
+        if args.languages is not None:
+            file_source = file_source \
+                .link(LanguageExtractor()) \
+                .link(LanguageSelector(languages=args.languages, blacklist=args.blacklist))
+
     return root, file_source
 
 
