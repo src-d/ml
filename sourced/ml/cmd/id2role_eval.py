@@ -12,7 +12,6 @@ from sourced.ml.cmd.args import handle_input_arg
 from sourced.ml.models import Id2Vec
 
 
-# directory: /mnt/data/PGA/roles_and_ids/{lang}
 def load_dataset(directory):
     csvpaths = glob.glob(os.path.join(directory, "**/*.csv"))
     chunks = []
@@ -24,7 +23,9 @@ def load_dataset(directory):
 
 
 def identifiers_to_datasets(df_unique, id2vecs, log):
-    # Change identifiers to its embeddings and create standard X,y dataset
+    """
+    Replace identifiers with its embeddings and create standard X, y dataset
+    """
     y = df_unique["role"]
     identifiers = df_unique["identifier"]
     log.info("Final dataset size is %d" % len(identifiers))
@@ -55,8 +56,7 @@ def get_quality(X, y, estimator, tuned_parameters, seed, log):
         log.debug("\t%0.3f (+/-%0.03f) for %r" % (mean, std, params))
         if best_values[0] < mean:
             best_values = (mean, std, params)
-    # X_test !!!!!!!
-    return best_values
+    return clf.score(X_test, y_test), params
 
 
 def id2role_eval(args):
@@ -80,10 +80,9 @@ def id2role_eval(args):
             common_tokens &= set(models[name].tokens)
     log.info("Common tokens in all models: %d" % len(common_tokens))
 
-    final_report = []
     tuned_parameters = [{'C': [10 ** x for x in range(-7, -1)]}]
-    log.info("Data loading...")
     # Load data and preprocess
+    log.info("Data loading...")
     df = load_dataset(args.dataset)
     df_ids = set(df["identifier"])
     valid_tokens = list(set(df_ids) & common_tokens)
@@ -102,7 +101,7 @@ def id2role_eval(args):
     log.debug("Convert words to its embeddings")
     Xs, y = identifiers_to_datasets(df_unique, models, log)
 
-    final_report = pd.DataFrame(columns=["embedding name", "score", "std", "best C value"])
+    final_report = pd.DataFrame(columns=["embedding name", "score", "best C value"])
     for name in tqdm(Xs):
         log.info("{}...".format(name))
         best_values = get_quality(Xs[name], y,
@@ -113,8 +112,7 @@ def id2role_eval(args):
                                   log=log)
         final_report = final_report.append({"embedding name": name,
                                             "score": best_values[0],
-                                            "std": best_values[1],
-                                            "best C value": best_values[2]["C"]},
+                                            "best C value": best_values[1]["C"]},
                                            ignore_index=True)
 
     print("Pairs number: %d.\n" % len(valid_tokens))
