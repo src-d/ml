@@ -207,13 +207,13 @@ class BasicTransformerTest(unittest.TestCase):
 
     def test_language_selector(self):
         language_selector = LanguageSelector(languages=["XML", "YAML"], blacklist=True)
-        df = language_selector(HeadFiles()(self.engine))
+        df = language_selector(HeadFiles()(self.engine).classify_languages())
         langs = [x.lang for x in df.select("lang").distinct().collect()]
         self.assertEqual(langs, ["Markdown", "Gradle", "Text", "INI",
                                  "Batchfile", "Python", "Java", "Shell"])
 
         language_selector = LanguageSelector(languages=["Python", "Java"], blacklist=False)
-        df = language_selector(HeadFiles()(self.engine))
+        df = language_selector(HeadFiles()(self.engine).classify_languages())
         langs = [x.lang for x in df.select("lang").distinct().collect()]
         self.assertEqual(langs, ["Python", "Java"])
 

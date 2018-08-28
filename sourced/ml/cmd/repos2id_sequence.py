@@ -11,7 +11,7 @@ from sourced.ml.utils.engine import pipeline_graph, pause
 @pause
 def repos2id_sequence(args):
     log = logging.getLogger("repos2id_distance")
-    extractors = [IdSequenceExtractor(args.split)]
+    extractor = IdSequenceExtractor(args.split)
     session_name = "repos2roles_and_ids-%s" % uuid4()
     root, start_point = create_uast_source(args, session_name)
     if not args.skip_docname:
@@ -22,7 +22,7 @@ def repos2id_sequence(args):
     start_point \
         .link(UastRow2Document()) \
         .link(UastDeserializer()) \
-        .link(Uast2BagFeatures(extractors)) \
+        .link(Uast2BagFeatures(extractor)) \
         .link(mapper) \
         .link(CsvSaver(args.output)) \
         .execute()

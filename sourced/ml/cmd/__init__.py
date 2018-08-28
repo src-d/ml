@@ -19,3 +19,4 @@ from sourced.ml.cmd.run_swivel import run_swivel
 from sourced.ml.cmd.repos2roles_and_ids import repos2roles_and_ids
 from sourced.ml.cmd.repos2id_distance import repos2id_distance
 from sourced.ml.cmd.repos2id_sequence import repos2id_sequence
+from sourced.ml.cmd.id2role_eval import id2role_eval
