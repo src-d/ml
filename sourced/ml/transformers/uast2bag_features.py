@@ -1,9 +1,9 @@
-from typing import Iterable, Union
+from typing import Union
 
 from pyspark import RDD, Row
 from pyspark.sql import DataFrame
 
-from sourced.ml.extractors import BagsExtractor
+from sourced.ml.extractors import Extractor
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.utils import EngineConstants
 
@@ -28,7 +28,32 @@ class UastRow2Document(Transformer):
         return Row(**{bfc.document: doc, ec.Uast: r[ec.Uast]})
 
 
-class Uast2BagFeatures(Transformer):
+class UastMiner(Transformer):
+    def __init__(self, *extractors: Extractor, **kwargs):
+        super().__init__(**kwargs)
+        self.extractors = extractors
+
+    def __call__(self, rows: RDD):
+        return rows.flatMap(self.process_row)
+
+    def process_row(self, row: Row):
+        for uast in row[EngineConstants.Columns.Uast]:
+            for extractor in self.extractors:
+                for feature in extractor.extract(uast):
+                    yield self.process_feature(row, extractor.NAME, feature)
+
+    def process_feature(self, row: Row, name, feature):
+        raise NotImplemented
+
+
+class Uast2Features(UastMiner):
+    def process_feature(self, row: Row, name, feature):
+        new = row.asDict()
+        new[name] = feature
+        return new
+
+
+class Uast2BagFeatures(UastMiner):
     class Columns:
         """
         Standard column names for interop.
@@ -37,17 +62,5 @@ class Uast2BagFeatures(Transformer):
         document = "document"
         value = "value"
 
-    def __init__(self, extractors: Iterable[BagsExtractor], **kwargs):
-        super().__init__(**kwargs)
-        self.extractors = extractors
-
-    def __call__(self, rows: RDD):
-        return rows.flatMap(self.process_row)
-
-    def process_row(self, row: Row):
-        uast_column = EngineConstants.Columns.Uast
-        doc = row[self.Columns.document]
-        for uast in row[uast_column]:
-            for extractor in self.extractors:
-                for key, val in extractor.extract(uast):
-                    yield (key, doc), val
+    def process_feature(self, row: Row, name, feature):
+        return (feature[0], row[self.Columns.document]), feature[1]

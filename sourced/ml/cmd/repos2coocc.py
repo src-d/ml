@@ -26,7 +26,7 @@ def repos2coocc(args):
     uast_extractor = uast_extractor.link(UastDeserializer())
 
     df_model = create_or_load_ordered_df(
-        args, ndocs, uast_extractor.link(Uast2BagFeatures([id_extractor])))
+        args, ndocs, uast_extractor.link(Uast2BagFeatures(id_extractor)))
 
     token2index = root.session.sparkContext.broadcast(df_model.order)
     uast_extractor \

@@ -69,7 +69,7 @@ def repos2bow_template(args, cache_hook: Transformer=None,
         log.info("Processing %s distinct documents", len(documents))
         bags = uast_extractor \
             .link(UastDeserializer()) \
-            .link(Uast2BagFeatures(extractors)) \
+            .link(Uast2BagFeatures(*extractors)) \
             .link(BagFeatures2TermFreq()) \
             .link(Cacher.maybe(args.persist))
         log.info("Extracting UASTs and collecting distinct tokens ...")
@@ -125,7 +125,7 @@ def repos2bow_index_template(args):
     if args.quant:
         create_or_apply_quant(args.quant, extractors, uast_extractor)
     if args.docfreq_out:
-        create_or_load_ordered_df(args, ndocs, uast_extractor.link(Uast2BagFeatures(extractors)))
+        create_or_load_ordered_df(args, ndocs, uast_extractor.link(Uast2BagFeatures(*extractors)))
     pipeline_graph(args, log, root)
 
 
