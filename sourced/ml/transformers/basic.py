@@ -30,7 +30,7 @@ class Repartitioner(Transformer):
         if self.keymap is None:
             return head.coalesce(self.partitions, self.shuffle)
         # partitionBy the key extracted using self.keymap
-        else:
+        if self.keymap is not False:
             # user knows what they are doing
             return head \
                 .map(lambda x: (self.keymap(x), x)) \
@@ -302,14 +302,16 @@ class UastDeserializer(Transformer):
     def deserialize_uast(self, row: Row):
         if EngineConstants.Columns.Uast not in row:
             return
+        if not row[EngineConstants.Columns.Uast]:
+            return
         row_dict = row.asDict()
         row_dict[EngineConstants.Columns.Uast] = []
         for i, uast in enumerate(row[EngineConstants.Columns.Uast]):
             try:
                 row_dict[EngineConstants.Columns.Uast].append(self.parse_uast(uast))
             except:  # noqa
-                self._log.error("\nBabelfish Error: Failed to parse uast #%s for repository "
-                                "%s" % (i, row[Uast2BagFeatures.Columns.repository_id]))
+                self._log.error("\nBabelfish Error: Failed to parse uast for document %s for uast "
+                                "#%s" % (row[Uast2BagFeatures.Columns.document], i))
         yield Row(**row_dict)
 
 

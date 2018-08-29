@@ -61,7 +61,6 @@ class Uast2BagFeatures(UastMiner):
         token = "token"
         document = "document"
         value = "value"
-        repository_id = "repository_id"
 
     def process_feature(self, row: Row, name, feature):
         return (feature[0], row[self.Columns.document]), feature[1]

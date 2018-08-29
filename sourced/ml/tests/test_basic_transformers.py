@@ -11,7 +11,7 @@ from sourced.ml.utils import create_engine, SparkDefault
 from sourced.ml.transformers import ParquetSaver, ParquetLoader, Collector, First, \
      Identity, FieldsSelector, Repartitioner, DzhigurdaFiles, CsvSaver, Rower, \
      PartitionSelector, Sampler, Distinct, Cacher, Ignition, HeadFiles, LanguageSelector, \
-     UastExtractor, UastDeserializer
+     UastExtractor, UastDeserializer, UastRow2Document
 from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
 
 
@@ -63,11 +63,9 @@ class BasicTransformerTest(unittest.TestCase):
         self.assertEqual(loader.paths, PARQUET_DIR)
         self.assertNotIn("session", loader.__getstate__())
 
-        try:
+        with self.assertRaises(ValueError):
             loader = ParquetLoader(session=self.spark, paths=None)
             data = loader.execute()
-        except ValueError:
-            pass
 
     def test_rower(self):
         rows = [("get_user", 3)]
@@ -75,6 +73,7 @@ class BasicTransformerTest(unittest.TestCase):
         data = Rower(lambda x: dict(identifier=x[0], frequency=x[1]))(df.rdd)
         self.assertEqual(data.count(), 1)
         self.assertEqual(data.collect()[0].identifier, "get_user")
+        self.assertEqual(data.collect()[0].frequency, 3)
 
     def test_dzhigurda(self):
         self.assertEqual(DzhigurdaFiles(0)(self.engine).count(), 325)
@@ -93,7 +92,7 @@ class BasicTransformerTest(unittest.TestCase):
     def test_distinct(self):
         rows = [("foo_bar", 3), ("baz", 5), ("foo_bar", 3)]
         df = self.spark.createDataFrame(rows, ["identifier", "frequency"])
-        self.assertEqual(Distinct()(df).count(), df.count() - 1)
+        self.assertEqual(set(rows), set(Distinct()(df).collect()))
 
     def test_cacher(self):
         persistence = SparkDefault.STORAGE_LEVEL
@@ -123,10 +122,11 @@ class BasicTransformerTest(unittest.TestCase):
     def test_head_files(self):
         df = HeadFiles()(self.engine)
         df_as_dict = df.first().asDict()
-        self.assertIn("commit_hash", df_as_dict.keys())
-        self.assertIn("path", df_as_dict.keys())
-        self.assertIn("content", df_as_dict.keys())
-        self.assertIn("reference_name", df_as_dict.keys())
+        keys = set(df_as_dict.keys())
+        self.assertIn("commit_hash", keys)
+        self.assertIn("path", keys)
+        self.assertIn("content", keys)
+        self.assertIn("reference_name", keys)
 
     def test_uast_extractor(self):
         df = HeadFiles()(self.engine)
@@ -136,8 +136,10 @@ class BasicTransformerTest(unittest.TestCase):
     def test_uast_deserializer(self):
         df = HeadFiles()(self.engine)
         df_uast = UastExtractor()(df)
+        r2d = UastRow2Document()
+        row_uast = r2d.documentize(df_uast.first())
         uasts_empty = list(UastDeserializer().deserialize_uast(df.first()))
-        uasts = list(UastDeserializer().deserialize_uast(df_uast.first()))
+        uasts = list(UastDeserializer().deserialize_uast(row_uast))
         self.assertTrue(len(uasts_empty) == 0)
         self.assertTrue(len(uasts) > 0)
 
@@ -162,6 +164,7 @@ class BasicTransformerTest(unittest.TestCase):
 
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0][0], rows[0][0])
+        self.assertEqual(int(data[0][1]), rows[0][1])
 
     def test_parquet_saver(self):
         with tempfile.TemporaryDirectory() as tmpdir:
