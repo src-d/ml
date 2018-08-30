@@ -1,6 +1,6 @@
 import argparse
 import logging
-from typing import Union
+from typing import List, Union
 
 from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 from pyspark import RDD, Row, StorageLevel
@@ -30,8 +30,12 @@ class Repartitioner(Transformer):
         if self.keymap is None:
             return head.coalesce(self.partitions, self.shuffle)
         # partitionBy the key extracted using self.keymap
-        if self.keymap is not False:
-            # user knows what they are doing
+        try:
+            # this checks if keymap is an identity
+            probe = self.keymap("probe")
+        except:  # noqa: E722
+            probe = None
+        if probe != "probe":
             head = head.map(lambda x: (self.keymap(x), x))
         return head \
             .partitionBy(self.partitions) \
@@ -220,7 +224,7 @@ class LanguageExtractor(Transformer):
 
 
 class LanguageSelector(Transformer):
-    def __init__(self, languages: list, blacklist=False, **kwargs):
+    def __init__(self, languages: List[str], blacklist=False, **kwargs):
         super().__init__(**kwargs)
         self.languages = languages
         self.blacklist = blacklist
@@ -241,7 +245,8 @@ class UastExtractor(Transformer):
 
     def __call__(self, files: Union[BlobsDataFrame, BlobsWithLanguageDataFrame]) -> DataFrame:
         if not isinstance(files, (BlobsDataFrame, BlobsWithLanguageDataFrame)):
-            raise TypeError("Argument type should be BlobsDataFrame or BlobsWithLanguageDataFrame")
+            raise TypeError("Argument type should be BlobsDataFrame or BlobsWithLanguageDataFrame,"
+                            " got %s" % type(files).__name__)
         # if UAST is not extracted, returns an empty list that we filter out here
         return files.extract_uasts().where(functions.size(functions.col("uast")) > 0)
 
@@ -300,6 +305,8 @@ class UastDeserializer(Transformer):
         return rows.flatMap(self.deserialize_uast)
 
     def deserialize_uast(self, row: Row):
+        if EngineConstants.Columns.Uast not in row:
+            return
         if not row[EngineConstants.Columns.Uast]:
             return
         row_dict = row.asDict()
