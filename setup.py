@@ -29,7 +29,7 @@ setup(
               "github", "swivel", "bow", "bblfsh", "babelfish"],
     install_requires=["PyStemmer>=1.3,<2.0",
                       "bblfsh>=2.2.1,<3.0",
-                      "modelforge>=0.6.0,<0.7",
+                      "modelforge>=0.7.0,<0.8",
                       "sourced-engine>=0.5.1,<0.7",
                       "humanize>=0.5.0",
                       "parquet>=1.2,<2.0",
