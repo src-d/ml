@@ -90,7 +90,7 @@ def repos2bow_template(args, cache_hook: Transformer=None,
             .link(Indexer(Uast2BagFeatures.Columns.token, reduced_token_index))
         if save_hook is not None:
             bags_writer = bags_writer \
-                .link(Repartitioner.maybe(args.partitions, args.shuffle, multiplier=10)) \
+                .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
                 .link(save_hook())
         bow = args.bow.split(".asdf")[0] + "_" + str(num_part + 1) + ".asdf"
         bags_writer \

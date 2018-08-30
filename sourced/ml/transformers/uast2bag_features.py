@@ -1,5 +1,3 @@
-from typing import Union
-
 from pyspark import RDD, Row
 from pyspark.sql import DataFrame
 
@@ -12,9 +10,8 @@ class UastRow2Document(Transformer):
     REPO_PATH_SEP = "//"
     PATH_BLOB_SEP = "@"
 
-    def __call__(self, rows: Union[RDD, DataFrame]):
-        if isinstance(rows, DataFrame):
-            rows = rows.rdd
+    def __call__(self, rows: RDD) -> RDD:
+        assert isinstance(rows, RDD)
         return rows.map(self.documentize)
 
     def documentize(self, r: Row) -> Row:
