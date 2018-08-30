@@ -1,5 +1,4 @@
 from pyspark import RDD, Row
-from pyspark.sql import DataFrame
 
 from sourced.ml.extractors import Extractor
 from sourced.ml.transformers.transformer import Transformer

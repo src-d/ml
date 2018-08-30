@@ -1,6 +1,6 @@
 import argparse
 import logging
-from typing import Union
+from typing import List, Union
 
 from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 from pyspark import RDD, Row, StorageLevel
@@ -33,7 +33,7 @@ class Repartitioner(Transformer):
         try:
             # this checks if keymap is an identity
             probe = self.keymap("probe")
-        except:
+        except:  # noqa: E722
             probe = None
         if probe != "probe":
             head = head.map(lambda x: (self.keymap(x), x))
