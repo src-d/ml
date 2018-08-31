@@ -9,13 +9,13 @@ from pyspark.sql import Row
 
 from sourced.ml.utils import create_engine, SparkDefault
 from sourced.ml.transformers import ParquetSaver, ParquetLoader, Collector, First, \
-     Identity, FieldsSelector, Repartitioner, DzhigurdaFiles, CsvSaver, Rower, \
-     PartitionSelector, Sampler, Distinct, Cacher, Ignition, HeadFiles, LanguageSelector, \
-     UastExtractor, UastDeserializer, UastRow2Document
+    Identity, FieldsSelector, Repartitioner, DzhigurdaFiles, CsvSaver, Rower, \
+    PartitionSelector, Sampler, Distinct, Cacher, Ignition, HeadFiles, LanguageSelector, \
+    UastExtractor, UastDeserializer, UastRow2Document, RepositoriesFilter
 from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
 
 
-class BasicTransformerTest(unittest.TestCase):
+class BasicTransformerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.engine = create_engine("test_with_engine", SIVA_DIR, "siva")
@@ -76,9 +76,9 @@ class BasicTransformerTest(unittest.TestCase):
         self.assertEqual(data.collect()[0].frequency, 3)
 
     def test_dzhigurda(self):
-        self.assertEqual(DzhigurdaFiles(0)(self.engine).count(), 325)
-        self.assertEqual(DzhigurdaFiles(10)(self.engine).count(), 3490)
-        self.assertEqual(DzhigurdaFiles(-1)(self.engine).count(), 27745)
+        self.assertEqual(DzhigurdaFiles(0)(self.engine.repositories).count(), 325)
+        self.assertEqual(DzhigurdaFiles(10)(self.engine.repositories).count(), 3490)
+        self.assertEqual(DzhigurdaFiles(-1)(self.engine.repositories).count(), 27745)
 
     def test_identity(self):
         # load parquet
@@ -115,12 +115,18 @@ class BasicTransformerTest(unittest.TestCase):
 
     def test_ignition(self):
         start_point = Ignition(self.engine)
-        columns = start_point(self).repositories.columns
+        columns = start_point(self).columns
         self.assertNotIn("engine", start_point.__getstate__())
         self.assertEqual(columns, ["id", "urls", "is_fork", "repository_path"])
 
+    def test_repositories_filter(self):
+        start_point = Ignition(self.engine)
+        repos = start_point.link(RepositoriesFilter(".*antoniolg.*")).link(Collector()).execute()
+        self.assertEqual(len(repos), 1)
+        self.assertEqual(repos[0].id, "github.com/antoniolg/androidmvp.git")
+
     def test_head_files(self):
-        df = HeadFiles()(self.engine)
+        df = HeadFiles()(self.engine.repositories)
         df_as_dict = df.first().asDict()
         keys = set(df_as_dict.keys())
         self.assertIn("commit_hash", keys)
@@ -129,12 +135,12 @@ class BasicTransformerTest(unittest.TestCase):
         self.assertIn("reference_name", keys)
 
     def test_uast_extractor(self):
-        df = HeadFiles()(self.engine)
+        df = HeadFiles()(self.engine.repositories)
         df_uast = UastExtractor()(df)
         self.assertIn("uast", df_uast.columns)
 
     def test_uast_deserializer(self):
-        df = HeadFiles()(self.engine)
+        df = HeadFiles()(self.engine.repositories)
         df_uast = UastExtractor()(df)
         r2d = UastRow2Document()
         row_uast = r2d.documentize(df_uast.first())
@@ -210,13 +216,13 @@ class BasicTransformerTest(unittest.TestCase):
 
     def test_language_selector(self):
         language_selector = LanguageSelector(languages=["XML", "YAML"], blacklist=True)
-        df = language_selector(HeadFiles()(self.engine).classify_languages())
+        df = language_selector(HeadFiles()(self.engine.repositories).classify_languages())
         langs = [x.lang for x in df.select("lang").distinct().collect()]
         self.assertEqual(langs, ["Markdown", "Gradle", "Text", "INI",
                                  "Batchfile", "Python", "Java", "Shell"])
 
         language_selector = LanguageSelector(languages=["Python", "Java"], blacklist=False)
-        df = language_selector(HeadFiles()(self.engine).classify_languages())
+        df = language_selector(HeadFiles()(self.engine.repositories).classify_languages())
         langs = [x.lang for x in df.select("lang").distinct().collect()]
         self.assertEqual(langs, ["Python", "Java"])
 
