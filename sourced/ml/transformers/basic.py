@@ -158,6 +158,9 @@ class Cacher(Transformer):
 
 
 class Ignition(Transformer):
+    """
+    All pipelines start with this transformer - it returns all the repositories from the engine.
+    """
     def __init__(self, engine, **kwargs):
         super().__init__(**kwargs)
         self.engine = engine
@@ -167,8 +170,21 @@ class Ignition(Transformer):
         del state["engine"]
         return state
 
-    def __call__(self, _):
-        return self.engine
+    def __call__(self, _) -> DataFrame:
+        return self.engine.repositories
+
+
+class RepositoriesFilter(Transformer):
+    """
+    Filters repositories by a regular expression over the identifiers
+    (ex. "github.com/src-d/vecino" or "file:///tmp/vecino-yzv92l0i/repo").
+    """
+    def __init__(self, idre: str, **kwargs):
+        super().__init__(**kwargs)
+        self.idre = idre
+
+    def __call__(self, repositories: DataFrame) -> DataFrame:
+        return repositories.filter(repositories["id"].rlike(self.idre))
 
 
 class DzhigurdaFiles(Transformer):
@@ -176,8 +192,8 @@ class DzhigurdaFiles(Transformer):
         super().__init__(**kwargs)
         self.dzhigurda = dzhigurda
 
-    def __call__(self, engine):
-        head_ref = engine.repositories.references.head_ref
+    def __call__(self, repositories: DataFrame) -> DataFrame:
+        head_ref = repositories.references.head_ref
         if self.dzhigurda < 0:
             # Use all available commits
             chosen = head_ref.all_reference_commits
@@ -192,8 +208,8 @@ class DzhigurdaFiles(Transformer):
 
 
 class HeadFiles(Transformer):
-    def __call__(self, engine):
-        return engine.repositories.references.head_ref.commits.tree_entries.blobs
+    def __call__(self, repositories: DataFrame) -> DataFrame:
+        return repositories.references.head_ref.commits.tree_entries.blobs
 
 
 class Counter(Transformer):
