@@ -3,7 +3,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter import build_rnn, build_cnn, register_metric, \
+from sourced.ml.algorithms.id_splitter.nn_model import build_rnn, build_cnn, register_metric, \
     METRICS
 
 

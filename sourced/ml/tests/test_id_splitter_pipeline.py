@@ -5,8 +5,9 @@ import numpy
 from keras.callbacks import TensorBoard, CSVLogger, ModelCheckpoint
 from keras.backend.tensorflow_backend import get_session
 
-from sourced.ml.algorithms.id_splitter import build_schedule, prepare_callbacks, \
-    build_train_generator, binarize, create_generator_params, config_keras, prepare_devices
+from sourced.ml.algorithms.id_splitter.nn_model import prepare_devices
+from sourced.ml.algorithms.id_splitter.pipeline import build_schedule, prepare_callbacks, \
+    build_train_generator, binarize, create_generator_params, config_keras
 
 
 class IdSplitterPipelineTest(unittest.TestCase):
