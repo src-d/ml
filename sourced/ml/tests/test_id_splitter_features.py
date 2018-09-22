@@ -5,7 +5,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter import prepare_features, read_identifiers
+from sourced.ml.algorithms.id_splitter.features import prepare_features, read_identifiers
 from sourced.ml.tests.models import IDENTIFIERS
 
 
