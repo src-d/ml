@@ -36,7 +36,7 @@ class BblfshUtilsTests(unittest.TestCase):
                         break
 
         container = self.docker_client.containers.run(
-            image="bblfsh/bblfshd:%s" % (version),
+            image="bblfsh/bblfshd:%s" % version,
             privileged=True,
             detach=True,
             ports={"9432": port},
