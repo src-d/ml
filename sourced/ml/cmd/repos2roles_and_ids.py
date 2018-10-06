@@ -18,7 +18,7 @@ def repos2roles_and_ids(args):
         .link(UastRow2Document()) \
         .link(UastDeserializer()) \
         .link(Uast2Features(extractor)) \
-        .link(Rower(lambda x: dict(identifier=x["roleids"][0], role=x["roleids"][1]))) \
+        .link(Rower(lambda x: {"identifier": x["roleids"][0], "role": x["roleids"][1]})) \
         .link(CsvSaver(args.output)) \
         .execute()
     pipeline_graph(args, log, root)

@@ -70,7 +70,7 @@ class BasicTransformerTests(unittest.TestCase):
     def test_rower(self):
         rows = [("get_user", 3)]
         df = self.spark.createDataFrame(rows, ["identifier", "frequency"])
-        data = Rower(lambda x: dict(identifier=x[0], frequency=x[1]))(df.rdd)
+        data = Rower(lambda x: {"identifier": x[0], "frequency": x[1]})(df.rdd)
         self.assertEqual(data.count(), 1)
         self.assertEqual(data.collect()[0].identifier, "get_user")
         self.assertEqual(data.collect()[0].frequency, 3)
