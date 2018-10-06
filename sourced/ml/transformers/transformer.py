@@ -146,7 +146,7 @@ class Transformer(PickleableLogger):
         return " -> ".join(type(n).__name__ for n in pipeline)
 
     def __call__(self, head):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class Execute(Transformer):

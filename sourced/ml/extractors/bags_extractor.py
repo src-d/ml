@@ -85,7 +85,7 @@ class BagsExtractor(Extractor):
             yield self.NAMESPACE + key, val * self.weight
 
     def uast_to_bag(self, uast):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class RoleIdsExtractor(Extractor):
