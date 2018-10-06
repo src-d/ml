@@ -25,7 +25,7 @@ class TransformerTest(unittest.TestCase):
         self.pipeline_linear = self.transformers_linear[0]
         for transformer in self.transformers_linear[1:]:
             self.pipeline_linear = self.pipeline_linear.link(transformer)
-        """
+        r"""
         Tree structure:
         0 - 2 --- 5 - 6
          \   \ \
