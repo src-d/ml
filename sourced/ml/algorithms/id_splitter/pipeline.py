@@ -32,7 +32,7 @@ def set_random_seed(seed: int) -> None:
     tf.set_random_seed(seed)
 
 
-def binarize(matrix: numpy.array, threshold: float, inplace: bool=True) -> numpy.array:
+def binarize(matrix: numpy.array, threshold: float, inplace: bool = True) -> numpy.array:
     """
     Helper function to binarize a matrix.
 
@@ -61,7 +61,7 @@ def str2ints(params: str) -> List[int]:
     return list(map(int, params.split(",")))
 
 
-def precision_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) -> float:
+def precision_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float = EPSILON) -> float:
     """
     Computes the precision metric, a metric for multi-label classification of
     how many selected items are relevant.
@@ -76,7 +76,7 @@ def precision_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILO
     return true_positives / (predicted_positives + epsilon)
 
 
-def recall_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) -> float:
+def recall_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float = EPSILON) -> float:
     """
     Computes the recall metric, a metric for multi-label classification of
     how many relevant items are selected.
@@ -92,7 +92,7 @@ def recall_np(y_true: numpy.array, y_pred: numpy.array, epsilon: float=EPSILON) 
 
 
 def report(model: keras.engine.training.Model, X: numpy.array, y: numpy.array, batch_size: int,
-           threshold: float=DEFAULT_THRESHOLD, epsilon: float=EPSILON) -> None:
+           threshold: float = DEFAULT_THRESHOLD, epsilon: float = EPSILON) -> None:
     """
     Prints a metric report of the `model` on the  data `X` & `y`.
     The metrics printed are precision, recall, F1 score.
@@ -127,7 +127,7 @@ def config_keras() -> None:
 
 
 def build_train_generator(X: numpy.array, y: numpy.array,
-                          batch_size: int=500) -> Iterable[Tuple[numpy.array]]:
+                          batch_size: int = 500) -> Iterable[Tuple[numpy.array]]:
     """
     Builds the generator that yields features and their labels.
 
@@ -169,7 +169,7 @@ def build_schedule(lr: float, final_lr: float, n_epochs: int) -> Callable:
 
 
 def make_lr_scheduler(lr: float, final_lr: float, n_epochs: int,
-                      verbose: int=1) -> keras.callbacks.LearningRateScheduler:
+                      verbose: int = 1) -> keras.callbacks.LearningRateScheduler:
     """
     Prepares the scheduler to decrease the learning rate while training.
 

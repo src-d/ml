@@ -20,7 +20,7 @@ class Repartitioner(Transformer):
     2. repartition() if shuffle=True, keymap=None
     3. partitionBy() if keymap is not None
     """
-    def __init__(self, partitions: int, shuffle: bool=False, keymap: callable=None, **kwargs):
+    def __init__(self, partitions: int, shuffle: bool = False, keymap: callable = None, **kwargs):
         super().__init__(**kwargs)
         self.partitions = partitions
         self.shuffle = shuffle
@@ -42,8 +42,8 @@ class Repartitioner(Transformer):
             .map(lambda x: x[1])
 
     @staticmethod
-    def maybe(partitions: Union[int, None], shuffle: bool=False, keymap: callable=None,
-              multiplier: int=1):
+    def maybe(partitions: Union[int, None], shuffle: bool = False, keymap: callable = None,
+              multiplier: int = 1):
         if partitions is not None:
             return Repartitioner(partitions * multiplier, shuffle=shuffle, keymap=keymap)
         else:

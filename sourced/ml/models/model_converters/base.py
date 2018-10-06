@@ -16,8 +16,8 @@ class Model2Base(PickleableLogger):
     MODEL_FROM_CLASS = None
     MODEL_TO_CLASS = None
 
-    def __init__(self, num_processes: int=0,
-                 log_level: int=logging.DEBUG, overwrite_existing: bool=True):
+    def __init__(self, num_processes: int = 0,
+                 log_level: int = logging.DEBUG, overwrite_existing: bool = True):
         """
         Initializes a new instance of Model2Base class.
 

@@ -81,7 +81,7 @@ class BOW(Model):
         """
         return len(self._documents)
 
-    def save(self, output: str, deps: Iterable=tuple()):
+    def save(self, output: str, deps: Iterable = tuple()):
         if not deps:
             try:
                 deps = [self.get_dep(DocumentFrequencies.NAME)]

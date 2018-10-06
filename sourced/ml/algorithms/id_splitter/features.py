@@ -8,7 +8,7 @@ from modelforge.progress_bar import progress_bar
 
 
 def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, identifier_col: int,
-                     split_identifier_col: int, shuffle: bool=True) -> List[str]:
+                     split_identifier_col: int, shuffle: bool = True) -> List[str]:
     """
     Reads and filters too long identifiers in the CSV file.
 
@@ -43,7 +43,7 @@ def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, i
 
 def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
                      identifier_col: int, split_identifier_col: int, test_ratio: float,
-                     padding: str, shuffle: bool=True) -> Tuple[numpy.array]:
+                     padding: str, shuffle: bool = True) -> Tuple[numpy.array]:
     """
     Prepare the features to train the identifier splitting task.
 

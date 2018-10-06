@@ -5,7 +5,7 @@ BBLFSH_VERSION_LOW = "2.2"
 BBLFSH_VERSION_HIGH = "3.0"
 
 
-def check_version(host: str="0.0.0.0", port: str="9432") -> bool:
+def check_version(host: str = "0.0.0.0", port: str = "9432") -> bool:
     """
     Check if the bblfsh server version matches module requirements.
 

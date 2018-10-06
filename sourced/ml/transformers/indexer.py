@@ -12,7 +12,7 @@ class Indexer(Transformer):
     index. The mapping is created by collecting all the unique values, sorting them and finally
     enumerating. Use value_to_index or [] to get index value.
     """
-    def __init__(self, column: Union[int, str], column2id: Dict[str, int]=None, **kwargs):
+    def __init__(self, column: Union[int, str], column2id: Dict[str, int] = None, **kwargs):
         """
         :param column: column index or its name in pyspark.RDD for indexing.
         :param column2id: precomputed mapping between column values to integers.

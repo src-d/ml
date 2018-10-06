@@ -13,8 +13,8 @@ from sourced.ml.models import DocumentFrequencies
 
 
 @pause
-def repos2bow_template(args, cache_hook: Transformer=None,
-                       save_hook: Transformer=None):
+def repos2bow_template(args, cache_hook: Transformer = None,
+                       save_hook: Transformer = None):
 
     log = logging.getLogger("repos2bow")
     extractors = create_extractors_from_args(args)

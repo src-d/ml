@@ -16,7 +16,7 @@ class BOWWriter(Transformer):
     DEFAULT_CHUNK_SIZE = 2 * 1000 * 1000 * 1000
 
     def __init__(self, document_indexer: Indexer, df: OrderedDocumentFrequencies,
-                 filename: str, chunk_size: int=DEFAULT_CHUNK_SIZE, **kwargs):
+                 filename: str, chunk_size: int = DEFAULT_CHUNK_SIZE, **kwargs):
         super().__init__(**kwargs)
         self.document_indexer = document_indexer
         self.df = df

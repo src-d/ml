@@ -13,7 +13,7 @@ class MergeDocFreq(Model2Base):
     MODEL_FROM_CLASS = DocumentFrequencies
     MODEL_TO_CLASS = DocumentFrequencies
 
-    def __init__(self, min_docfreq: int, vocabulary_size: int, ordered: bool=False,
+    def __init__(self, min_docfreq: int, vocabulary_size: int, ordered: bool = False,
                  *args, **kwargs):
         super().__init__(num_processes=1, *args, **kwargs)
         self.ordered = ordered
