@@ -56,8 +56,8 @@ class TransformerTest(unittest.TestCase):
         t.link(t_c1)
         t.link(t_c2)
         self.assertEqual(t.children, (t_c1, t_c2))
-        self.assertEqual(t_c1.children, tuple())
-        self.assertEqual(t_c2.children, tuple())
+        self.assertEqual(t_c1.children, ())
+        self.assertEqual(t_c2.children, ())
 
     def test_parent(self):
         t = Transformer(False)
@@ -74,7 +74,7 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(t2.children, (t,))
         t2.unlink(t)
         self.assertIsNone(t.parent)
-        self.assertEqual(t2.children, tuple())
+        self.assertEqual(t2.children, ())
 
     def test_link(self):
         t = Transformer(False)
@@ -88,7 +88,7 @@ class TransformerTest(unittest.TestCase):
         t2 = DumpTransformer(2)
         t3 = DumpTransformer(3)
         t3 >> t2 >> t1
-        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.children, ())
         self.assertEqual(t1.parent, t2)
         self.assertEqual(t2.children, (t1,))
         self.assertEqual(t2.parent, t3)
@@ -96,9 +96,9 @@ class TransformerTest(unittest.TestCase):
         self.assertIsNone(t3.parent)
 
         t2 << t1
-        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.children, ())
         self.assertIsNone(t1.parent)
-        self.assertEqual(t2.children, tuple())
+        self.assertEqual(t2.children, ())
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
         self.assertIsNone(t3.parent)
@@ -108,7 +108,7 @@ class TransformerTest(unittest.TestCase):
         t2 = DumpTransformer(2)
         t3 = DumpTransformer(3)
         t3 >> t2 >> t1
-        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.children, ())
         self.assertEqual(t1.parent, t2)
         self.assertEqual(t2.children, (t1,))
         self.assertEqual(t2.parent, t3)
