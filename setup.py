@@ -4,6 +4,9 @@ import sys
 
 sourcedml = SourceFileLoader("sourced.ml", "./sourced/ml/__init__.py").load_module()
 
+with open("README.md") as f:
+    long_description = f.read()
+
 if sys.version_info < (3, 5, 0):
     typing = ["typing"]
 else:
@@ -14,6 +17,8 @@ setup(
     description="Framework for machine learning on source code. "
                 "Provides API and tools to train and use models based "
                 "on source code features extracted from Babelfish's UASTs.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     version=".".join(map(str, sourcedml.__version__)),
     license="Apache 2.0",
     author="source{d}",
