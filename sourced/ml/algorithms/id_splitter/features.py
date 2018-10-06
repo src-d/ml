@@ -16,10 +16,10 @@ def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, i
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifiers. Skip identifiers that are longer.
     :param identifier_col: column name in the CSV file for the raw identifier.
-    :param split_identifier_col: column name in the CSV file for the splitted identifier lowercase.
+    :param split_identifier_col: column name in the CSV file for the split identifier lowercase.
     :param shuffle: indicates whether to reorder the list of identifiers
         at random after reading it.
-    :return: list of splitted identifiers.
+    :return: list of split identifiers.
     """
     log = logging.getLogger("read_identifiers")
     log.info("Reading data from the CSV file %s", csv_path)
@@ -51,7 +51,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     :param use_header: uses header as normal line (True) or treat as header line with column names.
     :param max_identifier_len: maximum length of raw identifiers. Skip identifiers that are longer.
     :param identifier_col: column in the CSV file for the raw identifier.
-    :param split_identifier_col: column in the CSV file for the splitted identifier.
+    :param split_identifier_col: column in the CSV file for the split identifier.
     :param shuffle: indicates whether to reorder the list of identifiers
         at random after reading it.
     :param test_ratio: Proportion of test samples used for evaluation.
