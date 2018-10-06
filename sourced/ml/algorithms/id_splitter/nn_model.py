@@ -37,7 +37,7 @@ def prepare_devices(devices: str) -> Tuple[str]:
     Extract devices from arguments.
 
     :param devices: devices to use passed as one string argument.
-    :return: splitted devices.
+    :return: split devices.
     """
     devices = devices.split(",")
     if len(devices) == 2:

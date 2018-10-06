@@ -12,7 +12,7 @@ The goal of this feature is to train a neural network to learn how to split iden
      * `foobar` -&gt; `foo bar`
      * `methodbase` -&gt; `method base`
 5. Code a simple neural language model with Keras that relies on character-level inputs as it is described in [Character-Aware Neural Language Models](https://arxiv.org/pdf/1508.06615.pdf) to split identifiers.
-6. Evaluation plots and accuracy improvments by playing with metaparameters. Other ideas:
+6. Evaluation plots and accuracy improvements by playing with metaparameters. Other ideas:
    * Use the context of identifiers
    * Use [Babelfish](https://github.com/bblfsh) and focus on Python/Java languages
 

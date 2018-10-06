@@ -8,7 +8,7 @@ class TokenParser:
     Common utilities for splitting and stemming tokens.
     """
     NAME_BREAKUP_RE = re.compile(r"[^a-zA-Z]+")  #: Regexp to split source code identifiers.
-    STEM_THRESHOLD = 6  #: We do not stem splitted parts shorter than or equal to this size.
+    STEM_THRESHOLD = 6  #: We do not stem split parts shorter than or equal to this size.
     MAX_TOKEN_LENGTH = 256  #: We cut identifiers longer than this value.
     MIN_SPLIT_LENGTH = 3  #: We do not split source code identifiers shorter than this value.
     DEFAULT_SINGLE_SHOT = False  #: True if we do not want to join small identifiers to next one.

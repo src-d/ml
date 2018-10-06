@@ -84,7 +84,7 @@ def get_parser() -> argparse.ArgumentParser:
         help="Adds identifier frequencies to the output CSV file."
              "num_repos is the number of repositories where the identifier appears in."
              "num_files is the number of files where the identifier appears in."
-             "num_occ is the total number of occurences of the identifier.")
+             "num_occ is the total number of occurrences of the identifier.")
     # ------------------------------------------------------------------------
     repos2coocc_parser = add_parser(
         "repos2coocc", "Convert source code to the sparse co-occurrence matrix of identifiers.")
@@ -107,7 +107,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2roles_and_ids.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the directory where spark should store the result. "
-             "Inside the direcory you find result is csv format, status file and sumcheck files.")
+             "Inside the directory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     repos2identifier_distance = add_parser(
         "repos2id_distance", "Converts a UAST to a list of identifier pairs "
@@ -124,7 +124,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2identifier_distance.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the directory where spark should store the result. "
-             "Inside the direcory you find result is csv format, status file and sumcheck files.")
+             "Inside the directory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     repos2id_sequence = add_parser(
         "repos2idseq", "Converts a UAST to sequence of identifiers sorted by order of appearance.")
@@ -137,7 +137,7 @@ def get_parser() -> argparse.ArgumentParser:
     repos2id_sequence.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the directory where spark should store the result. "
-             "Inside the direcory you find result is csv format, status file and sumcheck files.")
+             "Inside the directory you find result is csv format, status file and sumcheck files.")
     # ------------------------------------------------------------------------
     preproc_parser = add_parser(
         "id2vec-preproc", "Convert a sparse co-occurrence matrix to the Swivel shards.")
@@ -198,7 +198,7 @@ def get_parser() -> argparse.ArgumentParser:
     train_id_split_parser.add_argument("-t", "--test-ratio", type=float, default=0.2,
                                        help="Fraction of the dataset to use for evaluation.")
     train_id_split_parser.add_argument("-p", "--padding", default="post", choices=("pre", "post"),
-                                       help="Wether to pad before or after each sequence.")
+                                       help="Whether to pad before or after each sequence.")
     train_id_split_parser.add_argument("--optimizer", default="Adam", choices=("RMSprop", "Adam"),
                                        help="Algorithm to use as an optimizer for the neural net.")
     train_id_split_parser.add_argument("--lr", default=0.001, type=float,
@@ -220,7 +220,7 @@ def get_parser() -> argparse.ArgumentParser:
     train_id_split_parser.add_argument("--csv-identifier", default=3,
                                        help="Column name in the CSV file for the raw identifier.")
     train_id_split_parser.add_argument("--csv-identifier-split", default=4,
-                                       help="Column name in the CSV file for the splitted"
+                                       help="Column name in the CSV file for the split"
                                             "identifier.")
     train_id_split_parser.add_argument("--include-csv-header", action="store_true",
                                        help="Treat the first line of the input CSV as a regular"

@@ -118,7 +118,7 @@ class IdentifiersToDataset(Transformer):
         Process rows to gather identifier frequencies.
         num_repos is the number of repositories where the identifier appears in.
         num_files is the number of files where the identifier appears in.
-        num_occ is the total number of occurences of the identifier.
+        num_occ is the total number of occurrences of the identifier.
         """
         list_RDDs = []
         for i in (0, 1):
