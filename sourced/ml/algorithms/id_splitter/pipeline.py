@@ -114,7 +114,7 @@ def report(model: keras.engine.training.Model, X: numpy.array, y: numpy.array, b
     pr = precision_np(y[:, :, 0], predictions, epsilon=epsilon)
     rec = recall_np(y[:, :, 0], predictions, epsilon=epsilon)
     f1 = 2 * pr * rec / (pr + rec + epsilon)
-    log.info("precision: %.3f, recall: %.3f, f1: %.3f" % (pr, rec, f1))
+    log.info("precision: {:.3f}, recall: {:.3f}, f1: {:.3f}".format(pr, rec, f1))
 
 
 def config_keras() -> None:

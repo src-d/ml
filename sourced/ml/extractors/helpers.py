@@ -9,7 +9,7 @@ __extractors__ = {}
 
 def register_extractor(cls):
     if not issubclass(cls, BagsExtractor):
-        raise TypeError("%s is not an instance of %s" % (cls.__name__, BagsExtractor.__name__))
+        raise TypeError("{} is not an instance of {}".format(cls.__name__, BagsExtractor.__name__))
     __extractors__[cls.NAME] = cls
     return cls
 
@@ -23,7 +23,7 @@ def get_names_from_kwargs(f):
 
 def filter_kwargs(kwargs, func):
     func_param = inspect.signature(func).parameters.keys()
-    return dict([(k, v) for k, v in kwargs.items() if k in func_param])
+    return {k: v for k, v in kwargs.items() if k in func_param}
 
 
 def create_extractors_from_args(args: argparse.Namespace) -> List[BagsExtractor]:

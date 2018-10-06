@@ -132,7 +132,7 @@ class Transformer(PickleableLogger):
                 myself = "%s %d" % (type(node).__name__, index)
                 nodes[node] = myself
             if parent is not None:
-                stream.write("\t\"%s\" -> \"%s\"\n" % (parent, myself))
+                stream.write("\t\"{}\" -> \"{}\"\n".format(parent, myself))
             for child in node._children:
                 queue.append((child, myself))
         stream.write("}\n")

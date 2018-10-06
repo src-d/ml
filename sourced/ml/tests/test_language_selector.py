@@ -19,7 +19,7 @@ class LoaderTest(unittest.TestCase):
             .link(LanguageSelector(languages1)) \
             .link(Collector()) \
             .execute()
-        self.assertEqual(set([x.lang for x in res]), set(languages1))
+        self.assertEqual({x.lang for x in res}, set(languages1))
 
         res = Ignition(engine) \
             .link(HeadFiles()) \
@@ -27,7 +27,7 @@ class LoaderTest(unittest.TestCase):
             .link(LanguageSelector(languages2)) \
             .link(Collector()) \
             .execute()
-        self.assertEqual(set([x.lang for x in res]), set(languages2))
+        self.assertEqual({x.lang for x in res}, set(languages2))
 
         res = Ignition(engine) \
             .link(HeadFiles()) \
@@ -35,7 +35,7 @@ class LoaderTest(unittest.TestCase):
             .link(LanguageSelector(languages2, blacklist=True)) \
             .link(Collector()) \
             .execute()
-        self.assertEqual(set(), set([x.lang for x in res]) & set(languages2))
+        self.assertEqual(set(), {x.lang for x in res} & set(languages2))
 
         res = Ignition(engine) \
             .link(HeadFiles()) \
@@ -43,7 +43,7 @@ class LoaderTest(unittest.TestCase):
             .link(LanguageSelector([])) \
             .link(Collector()) \
             .execute()
-        self.assertEqual(set(), set([x.lang for x in res]))
+        self.assertEqual(set(), {x.lang for x in res})
 
         parquet_loader = create_parquet_loader("test_parquet", repositories=PARQUET_DIR)
         df = parquet_loader.execute()

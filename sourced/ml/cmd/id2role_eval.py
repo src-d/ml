@@ -53,7 +53,7 @@ def get_quality(X, y, estimator, tuned_parameters, seed, log):
     stds = clf.cv_results_['std_test_score']
     best_values = (0,)
     for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-        log.debug("\t%0.3f (+/-%0.03f) for %r" % (mean, std, params))
+        log.debug("\t{:0.3f} (+/-{:0.03f}) for {!r}".format(mean, std, params))
         if best_values[0] < mean:
             best_values = (mean, std, params)
     return clf.score(X_test, y_test), params
