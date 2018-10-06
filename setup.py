@@ -47,6 +47,7 @@ setup(
     tests_require=["docker>=3.4.0,<4.0"],
     package_data={"": ["LICENSE.md", "README.md"],
                   "sourced": ["ml/transformers/languages.yml"], },
+    python_requires=">=3.4",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
