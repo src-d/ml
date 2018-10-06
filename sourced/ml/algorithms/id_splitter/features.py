@@ -98,7 +98,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
         splits.append(split_arr)
 
     log.info("Number of subtokens: %d, Number of distinct characters: %d" %
-             (sum([sum(split_arr) for split_arr in splits]) + len(identifiers),
+             (sum(sum(split_arr) for split_arr in splits) + len(identifiers),
               len({i for index_arr in char_id_seq for i in index_arr})))
 
     log.info("Train/test splitting...")
