@@ -15,7 +15,7 @@ class ModerTest(unittest.TestCase):
 
         function_names = ["func_a", "func_b", "func_c"]
         for f in functions:
-            self.assertTrue(f[0].token in function_names)
+            self.assertIn(f[0].token, function_names)
 
 
 if __name__ == "__main__":

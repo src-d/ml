@@ -93,15 +93,15 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(t2.children, (t1,))
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
-        self.assertEqual(t3.parent, None)
+        self.assertIsNone(t3.parent)
 
         t2 << t1
         self.assertEqual(t1.children, tuple())
-        self.assertEqual(t1.parent, None)
+        self.assertIsNone(t1.parent)
         self.assertEqual(t2.children, tuple())
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
-        self.assertEqual(t3.parent, None)
+        self.assertIsNone(t3.parent)
 
     def test_rshift(self):
         t1 = DumpTransformer(1)
@@ -113,7 +113,7 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(t2.children, (t1,))
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
-        self.assertEqual(t3.parent, None)
+        self.assertIsNone(t3.parent)
 
     def test_path(self):
         self.assertEqual(self.pipeline_linear.path(), self.transformers_linear)
