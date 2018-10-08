@@ -13,7 +13,7 @@ class Uast2GraphletBagTest(unittest.TestCase):
 
     def test_uast_to_bag(self):
         bag = self.graphlets_bag_extractor(self.uast)
-        self.assertTrue(len(bag) > 0, "Expected size of bag should be > 0")
+        self.assertGreater(len(bag), 0, "Expected size of bag should be > 0")
 
 
 if __name__ == "__main__":

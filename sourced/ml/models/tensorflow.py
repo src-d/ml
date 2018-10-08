@@ -11,8 +11,9 @@ class TensorFlowModel(Model):
     """
     NAME = "tensorflow-model"
 
-    def construct(self, graphdef: "tensorflow.GraphDef"=None, session: "tensorflow.Session"=None,
-                  outputs: List[str]=None):
+    def construct(self, graphdef: "tensorflow.GraphDef" = None,
+                  session: "tensorflow.Session" = None,
+                  outputs: List[str] = None):
         if graphdef is None:
             assert session is not None
             assert outputs is not None

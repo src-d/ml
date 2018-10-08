@@ -70,7 +70,7 @@ class BasicTransformerTests(unittest.TestCase):
     def test_rower(self):
         rows = [("get_user", 3)]
         df = self.spark.createDataFrame(rows, ["identifier", "frequency"])
-        data = Rower(lambda x: dict(identifier=x[0], frequency=x[1]))(df.rdd)
+        data = Rower(lambda x: {"identifier": x[0], "frequency": x[1]})(df.rdd)
         self.assertEqual(data.count(), 1)
         self.assertEqual(data.collect()[0].identifier, "get_user")
         self.assertEqual(data.collect()[0].frequency, 3)
@@ -146,8 +146,8 @@ class BasicTransformerTests(unittest.TestCase):
         row_uast = r2d.documentize(df_uast.first())
         uasts_empty = list(UastDeserializer().deserialize_uast(df.first()))
         uasts = list(UastDeserializer().deserialize_uast(row_uast))
-        self.assertTrue(len(uasts_empty) == 0)
-        self.assertTrue(len(uasts) > 0)
+        self.assertEqual(len(uasts_empty), 0)
+        self.assertGreater(len(uasts), 0)
 
     def test_csv_saver(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -196,7 +196,7 @@ class BasicTransformerTests(unittest.TestCase):
     def test_first(self):
         row = ParquetLoader(session=self.spark, paths=PARQUET_DIR).link(First()) \
             .execute()
-        self.assertTrue(isinstance(row, Row))
+        self.assertIsInstance(row, Row)
 
     def test_field_selector(self):
         rows = [("Alice", 1)]

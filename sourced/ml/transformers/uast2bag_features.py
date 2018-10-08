@@ -39,7 +39,7 @@ class UastMiner(Transformer):
                     yield self.process_feature(row, extractor.NAME, feature)
 
     def process_feature(self, row: Row, name, feature):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class Uast2Features(UastMiner):

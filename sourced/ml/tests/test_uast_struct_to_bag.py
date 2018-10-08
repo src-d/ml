@@ -13,7 +13,7 @@ class Uast2RandomWalk2BagTest(unittest.TestCase):
 
     def test_uast_to_bag(self):
         bag = self.uast_random_walk2bag(self.uast)
-        self.assertTrue(len(bag) > 0, "Expected size of bag should be > 0")
+        self.assertGreater(len(bag), 0, "Expected size of bag should be > 0")
 
     def test_equivalence_prepare_starting_nodes(self):
         starting_nodes_old = self.prepare_starting_nodes(self.uast)
@@ -48,7 +48,7 @@ class UastSeq2BagTest(unittest.TestCase):
 
     def test_uast_to_bag(self):
         bag = self.uast_seq2bag(self.uast)
-        self.assertTrue(len(bag) > 0, "Expected size of bag should be > 0")
+        self.assertGreater(len(bag), 0, "Expected size of bag should be > 0")
 
 
 if __name__ == "__main__":

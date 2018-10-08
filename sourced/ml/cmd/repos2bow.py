@@ -13,8 +13,8 @@ from sourced.ml.models import DocumentFrequencies
 
 
 @pause
-def repos2bow_template(args, cache_hook: Transformer=None,
-                       save_hook: Transformer=None):
+def repos2bow_template(args, cache_hook: Transformer = None,
+                       save_hook: Transformer = None):
 
     log = logging.getLogger("repos2bow")
     extractors = create_extractors_from_args(args)
@@ -62,7 +62,7 @@ def repos2bow_template(args, cache_hook: Transformer=None,
             .link(Collector()) \
             .execute()
         selected_part.unpersist()
-        documents = set(row.document for row in documents)
+        documents = {row.document for row in documents}
         reduced_doc_index = {
             key: document_index[key] for key in document_index if key in documents}
         document_indexer = Indexer(Uast2BagFeatures.Columns.document, reduced_doc_index)
@@ -79,7 +79,7 @@ def repos2bow_template(args, cache_hook: Transformer=None,
             .link(Collector()) \
             .execute()
         uast_extractor.unpersist()
-        tokens = set(row.token for row in tokens)
+        tokens = {row.token for row in tokens}
         reduced_token_freq = {key: df_model[key] for key in df_model.df if key in tokens}
         reduced_token_index = {key: df_model.order[key] for key in df_model.df if key in tokens}
         log.info("Processing %s distinct tokens", len(reduced_token_freq))

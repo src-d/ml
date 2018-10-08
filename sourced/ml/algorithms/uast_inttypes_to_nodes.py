@@ -11,7 +11,7 @@ class Uast2QuantizedChildren(Uast2BagThroughSingleScan):
     Converts a UAST to a bag of children counts.
     """
 
-    def __init__(self, npartitions: int=20):
+    def __init__(self, npartitions: int = 20):
         self.npartitions = npartitions
         self.levels = {}
 

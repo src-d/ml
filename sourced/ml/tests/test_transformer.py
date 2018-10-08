@@ -25,7 +25,7 @@ class TransformerTest(unittest.TestCase):
         self.pipeline_linear = self.transformers_linear[0]
         for transformer in self.transformers_linear[1:]:
             self.pipeline_linear = self.pipeline_linear.link(transformer)
-        """
+        r"""
         Tree structure:
         0 - 2 --- 5 - 6
          \   \ \
@@ -56,8 +56,8 @@ class TransformerTest(unittest.TestCase):
         t.link(t_c1)
         t.link(t_c2)
         self.assertEqual(t.children, (t_c1, t_c2))
-        self.assertEqual(t_c1.children, tuple())
-        self.assertEqual(t_c2.children, tuple())
+        self.assertEqual(t_c1.children, ())
+        self.assertEqual(t_c2.children, ())
 
     def test_parent(self):
         t = Transformer(False)
@@ -74,7 +74,7 @@ class TransformerTest(unittest.TestCase):
         self.assertEqual(t2.children, (t,))
         t2.unlink(t)
         self.assertIsNone(t.parent)
-        self.assertEqual(t2.children, tuple())
+        self.assertEqual(t2.children, ())
 
     def test_link(self):
         t = Transformer(False)
@@ -88,32 +88,32 @@ class TransformerTest(unittest.TestCase):
         t2 = DumpTransformer(2)
         t3 = DumpTransformer(3)
         t3 >> t2 >> t1
-        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.children, ())
         self.assertEqual(t1.parent, t2)
         self.assertEqual(t2.children, (t1,))
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
-        self.assertEqual(t3.parent, None)
+        self.assertIsNone(t3.parent)
 
         t2 << t1
-        self.assertEqual(t1.children, tuple())
-        self.assertEqual(t1.parent, None)
-        self.assertEqual(t2.children, tuple())
+        self.assertEqual(t1.children, ())
+        self.assertIsNone(t1.parent)
+        self.assertEqual(t2.children, ())
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
-        self.assertEqual(t3.parent, None)
+        self.assertIsNone(t3.parent)
 
     def test_rshift(self):
         t1 = DumpTransformer(1)
         t2 = DumpTransformer(2)
         t3 = DumpTransformer(3)
         t3 >> t2 >> t1
-        self.assertEqual(t1.children, tuple())
+        self.assertEqual(t1.children, ())
         self.assertEqual(t1.parent, t2)
         self.assertEqual(t2.children, (t1,))
         self.assertEqual(t2.parent, t3)
         self.assertEqual(t3.children, (t2,))
-        self.assertEqual(t3.parent, None)
+        self.assertIsNone(t3.parent)
 
     def test_path(self):
         self.assertEqual(self.pipeline_linear.path(), self.transformers_linear)

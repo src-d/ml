@@ -23,7 +23,7 @@ class SparkDefault:
         # to skip broken siva files
         "spark.tech.sourced.engine.skip.read.errors=true",
     )
-    JAR_PACKAGES = tuple()
+    JAR_PACKAGES = ()
     MEMORY = ""
     STORAGE_LEVEL = "MEMORY_AND_DISK"
     DEP_ZIP = False
@@ -114,7 +114,7 @@ def get_spark_memory_config(memory=SparkDefault.MEMORY):
     :return: memory configuration
     """
     if not memory:
-        return tuple()
+        return ()
     memory = memory.split(",")
     if len(memory) != 3:
         raise ValueError("Expected 3 memory parameters but got %s. Please check --help "

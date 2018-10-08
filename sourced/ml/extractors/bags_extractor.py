@@ -11,7 +11,7 @@ class Extractor(PickleableLogger):
     """
     NAME = None  # feature scheme name, should be overridden in the derived class.
     ALGORITHM = None  # algorithm class to extract from UAST
-    OPTS = dict()  # cmdline args which are passed into __init__()
+    OPTS = {}  # cmdline args which are passed into __init__()
 
     def _get_log_name(self):
         return type(self).__name__
@@ -85,7 +85,7 @@ class BagsExtractor(Extractor):
             yield self.NAMESPACE + key, val * self.weight
 
     def uast_to_bag(self, uast):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class RoleIdsExtractor(Extractor):

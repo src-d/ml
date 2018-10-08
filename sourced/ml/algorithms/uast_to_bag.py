@@ -13,7 +13,7 @@ class Uast2BagBase:
 
         :param uast: The UAST root node.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class Uast2BagThroughSingleScan(Uast2BagBase):
@@ -30,4 +30,4 @@ class Uast2BagThroughSingleScan(Uast2BagBase):
         return result
 
     def node2key(self, node) -> str:
-        raise NotImplemented
+        raise NotImplementedError

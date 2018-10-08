@@ -17,7 +17,7 @@ try:
             parser.add_argument(
                 "--" + flag.name, default=flag.default, type=types[flag.flag_type()],
                 help=flag.help)
-except ImportError as e:
+except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 
     def mirror_tf_args(parser: argparse.ArgumentParser):

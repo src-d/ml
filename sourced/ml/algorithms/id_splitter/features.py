@@ -8,7 +8,7 @@ from modelforge.progress_bar import progress_bar
 
 
 def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, identifier_col: int,
-                     split_identifier_col: int, shuffle: bool=True) -> List[str]:
+                     split_identifier_col: int, shuffle: bool = True) -> List[str]:
     """
     Reads and filters too long identifiers in the CSV file.
 
@@ -43,7 +43,7 @@ def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, i
 
 def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
                      identifier_col: int, split_identifier_col: int, test_ratio: float,
-                     padding: str, shuffle: bool=True) -> Tuple[numpy.array]:
+                     padding: str, shuffle: bool = True) -> Tuple[numpy.array]:
     """
     Prepare the features to train the identifier splitting task.
 
@@ -72,7 +72,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     log.info("Number of identifiers: %d, Average length: %d characters" %
              (len(identifiers), numpy.mean([len(i) for i in identifiers])))
 
-    char2ind = dict((c, i + 1) for i, c in enumerate(sorted(string.ascii_lowercase)))
+    char2ind = {c: i + 1 for i, c in enumerate(sorted(string.ascii_lowercase))}
 
     char_id_seq = []
     splits = []
@@ -98,8 +98,8 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
         splits.append(split_arr)
 
     log.info("Number of subtokens: %d, Number of distinct characters: %d" %
-             (sum([sum(split_arr) for split_arr in splits]) + len(identifiers),
-              len(set([i for index_arr in char_id_seq for i in index_arr]))))
+             (sum(sum(split_arr) for split_arr in splits) + len(identifiers),
+              len({i for index_arr in char_id_seq for i in index_arr})))
 
     log.info("Train/test splitting...")
     n_train = int((1 - test_ratio) * len(char_id_seq))

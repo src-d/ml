@@ -117,10 +117,10 @@ class ProjectorTests(unittest.TestCase):
 
     def test_stop(self):
         web_server.stop()  # dummy test to avoid partially covered line in CI
-        self.assertEqual(web_server.running, False)
+        self.assertFalse(web_server.running)
         web_server.start()
         web_server.stop()
-        self.assertEqual(web_server.running, False)
+        self.assertFalse(web_server.running)
 
 
 if __name__ == "__main__":

@@ -49,13 +49,13 @@ class Uast2IdDistance(UastIds2Bag):
 
         :return: Distance between two points.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def _process_uast(self, node: bblfsh.Node) -> Iterable:
         """
         Converts uast to points list. A point can be anything you need to calculate distance.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def _process_point(self, node, info):
         if bblfsh_roles.IDENTIFIER in node.roles and node.token:

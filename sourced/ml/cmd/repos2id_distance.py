@@ -19,9 +19,9 @@ def repos2id_distance(args):
         .link(UastRow2Document()) \
         .link(UastDeserializer()) \
         .link(Uast2BagFeatures(extractor)) \
-        .link(Rower(lambda x: dict(identifier1=x[0][0][0],
-                                   identifier2=x[0][0][1],
-                                   distance=x[1]))) \
+        .link(Rower(lambda x: {"identifier1": x[0][0][0],
+                               "identifier2": x[0][0][1],
+                               "distance": x[1]})) \
         .link(CsvSaver(args.output)) \
         .execute()
     pipeline_graph(args, log, root)

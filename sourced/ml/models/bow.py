@@ -81,7 +81,7 @@ class BOW(Model):
         """
         return len(self._documents)
 
-    def save(self, output: str, deps: Iterable=tuple()):
+    def save(self, output: str, deps: Iterable = ()):
         if not deps:
             try:
                 deps = [self.get_dep(DocumentFrequencies.NAME)]
@@ -117,9 +117,9 @@ class BOW(Model):
                 "tokens": merge_strings(self.tokens)}
 
     def _load_tree_kwargs(self, tree: dict):
-        return dict(documents=split_strings(tree["documents"]),
-                    matrix=assemble_sparse_matrix(tree["matrix"]),
-                    tokens=split_strings(tree["tokens"]))
+        return {"documents": split_strings(tree["documents"]),
+                "matrix": assemble_sparse_matrix(tree["matrix"]),
+                "tokens": split_strings(tree["tokens"])}
 
     def _load_tree(self, tree: dict):
         self.construct(**self._load_tree_kwargs(tree))
