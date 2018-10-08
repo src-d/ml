@@ -5,7 +5,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter.features import prepare_features, read_identifiers
+from sourced.ml.tests import has_tensorflow
 from sourced.ml.tests.models import IDENTIFIERS
 
 
@@ -38,7 +38,9 @@ def write_fake_identifiers(tar_file, n_lines, char_sizes, n_cols, text="a"):
 
 
 class IdSplitterTest(unittest.TestCase):
+    @unittest.skipIf(not has_tensorflow(), "Tensorflow is not installed.")
     def test_prepare_features(self):
+        from sourced.ml.algorithms.id_splitter.features import prepare_features
         # check feature extraction
         text = "a a"
         n_lines = 10
@@ -82,7 +84,9 @@ class IdSplitterTest(unittest.TestCase):
         except Exception as e:
             self.fail("prepare_features raised %s with log %s" % (type(e), str(e)))
 
+    @unittest.skipIf(not has_tensorflow(), "Tensorflow is not installed.")
     def test_read_identifiers(self):
+        from sourced.ml.algorithms.id_splitter.features import read_identifiers
         # read with header
         with tempfile.NamedTemporaryFile() as tmp:
             with tarfile.open(None, "w", fileobj=tmp, encoding="utf-8") as tmp_tar:

@@ -22,5 +22,13 @@ def create_spark_for_test(name="test"):
     return create_spark(name, config=config, packages=packages)
 
 
+def has_tensorflow():
+    try:
+        import tensorflow  # noqa
+        return True
+    except ImportError:
+        return False
+
+
 def setup():
     setup_logging("INFO")
