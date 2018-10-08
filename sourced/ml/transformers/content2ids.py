@@ -51,7 +51,7 @@ class ContentToIdentifiers(Transformer):
                 lexer = get_lexer_by_name(self.linguist2pygments[row.lang][i])
                 pygments.highlight(code, lexer, self.FormatterProxy(callback=self.process_tokens))
                 break
-            except (KeyError, IndexError, ClassNotFound, UnicodeDecodeError) as e:
+            except (KeyError, IndexError, ClassNotFound, UnicodeDecodeError):
                 continue
         for token in self.names:
             yield token, (repo_id, path)
@@ -118,7 +118,7 @@ class IdentifiersToDataset(Transformer):
         Process rows to gather identifier frequencies.
         num_repos is the number of repositories where the identifier appears in.
         num_files is the number of files where the identifier appears in.
-        num_occ is the total number of occurences of the identifier.
+        num_occ is the total number of occurrences of the identifier.
         """
         list_RDDs = []
         for i in (0, 1):

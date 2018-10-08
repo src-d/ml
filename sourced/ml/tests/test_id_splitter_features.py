@@ -5,7 +5,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter import prepare_features, read_identifiers
+from sourced.ml.algorithms.id_splitter.features import prepare_features, read_identifiers
 from sourced.ml.tests.models import IDENTIFIERS
 
 
@@ -13,7 +13,7 @@ def write_fake_identifiers(tar_file, n_lines, char_sizes, n_cols, text="a"):
     """
     Prepare file with fake identifiers.
     :param tar_file: ready to write file.
-    :param n_lines: number of lines to genrate.
+    :param n_lines: number of lines to generate.
     :param char_sizes: sizes of identifiers.
     :param n_cols: number of columns.
     :param text: text that is used to fill identifiers.

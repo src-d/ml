@@ -31,9 +31,10 @@ class MainTests(unittest.TestCase):
             "merge-df": "merge_df",
             "merge-coocc": "merge_coocc",
             "merge-bow": "merge_bow",
+            "id2role-eval": "id2role_eval"
         }
         parser = main.get_parser()
-        subcommands = set([x.dest for x in parser._subparsers._actions[2]._choices_actions])
+        subcommands = {x.dest for x in parser._subparsers._actions[2]._choices_actions}
         set_action2handler = set(action2handler)
         self.assertFalse(len(subcommands - set_action2handler),
                          "You forgot to add to this test {} subcommand(s) check".format(

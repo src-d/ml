@@ -40,8 +40,8 @@ This program expects an input directory that contains the following files.
     expected to be a serialzed tf.Example protocol buffer with the following
     properties:
 
-      global_row: the global row indicies contained in the shard
-      global_col: the global column indicies contained in the shard
+      global_row: the global row indices contained in the shard
+      global_col: the global column indices contained in the shard
       sparse_local_row, sparse_local_col, sparse_value: three parallel arrays
       that are a sparse representation of the submatrix counts.
 

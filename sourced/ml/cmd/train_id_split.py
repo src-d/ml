@@ -3,11 +3,6 @@ import logging
 import os
 import pickle
 
-from sourced.ml.algorithms.id_splitter import set_random_seed, config_keras, \
-    prepare_features, create_generator_params, str2ints, build_train_generator, \
-    prepare_devices, build_rnn, build_cnn, prepare_callbacks, make_lr_scheduler, \
-    report
-
 
 def train_id_split(args: argparse.ArgumentParser):
     """
@@ -16,6 +11,12 @@ def train_id_split(args: argparse.ArgumentParser):
     :param args: arguments.
     :param model: type of neural network used to learn the splitting task.
     """
+    from sourced.ml.algorithms.id_splitter.features import prepare_features
+    from sourced.ml.algorithms.id_splitter.nn_model import build_rnn, build_cnn, prepare_devices
+    from sourced.ml.algorithms.id_splitter.pipeline import make_lr_scheduler, set_random_seed, \
+        prepare_callbacks, build_train_generator, create_generator_params, str2ints, \
+        config_keras, report
+
     log = logging.getLogger("train_id_split")
     config_keras()
     set_random_seed(args.seed)

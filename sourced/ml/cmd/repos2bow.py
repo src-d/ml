@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sourced.ml.extractors import create_extractors_from_args
 from sourced.ml.transformers import UastDeserializer, BagFeatures2TermFreq, Uast2BagFeatures, \
-    HeadFiles, TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, \
+    TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, \
     Repartitioner, PartitionSelector, Transformer, Distinct, Collector, FieldsSelector
 from sourced.ml.utils import EngineConstants
 from sourced.ml.utils.engine import pipeline_graph, pause
@@ -13,13 +13,13 @@ from sourced.ml.models import DocumentFrequencies
 
 
 @pause
-def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transformer=None,
-                       save_hook: Transformer=None):
+def repos2bow_template(args, cache_hook: Transformer = None,
+                       save_hook: Transformer = None):
 
     log = logging.getLogger("repos2bow")
     extractors = create_extractors_from_args(args)
     session_name = "repos2bow-%s" % uuid4()
-    root, start_point = create_uast_source(args, session_name, select=select)
+    root, start_point = create_uast_source(args, session_name)
     log.info("Loading the document index from %s ...", args.cached_index_path)
     docfreq = DocumentFrequencies().load(source=args.cached_index_path)
     document_index = {key: int(val) for (key, val) in docfreq}
@@ -62,14 +62,14 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
             .link(Collector()) \
             .execute()
         selected_part.unpersist()
-        documents = set(row.document for row in documents)
+        documents = {row.document for row in documents}
         reduced_doc_index = {
             key: document_index[key] for key in document_index if key in documents}
         document_indexer = Indexer(Uast2BagFeatures.Columns.document, reduced_doc_index)
         log.info("Processing %s distinct documents", len(documents))
         bags = uast_extractor \
             .link(UastDeserializer()) \
-            .link(Uast2BagFeatures(extractors)) \
+            .link(Uast2BagFeatures(*extractors)) \
             .link(BagFeatures2TermFreq()) \
             .link(Cacher.maybe(args.persist))
         log.info("Extracting UASTs and collecting distinct tokens ...")
@@ -79,7 +79,7 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
             .link(Collector()) \
             .execute()
         uast_extractor.unpersist()
-        tokens = set(row.token for row in tokens)
+        tokens = {row.token for row in tokens}
         reduced_token_freq = {key: df_model[key] for key in df_model.df if key in tokens}
         reduced_token_index = {key: df_model.order[key] for key in df_model.df if key in tokens}
         log.info("Processing %s distinct tokens", len(reduced_token_freq))
@@ -90,7 +90,7 @@ def repos2bow_template(args, select: Transformer=HeadFiles, cache_hook: Transfor
             .link(Indexer(Uast2BagFeatures.Columns.token, reduced_token_index))
         if save_hook is not None:
             bags_writer = bags_writer \
-                .link(Repartitioner.maybe(args.partitions, args.shuffle, multiplier=10)) \
+                .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
                 .link(save_hook())
         bow = args.bow.split(".asdf")[0] + "_" + str(num_part + 1) + ".asdf"
         bags_writer \
@@ -106,11 +106,11 @@ def repos2bow(args):
     return repos2bow_template(args)
 
 
-def repos2bow_index_template(args, select=HeadFiles):
+def repos2bow_index_template(args):
     log = logging.getLogger("repos2bow_index")
     extractors = create_extractors_from_args(args)
     session_name = "repos2bow_index_features-%s" % uuid4()
-    root, start_point = create_uast_source(args, session_name, select=select)
+    root, start_point = create_uast_source(args, session_name)
     uast_extractor = start_point.link(Moder(args.mode)) \
         .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
         .link(UastRow2Document()) \
@@ -125,7 +125,7 @@ def repos2bow_index_template(args, select=HeadFiles):
     if args.quant:
         create_or_apply_quant(args.quant, extractors, uast_extractor)
     if args.docfreq_out:
-        create_or_load_ordered_df(args, ndocs, uast_extractor.link(Uast2BagFeatures(extractors)))
+        create_or_load_ordered_df(args, ndocs, uast_extractor.link(Uast2BagFeatures(*extractors)))
     pipeline_graph(args, log, root)
 
 

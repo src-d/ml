@@ -3,7 +3,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.algorithms.id_splitter import build_rnn, build_cnn, register_metric, \
+from sourced.ml.algorithms.id_splitter.nn_model import build_rnn, build_cnn, register_metric, \
     METRICS
 
 
@@ -11,15 +11,15 @@ class MetricsTests(unittest.TestCase):
     def test_register_metric(self):
         fake_metric = "fake metric"
         register_metric(fake_metric)
-        self.assertTrue(fake_metric in METRICS)
+        self.assertIn(fake_metric, METRICS)
         METRICS.pop()
-        self.assertFalse(fake_metric in METRICS)
+        self.assertNotIn(fake_metric, METRICS)
 
     def test_raise_register_metric(self):
         bad_metric = 1
         with self.assertRaises(AssertionError):
             register_metric(bad_metric)
-        self.assertTrue(bad_metric not in METRICS)
+        self.assertNotIn(bad_metric, METRICS)
 
 
 class ModelsTests(unittest.TestCase):

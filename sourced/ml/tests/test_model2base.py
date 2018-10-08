@@ -7,7 +7,7 @@ from sourced.ml.models.model_converters.base import Model2Base
 
 class FromModel:
     NAME = "from"
-    meta = {"dependencies": tuple()}
+    meta = {"dependencies": ()}
 
     def __init__(self, **kwargs):
         pass
@@ -19,7 +19,7 @@ class FromModel:
 class ToModel:
     NAME = "to"
     output = None
-    meta = {"dependencies": tuple()}
+    meta = {"dependencies": ()}
 
     def __init__(self, **kwargs):
         pass

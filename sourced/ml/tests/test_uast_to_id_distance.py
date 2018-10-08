@@ -11,42 +11,35 @@ class Uast2IdTreeDistanceTest(unittest.TestCase):
         self.uast2role_id_pairs = Uast2IdTreeDistance(token_parser=NoopTokenParser(),
                                                       max_distance=4)
         self.uast = BblfshClient("0.0.0.0:9432").parse(SOURCE_PY).uast
+        self.maxDiff = None
 
     def test_result(self):
         correct = [(('__spec__', 'ModuleSpec'), 2),
-                   (('__spec__', 'ModuleSpec'), 2),
                    (('__spec__', 'ModuleSpec'), 3),
-                   (('__spec__', '__package__'), 2),
+                   (('__spec__', 'ModuleSpec'), 3),
                    (('collections', 'ModuleSpec'), 2),
                    (('collections', 'ModuleSpec'), 2),
                    (('collections', 'ModuleSpec'), 3),
-                   (('collections', '__spec__'), 2),
-                   (('modules', 'modelforge.logs'), 3),
+                   (('collections', '__spec__'), 3),
                    (('namedtuple', 'ModuleSpec'), 3),
                    (('namedtuple', 'ModuleSpec'), 3),
                    (('namedtuple', 'ModuleSpec'), 3),
                    (('namedtuple', 'ModuleSpec'), 3),
-                   (('namedtuple', '__spec__'), 3),
-                   (('namedtuple', '__spec__'), 3),
                    (('namedtuple', 'collections'), 3),
                    (('namedtuple', 'collections'), 3),
                    (('setup', 'modelforge.logs'), 3),
                    (('setup_logging', 'modelforge.logs'), 3),
                    (('sys', 'modelforge.logs'), 3),
-                   (('sys', 'modules'), 3),
+                   (('sys', 'modules'), 2),
                    (('utmain', 'ModuleSpec'), 2),
                    (('utmain', 'ModuleSpec'), 3),
                    (('utmain', 'ModuleSpec'), 3),
-                   (('utmain', '__package__'), 3),
-                   (('utmain', '__package__'), 3),
-                   (('utmain', '__spec__'), 3),
-                   (('utmain', '__spec__'), 3),
-                   (('utmain', '__spec__'), 3),
+                   (('utmain', '__package__'), 2),
+                   (('utmain', '__spec__'), 2),
+                   (('utmain', '__spec__'), 2),
                    (('utmain', 'collections'), 3),
                    (('utmain', 'modelforge.logs'), 2),
                    (('utmain', 'modelforge.logs'), 2),
-                   (('utmain', 'modules'), 3),
-                   (('utmain', 'modules'), 3),
                    (('utmain', 'setup'), 3),
                    (('utmain', 'setup'), 3),
                    (('utmain', 'setup_logging'), 3),
@@ -63,6 +56,7 @@ class Uast2IdLineDistanceTest(unittest.TestCase):
         self.uast2role_id_pairs = Uast2IdLineDistance(token_parser=NoopTokenParser(),
                                                       max_distance=3)
         self.uast = BblfshClient("0.0.0.0:9432").parse(SOURCE_PY).uast
+        self.maxDiff = None
 
     def test_result(self):
         correct = [(('__package__', 'ModuleSpec'), 2),

@@ -37,7 +37,7 @@ def prepare_devices(devices: str) -> Tuple[str]:
     Extract devices from arguments.
 
     :param devices: devices to use passed as one string argument.
-    :return: splitted devices.
+    :return: split devices.
     """
     devices = devices.split(",")
     if len(devices) == 2:
@@ -80,8 +80,8 @@ def add_output_layer(hidden_layer: tf.Tensor) -> keras.layers.wrappers.TimeDistr
     return TimeDistributed(Dense(1, activation="sigmoid"))(norm_input)
 
 
-def add_rnn(X: tf.Tensor, units: int, rnn_layer: str, dev0: str="/gpu:0",
-            dev1: str="/gpu:1") -> tf.Tensor:
+def add_rnn(X: tf.Tensor, units: int, rnn_layer: str, dev0: str = "/gpu:0",
+            dev1: str = "/gpu:1") -> tf.Tensor:
     """
     Adds a bidirectional RNN layer with the specified parameters.
 

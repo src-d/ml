@@ -1,6 +1,8 @@
+import argparse
 import logging
-from typing import Union
+from typing import List, Union
 
+from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
 
@@ -18,7 +20,7 @@ class Repartitioner(Transformer):
     2. repartition() if shuffle=True, keymap=None
     3. partitionBy() if keymap is not None
     """
-    def __init__(self, partitions: int, shuffle: bool=False, keymap: callable=None, **kwargs):
+    def __init__(self, partitions: int, shuffle: bool = False, keymap: callable = None, **kwargs):
         super().__init__(**kwargs)
         self.partitions = partitions
         self.shuffle = shuffle
@@ -28,16 +30,20 @@ class Repartitioner(Transformer):
         if self.keymap is None:
             return head.coalesce(self.partitions, self.shuffle)
         # partitionBy the key extracted using self.keymap
-        if self.keymap is not False:
-            # user knows what they are doing
+        try:
+            # this checks if keymap is an identity
+            probe = self.keymap("probe")
+        except:  # noqa: E722
+            probe = None
+        if probe != "probe":
             head = head.map(lambda x: (self.keymap(x), x))
         return head \
             .partitionBy(self.partitions) \
             .map(lambda x: x[1])
 
     @staticmethod
-    def maybe(partitions: Union[int, None], shuffle: bool=False, keymap: callable=None,
-              multiplier: int=1):
+    def maybe(partitions: Union[int, None], shuffle: bool = False, keymap: callable = None,
+              multiplier: int = 1):
         if partitions is not None:
             return Repartitioner(partitions * multiplier, shuffle=shuffle, keymap=keymap)
         else:
@@ -152,6 +158,9 @@ class Cacher(Transformer):
 
 
 class Ignition(Transformer):
+    """
+    All pipelines start with this transformer - it returns all the repositories from the engine.
+    """
     def __init__(self, engine, **kwargs):
         super().__init__(**kwargs)
         self.engine = engine
@@ -161,8 +170,21 @@ class Ignition(Transformer):
         del state["engine"]
         return state
 
-    def __call__(self, _):
-        return self.engine
+    def __call__(self, _) -> DataFrame:
+        return self.engine.repositories
+
+
+class RepositoriesFilter(Transformer):
+    """
+    Filters repositories by a regular expression over the identifiers
+    (ex. "github.com/src-d/vecino" or "file:///tmp/vecino-yzv92l0i/repo").
+    """
+    def __init__(self, idre: str, **kwargs):
+        super().__init__(**kwargs)
+        self.idre = idre
+
+    def __call__(self, repositories: DataFrame) -> DataFrame:
+        return repositories.filter(repositories["id"].rlike(self.idre))
 
 
 class DzhigurdaFiles(Transformer):
@@ -170,13 +192,14 @@ class DzhigurdaFiles(Transformer):
         super().__init__(**kwargs)
         self.dzhigurda = dzhigurda
 
-    def __call__(self, engine):
-        head_ref = engine.repositories.references.head_ref
+    def __call__(self, repositories: DataFrame) -> DataFrame:
+        head_ref = repositories.references.head_ref
         if self.dzhigurda < 0:
             # Use all available commits
             chosen = head_ref.all_reference_commits
         elif self.dzhigurda == 0:
             # Use only the first commit on a reference.
+            # This case is completely the same with HeadFiles Transformer
             chosen = head_ref.commits
         else:
             commits = head_ref.all_reference_commits
@@ -185,8 +208,8 @@ class DzhigurdaFiles(Transformer):
 
 
 class HeadFiles(Transformer):
-    def __call__(self, engine):
-        return engine.repositories.references.head_ref.commits.tree_entries.blobs
+    def __call__(self, repositories: DataFrame) -> DataFrame:
+        return repositories.references.head_ref.commits.tree_entries.blobs
 
 
 class Counter(Transformer):
@@ -205,32 +228,41 @@ class Counter(Transformer):
         return head.countApproxDistinct()
 
 
+class LanguageExtractor(Transformer):
+    def __call__(self, files: BlobsDataFrame) -> DataFrame:
+        if not isinstance(files, BlobsDataFrame):
+            raise TypeError("Argument type is not BlobsDataFrame. "
+                            "Language extraction can not be performed.")
+        return files \
+            .dropDuplicates(("blob_id",)) \
+            .filter("is_binary = 'false'") \
+            .classify_languages()
+
+
 class LanguageSelector(Transformer):
-    def __init__(self, languages: Union[list, tuple], blacklist=False, **kwargs):
+    def __init__(self, languages: List[str], blacklist=False, **kwargs):
         super().__init__(**kwargs)
         self.languages = languages
         self.blacklist = blacklist
 
-    def __call__(self, files: DataFrame) -> DataFrame:
-        files = files.dropDuplicates(("blob_id",)).filter("is_binary = 'false'")
-        classified = files.classify_languages()
-        if not self.blacklist:
-            lang_filter = classified.lang == self.languages[0]
-            for lang in self.languages[1:]:
-                lang_filter |= classified.lang == lang
-        else:
-            lang_filter = classified.lang != self.languages[0]
-            for lang in self.languages[1:]:
-                lang_filter &= classified.lang != lang
-        filtered_by_lang = classified.filter(lang_filter)
-        return filtered_by_lang
+    def __call__(self, files: BlobsWithLanguageDataFrame) -> DataFrame:
+        return files[files.lang.isin(self.languages) != self.blacklist]
+
+    @staticmethod
+    def maybe(languages, blacklist):
+        if languages is None:
+            return Identity()
+        return LanguageSelector(languages, blacklist)
 
 
 class UastExtractor(Transformer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def __call__(self, files: DataFrame) -> DataFrame:
+    def __call__(self, files: Union[BlobsDataFrame, BlobsWithLanguageDataFrame]) -> DataFrame:
+        if not isinstance(files, (BlobsDataFrame, BlobsWithLanguageDataFrame)):
+            raise TypeError("Argument type should be BlobsDataFrame or BlobsWithLanguageDataFrame,"
+                            " got %s" % type(files).__name__)
         # if UAST is not extracted, returns an empty list that we filter out here
         return files.extract_uasts().where(functions.size(functions.col("uast")) > 0)
 
@@ -289,6 +321,8 @@ class UastDeserializer(Transformer):
         return rows.flatMap(self.deserialize_uast)
 
     def deserialize_uast(self, row: Row):
+        if EngineConstants.Columns.Uast not in row:
+            return
         if not row[EngineConstants.Columns.Uast]:
             return
         row_dict = row.asDict()
@@ -320,22 +354,28 @@ def create_parquet_loader(session_name, repositories,
     return parquet
 
 
-def create_uast_source(args, session_name, select=HeadFiles, language_selector=None,
-                       extract_uast=True):
+def create_file_source(args: argparse.Namespace, session_name: str):
     if args.parquet:
         parquet_loader_args = filter_kwargs(args.__dict__, create_parquet_loader)
-        start_point = create_parquet_loader(session_name, **parquet_loader_args)
-        root = start_point
-        if extract_uast and "uast" not in [col.name for col in start_point.execute().schema]:
-            raise ValueError("The parquet files do not contain UASTs.")
+        root = create_parquet_loader(session_name, **parquet_loader_args)
+        file_source = root.link(LanguageSelector.maybe(languages=args.languages,
+                                                       blacklist=args.blacklist))
     else:
         engine_args = filter_kwargs(args.__dict__, create_engine)
-        root = create_engine(session_name, **engine_args)
-        if language_selector is None:
-            language_selector = LanguageSelector(languages=args.languages)
-        start_point = Ignition(root, explain=args.explain) \
-            .link(select()) \
-            .link(language_selector)
-        if extract_uast:
-            start_point = start_point.link(UastExtractor())
-    return root, start_point
+        root = Ignition(create_engine(session_name, **engine_args), explain=args.explain)
+        file_source = root.link(DzhigurdaFiles(args.dzhigurda))
+        if args.languages is not None:
+            file_source = file_source \
+                .link(LanguageExtractor()) \
+                .link(LanguageSelector(languages=args.languages, blacklist=args.blacklist))
+
+    return root, file_source
+
+
+def create_uast_source(args: argparse.Namespace, session_name: str):
+    root, file_source = create_file_source(args, session_name)
+    if args.parquet:
+        # Assume that we already have uast column inside, because we cannot convert parquet files
+        # back to sourced-engine format to extract UASTs.
+        return root, file_source
+    return root, file_source.link(UastExtractor())

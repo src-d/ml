@@ -6,7 +6,7 @@ import unittest
 from sourced.ml.utils.docfreq import create_or_load_ordered_df
 from sourced.ml.utils import create_spark
 from sourced.ml.transformers import ParquetLoader, UastDeserializer, UastRow2Document, Counter, \
-    Uast2BagFeatures
+    Uast2BagFeatures, Moder
 from sourced.ml.extractors import IdentifiersBagExtractor
 
 import sourced.ml.tests.models as paths
@@ -23,10 +23,11 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
     def test_create(self):
         session = create_spark("test_df_util")
         uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
+            .link(Moder("file")) \
             .link(UastRow2Document())
         ndocs = uast_extractor.link(Counter()).execute()
         uast_extractor = uast_extractor.link(UastDeserializer()) \
-            .link(Uast2BagFeatures([IdentifiersBagExtractor()]))
+            .link(Uast2BagFeatures(IdentifiersBagExtractor()))
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = os.path.join(tmpdir, "df.asdf")
             args = argparse.Namespace(docfreq_in=None, docfreq_out=tmp_path, min_docfreq=1,
@@ -42,7 +43,8 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             session = create_spark("test_df_util")
             uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
+                .link(Moder("file")) \
                 .link(UastRow2Document()) \
                 .link(UastDeserializer()) \
-                .link(Uast2BagFeatures([IdentifiersBagExtractor()]))
+                .link(Uast2BagFeatures(IdentifiersBagExtractor()))
             create_or_load_ordered_df(argparse.Namespace(docfreq_in=None), None, uast_extractor)

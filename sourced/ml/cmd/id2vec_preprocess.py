@@ -6,7 +6,7 @@ import warnings
 import numpy
 try:
     import tensorflow as tf
-except ImportError as e:
+except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
 
 from modelforge.progress_bar import progress_bar

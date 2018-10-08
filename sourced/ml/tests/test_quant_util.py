@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from sourced.ml.transformers import ParquetLoader, UastRow2Document, UastDeserializer
+from sourced.ml.transformers import ParquetLoader, UastRow2Document, UastDeserializer, Moder
 from sourced.ml.extractors import ChildrenBagExtractor
 from sourced.ml.models import QuantizationLevels
 from sourced.ml.utils.quant import create_or_apply_quant
@@ -26,6 +26,7 @@ class MyTestCase(unittest.TestCase):
         with tempfile.NamedTemporaryFile(mode="r+b", suffix="-quant.asdf") as tmp:
             path = tmp.name
             uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
+                .link(Moder("file")) \
                 .link(UastRow2Document()) \
                 .link(UastDeserializer())
             create_or_apply_quant(path, [extractor], uast_extractor)

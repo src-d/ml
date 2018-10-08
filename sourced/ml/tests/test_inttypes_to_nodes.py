@@ -13,7 +13,7 @@ class Uast2NodesBagTest(unittest.TestCase):
 
     def test_uast_to_bag(self):
         bag = self.nodes_bag_extractor(self.uast)
-        self.assertTrue(len(bag) > 0, "Expected size of bag should be > 0")
+        self.assertGreater(len(bag), 0, "Expected size of bag should be > 0")
 
     def test_quantize_1(self):
         freqs = {1: 100, 2: 90, 3: 10, 5: 10, 6: 5, 7: 5}
