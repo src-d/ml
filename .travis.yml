@@ -19,7 +19,7 @@ _install: &_install
   - gimme 1.8
   - source ~/.gimme/envs/latest.env
   - pip install --upgrade pip
-  - pip install tensorflow
+  - if [[ $TRAVIS_PYTHON_VERSION < 3.7 ]]; then pip install tensorflow; fi
   - pip install -r requirements.txt codecov
   - pip install -e .
 _coverage: &_coverage
@@ -43,6 +43,8 @@ matrix:
       env: *_coverage
       install: *_install
     - python: 3.7
+      env: *_coverage
+      install: *_install
       env: SCRIPT="flake8 . && (! grep -R /tmp sourced/ml/tests)"
       install: pip install flake8
     - python: 3.7
