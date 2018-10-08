@@ -23,7 +23,7 @@ def get_names_from_kwargs(f):
 
 def filter_kwargs(kwargs, func):
     func_param = inspect.signature(func).parameters.keys()
-    return dict([(k, v) for k, v in kwargs.items() if k in func_param])
+    return {k: v for k, v in kwargs.items() if k in func_param}
 
 
 def create_extractors_from_args(args: argparse.Namespace) -> List[BagsExtractor]:

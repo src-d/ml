@@ -72,7 +72,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     log.info("Number of identifiers: %d, Average length: %d characters" %
              (len(identifiers), numpy.mean([len(i) for i in identifiers])))
 
-    char2ind = dict((c, i + 1) for i, c in enumerate(sorted(string.ascii_lowercase)))
+    char2ind = {c: i + 1 for i, c in enumerate(sorted(string.ascii_lowercase))}
 
     char_id_seq = []
     splits = []
