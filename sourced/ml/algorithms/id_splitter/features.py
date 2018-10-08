@@ -72,7 +72,7 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     log.info("Number of identifiers: %d, Average length: %d characters" %
              (len(identifiers), numpy.mean([len(i) for i in identifiers])))
 
-    char2ind = {c: i + 1 for i, c in enumerate(sorted(string.ascii_lowercase))}
+    char2ind = dict((c, i + 1) for i, c in enumerate(sorted(string.ascii_lowercase)))
 
     char_id_seq = []
     splits = []
@@ -107,8 +107,8 @@ def prepare_features(csv_path: str, use_header: bool, max_identifier_len: int,
     X_test = char_id_seq[n_train:]
     y_train = splits[:n_train]
     y_test = splits[n_train:]
-    log.info("Number of train samples: {}, number of test samples: {}".format(
-        len(X_train), len(X_test)))
+    log.info("Number of train samples: %s, number of test samples: %s" % (len(X_train),
+                                                                          len(X_test)))
     log.info("Padding the sequences...")
     X_train = pad_sequences(X_train, maxlen=max_identifier_len, padding=padding)
     X_test = pad_sequences(X_test, maxlen=max_identifier_len, padding=padding)

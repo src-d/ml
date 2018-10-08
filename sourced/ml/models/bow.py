@@ -104,7 +104,7 @@ class BOW(Model):
                     except (KeyError, IndexError):
                         log.warning("%d not found in the vocabulary", t)
                         continue
-                    pairs.append("{}:{}".format(word, v))
+                    pairs.append("%s:%s" % (word, v))
                 fout.write(" ".join(pairs))
                 fout.write("\n")
 

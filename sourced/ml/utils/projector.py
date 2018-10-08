@@ -6,7 +6,7 @@ import threading
 import time
 
 
-class CORSWebServer:
+class CORSWebServer(object):
     def __init__(self):
         self.thread = None
         self.server = None

@@ -120,7 +120,7 @@ def add_feature_args(my_parser: argparse.ArgumentParser, required=True):
     for ex in extractors.__extractors__.values():
         for opt, val in ex.OPTS.items():
             my_parser.add_argument(
-                "--{}-{}".format(ex.NAME, opt), default=val, type=json.loads,
+                "--%s-%s" % (ex.NAME, opt), default=val, type=json.loads,
                 help="%s's kwarg" % ex.__name__)
 
 

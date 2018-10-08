@@ -23,7 +23,7 @@ class TrainIdSplitTest(unittest.TestCase):
                                           filters="64,32,16,8", kernel_sizes="2,4,8,16")
                 train_id_split(args)
         except Exception as e:
-            self.fail("CNN training raised {} with log: {}".format(type(e), str(e)))
+            self.fail("CNN training raised %s with log: %s" % (type(e), str(e)))
 
 
 if __name__ == "__main__":

@@ -80,7 +80,7 @@ class IdSplitterTest(unittest.TestCase):
                              max_identifier_len=max_identifier_len, split_identifier_col=1,
                              shuffle=True, test_ratio=0.5, padding="post")
         except Exception as e:
-            self.fail("prepare_features raised {} with log {}".format(type(e), str(e)))
+            self.fail("prepare_features raised %s with log %s" % (type(e), str(e)))
 
     def test_read_identifiers(self):
         # read with header
@@ -138,4 +138,4 @@ class IdSplitterTest(unittest.TestCase):
             read_identifiers(csv_path=IDENTIFIERS, use_header=True, max_identifier_len=10,
                              identifier_col=3, split_identifier_col=4)
         except Exception as e:
-            self.fail("read_identifiers raised {} with log {}".format(type(e), str(e)))
+            self.fail("read_identifiers raised %s with log %s" % (type(e), str(e)))

@@ -112,4 +112,4 @@ class Model2Base(PickleableLogger):
         self.finalize(index, destdir)
 
     def _get_log_name(self):
-        return "{}2{}".format(self.MODEL_FROM_CLASS.NAME, self.MODEL_TO_CLASS.NAME)
+        return "%s2%s" % (self.MODEL_FROM_CLASS.NAME, self.MODEL_TO_CLASS.NAME)
