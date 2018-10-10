@@ -117,3 +117,6 @@ We represent every repository as a weighted bag-of-vectors, provided by we've go
 
 See [here](doc/topic_modeling.md).
 
+## Glossary
+
+See [here](GLOSSARY.md).
