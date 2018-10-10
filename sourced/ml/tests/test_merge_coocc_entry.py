@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -41,6 +42,7 @@ class MergeCooccEntry(unittest.TestCase):
             shutil.copyfile(model_path,
                             os.path.join(to_dir, "{}.".format(i).join(coocc_filename.split("."))))
 
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_with_spark(self):
         with tempfile.TemporaryDirectory(prefix="merge-coocc-entry-test") as input_dir:
             self.copy_models(models.COOCC, input_dir, COPIES_NUMBER)
@@ -72,6 +74,7 @@ class MergeCooccEntry(unittest.TestCase):
                 self.assertTrue(np.all(coocc.matrix.data <= MAX_INT32))
                 break
 
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_overflow_with_spark(self):
         with tempfile.TemporaryDirectory(prefix="merge-coocc-entry-test") as input_dir:
             self.copy_models(models.COOCC, input_dir, COPIES_NUMBER)

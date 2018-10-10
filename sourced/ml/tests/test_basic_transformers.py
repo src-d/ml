@@ -1,6 +1,7 @@
 import csv
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -17,6 +18,7 @@ from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
 
 class BasicTransformerTests(unittest.TestCase):
     @classmethod
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def setUpClass(cls):
         cls.engine = create_engine("test_with_engine", SIVA_DIR, "siva")
         cls.spark = cls.engine.session

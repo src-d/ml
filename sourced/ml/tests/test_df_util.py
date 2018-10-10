@@ -1,5 +1,6 @@
 import os
 import argparse
+import sys
 import tempfile
 import unittest
 
@@ -20,6 +21,7 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
         df_model = create_or_load_ordered_df(args, None, None)
         self.assertEqual(df_model.docs, 1000)
 
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_create(self):
         session = create_spark("test_df_util")
         uast_extractor = ParquetLoader(session, paths.PARQUET_DIR) \
@@ -36,6 +38,7 @@ class DocumentFrequenciesUtilTests(unittest.TestCase):
             self.assertEqual(df_model.docs, ndocs)
             self.assertTrue(os.path.exists(tmp_path))
 
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_error(self):
         with self.assertRaises(ValueError):
             create_or_load_ordered_df(argparse.Namespace(docfreq_in=None), 10, None)

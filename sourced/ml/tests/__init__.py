@@ -1,4 +1,5 @@
 import sys
+from unittest import SkipTest
 
 from modelforge.logs import setup_logging
 
@@ -17,6 +18,8 @@ del utmain
 
 
 def create_spark_for_test(name="test"):
+    if sys.version_info > (3, 6):
+        raise SkipTest("Python 3.7 is not yet supported.")
     packages = (get_engine_package(get_engine_version()),)
     config = (get_bblfsh_dependency("localhost"),)
     return create_spark(name, config=config, packages=packages)
