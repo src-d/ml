@@ -1,16 +1,11 @@
+import os.path
 from importlib.machinery import SourceFileLoader
 from setuptools import setup, find_packages
-import sys
 
 sourcedml = SourceFileLoader("sourced.ml", "./sourced/ml/__init__.py").load_module()
 
-with open("README.md") as f:
+with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
     long_description = f.read()
-
-if sys.version_info < (3, 5, 0):
-    typing = ["typing"]
-else:
-    typing = []
 
 setup(
     name="sourced-ml",
@@ -32,17 +27,20 @@ setup(
     },
     keywords=["machine learning on source code", "word2vec", "id2vec",
               "github", "swivel", "bow", "bblfsh", "babelfish"],
-    install_requires=["PyStemmer>=1.3,<2.0",
-                      "bblfsh>=2.2.1,<3.0",
-                      "modelforge>=0.7.0,<0.8",
-                      "sourced-engine>=0.7.0,<1.1",
-                      "humanize>=0.5.0,<0.6",
-                      "parquet>=1.2,<2.0",
-                      "pygments>=2.2.0,<3.0",
-                      "keras>=2.0,<3.0",
-                      "pandas>=0.22,<1.0",
-                      "scikit-learn>=0.19,<1.0",
-                      "tqdm>=4.20,<5.0"] + typing,
+    install_requires=[
+        "PyStemmer>=1.3,<2.0",
+        "bblfsh>=2.2.1,<3.0",
+        "modelforge>=0.7.0,<0.8",
+        "sourced-engine>=0.7.0,<1.1",
+        "humanize>=0.5.0,<0.6",
+        "parquet>=1.2,<2.0",
+        "pygments>=2.2.0,<3.0",
+        "keras>=2.0,<3.0",
+        "pandas>=0.22,<1.0",
+        "scikit-learn>=0.19,<1.0",
+        "tqdm>=4.20,<5.0",
+        "typing;python_version<'3.5'",
+    ],
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
