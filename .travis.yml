@@ -1,6 +1,6 @@
 language: python
 sudo: false
-dist: trusty
+dist: xenial
 services:
 - docker
 cache:
@@ -37,11 +37,15 @@ matrix:
       env: *_coverage
       install: *_install
     - python: 3.5
+      dist: trusty
       env: *_coverage
       install: *_install
     - python: 3.6
+      dist: trusty
       env: *_coverage
       install: *_install
+      after_success:
+        - codecov
     - python: 3.7
       env: *_coverage
       install: *_install
@@ -50,8 +54,6 @@ matrix:
     - python: 3.7
       env: *_coverage
       install: *_install
-      after_success:
-        - codecov
     - stage: deploy
       python: 3.4
       install:

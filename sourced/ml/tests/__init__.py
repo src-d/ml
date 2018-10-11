@@ -18,7 +18,7 @@ del utmain
 
 
 def create_spark_for_test(name="test"):
-    if sys.version_info > (3, 6):
+    if sys.version_info >= (3, 7):
         raise SkipTest("Python 3.7 is not yet supported.")
     packages = (get_engine_package(get_engine_version()),)
     config = (get_bblfsh_dependency("localhost"),)
