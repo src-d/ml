@@ -2,14 +2,7 @@ import io
 import unittest
 
 from sourced.ml.models.tensorflow import TensorFlowModel
-
-
-def has_tensorflow():
-    try:
-        import tensorflow  # noqa
-        return True
-    except ImportError:
-        return False
+from sourced.ml.tests import has_tensorflow
 
 
 class TensorFlowModelTests(unittest.TestCase):

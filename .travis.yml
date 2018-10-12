@@ -1,6 +1,6 @@
 language: python
 sudo: false
-dist: trusty
+dist: xenial
 services:
 - docker
 cache:
@@ -19,7 +19,7 @@ _install: &_install
   - gimme 1.8
   - source ~/.gimme/envs/latest.env
   - pip install --upgrade pip
-  - pip install tensorflow
+  - if [[ $TRAVIS_PYTHON_VERSION < 3.7 ]]; then pip install tensorflow; fi
   - pip install -r requirements.txt codecov
   - pip install -e .
 _coverage: &_coverage
@@ -33,19 +33,27 @@ _deploy: &_deploy
 matrix:
   include:
     - python: 3.4
+      dist: trusty
       env: *_coverage
       install: *_install
     - python: 3.5
+      dist: trusty
       env: *_coverage
       install: *_install
     - python: 3.6
-      env: SCRIPT="flake8 . && (! grep -R /tmp sourced/ml/tests)"
-      install: pip install flake8
-    - python: 3.6
+      dist: trusty
       env: *_coverage
       install: *_install
       after_success:
         - codecov
+    - python: 3.7
+      env: *_coverage
+      install: *_install
+      env: SCRIPT="flake8 . && (! grep -R /tmp sourced/ml/tests)"
+      install: pip install flake8
+    - python: 3.7
+      env: *_coverage
+      install: *_install
     - stage: deploy
       python: 3.4
       install:

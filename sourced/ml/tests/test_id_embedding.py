@@ -7,13 +7,12 @@ import unittest
 
 import asdf
 import numpy
-import tensorflow as tf
 from scipy.sparse import coo_matrix
 
 from modelforge.model import split_strings, assemble_sparse_matrix
-from sourced.ml.algorithms import swivel
 from sourced.ml.cmd import id2vec_postprocess, run_swivel, id2vec_preprocess
 from sourced.ml.models import OrderedDocumentFrequencies, Id2Vec
+from sourced.ml.tests import has_tensorflow
 from sourced.ml.tests.test_dump import captured_output
 from sourced.ml.tests.models import COOCC, COOCC_DF
 
@@ -58,6 +57,7 @@ def check_swivel_results(obj, dirname):
 
 
 def default_swivel_args(tmpdir):
+    from sourced.ml.algorithms import swivel
     args = swivel.FLAGS
     args.input_base_path = os.path.join(os.path.dirname(__file__), "swivel")
     prepare_shard(args.input_base_path)
@@ -83,7 +83,9 @@ class IdEmbeddingTests(unittest.TestCase):
             args.shard_size = VOCAB + 1
             self.assertRaises(ValueError, lambda: id2vec_preprocess(args))
 
+    @unittest.skipIf(not has_tensorflow(), "Tensorflow is not installed.")
     def test_preprocess(self):
+        import tensorflow as tf
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_preprocess_params(tmpdir, VOCAB)
             with captured_output() as (out, err, log):
@@ -153,6 +155,7 @@ class IdEmbeddingTests(unittest.TestCase):
             matrix = matrix.tocsr()[chosen_indices][:, chosen_indices].todense().astype(int)
             self.assertTrue((matrix == freqs).all())
 
+    @unittest.skipIf(not has_tensorflow(), "Tensorflow is not installed.")
     def test_swivel_bad_params_submatrix_cols(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_swivel_args(tmpdir)
@@ -163,6 +166,7 @@ class IdEmbeddingTests(unittest.TestCase):
             args.submatrix_rows += 1
             self.assertRaises(ValueError, lambda: run_swivel(args))
 
+    @unittest.skipIf(not has_tensorflow(), "Tensorflow is not installed.")
     def test_swivel(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             args = default_swivel_args(tmpdir)

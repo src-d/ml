@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 import unittest
 
@@ -20,6 +21,7 @@ class MyTestCase(unittest.TestCase):
         for key in model_levels:
             self.assertListEqual(list(model_levels[key]), list(extractor.levels[key]))
 
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_create(self):
         session = create_spark("test_quant_util")
         extractor = ChildrenBagExtractor()

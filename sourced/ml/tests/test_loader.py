@@ -1,3 +1,4 @@
+import sys
 import unittest
 import argparse
 
@@ -6,6 +7,7 @@ from sourced.ml.transformers import create_uast_source
 
 
 class LoaderTest(unittest.TestCase):
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_parquet(self):
         args = argparse.Namespace(parquet=True,
                                   repositories=PARQUET_DIR,

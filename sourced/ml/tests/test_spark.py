@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from sourced.ml.utils.spark import get_spark_memory_config, create_spark
@@ -14,6 +15,7 @@ class SparkTests(unittest.TestCase):
                                   "spark.driver.maxResultSize=3"))
         self.assertRaises(ValueError, get_spark_memory_config, memory="1,2,3,4")
 
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_create_spark(self):
         spark = create_spark("test_1")
         self.assertEqual(spark.read.parquet(PARQUET_DIR).count(), 6)

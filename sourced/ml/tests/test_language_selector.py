@@ -1,3 +1,4 @@
+import sys
 import unittest
 from pyspark.sql.functions import lit
 
@@ -8,6 +9,7 @@ from sourced.ml.transformers.basic import create_parquet_loader, create_engine
 
 
 class LoaderTest(unittest.TestCase):
+    @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
     def test_parquet(self):
         languages1 = ["Python", "Java"]
         languages2 = ["Java"]
