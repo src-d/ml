@@ -1,10 +1,12 @@
+import io
 import os.path
 from importlib.machinery import SourceFileLoader
 from setuptools import setup, find_packages
 
 sourcedml = SourceFileLoader("sourced.ml", "./sourced/ml/__init__.py").load_module()
 
-with open(os.path.join(os.path.dirname(__file__), "README.md")) as f:
+with io.open(os.path.join(os.path.dirname(__file__), "README.md"),
+             encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
