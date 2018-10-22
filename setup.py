@@ -38,7 +38,6 @@ setup(
         "parquet>=1.2,<2.0",
         "pygments>=2.2.0,<3.0",
         "keras>=2.0,<3.0",
-        "pandas>=0.22,<1.0",
         "scikit-learn>=0.19,<1.0",
         "tqdm>=4.20,<5.0",
         "typing;python_version<'3.5'",
@@ -46,6 +45,7 @@ setup(
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
+        "pandas": ["pandas>=0.22,<1.0"],
     },
     tests_require=["docker>=3.4.0,<4.0"],
     package_data={"": ["LICENSE.md", "README.md"],
