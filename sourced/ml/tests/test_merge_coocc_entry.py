@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-import numpy as np
+import numpy
 
 from sourced.ml.cmd.merge_coocc import merge_coocc, load_and_check, MAX_INT32
 from sourced.ml.models import Cooccurrences
@@ -32,9 +32,9 @@ class MergeCooccEntry(unittest.TestCase):
         res = Cooccurrences().load(output)
         self.assertEqual(len(res.tokens), len(coocc.tokens))
         permutation = [coocc.tokens.index(token) for token in res.tokens]
-        self.assertTrue(np.all(res.matrix.todense() ==
-                               copies_number *
-                               coocc.matrix.todense()[permutation][:, permutation]))
+        self.assertTrue(numpy.all(res.matrix.todense() ==
+                                  copies_number *
+                                  coocc.matrix.todense()[permutation][:, permutation]))
 
     def copy_models(self, model_path, to_dir, n):
         coocc_filename = os.path.split(model_path)[1]
@@ -67,11 +67,11 @@ class MergeCooccEntry(unittest.TestCase):
             self.assertEqual(len(list(load_and_check(args.input, logging.getLogger("test")))), 2)
 
             c_neg = Cooccurrences().load(args.input[0])
-            c_neg.matrix.data = np.uint32(c_neg.matrix.data)
+            c_neg.matrix.data = numpy.uint32(c_neg.matrix.data)
             c_neg.matrix.data[0] = MAX_INT32 + 1
             c_neg.save(args.input[0])
             for path, coocc in load_and_check(args.input, logging.getLogger("test")):
-                self.assertTrue(np.all(coocc.matrix.data <= MAX_INT32))
+                self.assertTrue(numpy.all(coocc.matrix.data <= MAX_INT32))
                 break
 
     @unittest.skipUnless(sys.version_info < (3, 7), "Python 3.7 is not yet supported")
@@ -85,8 +85,8 @@ class MergeCooccEntry(unittest.TestCase):
             merge_coocc(args)
 
             result = Cooccurrences().load(args.output)
-            self.assertTrue(np.all(result.matrix.data <= MAX_INT32))
-            self.assertTrue(np.all(result.matrix.data >= 0))
+            self.assertTrue(numpy.all(result.matrix.data <= MAX_INT32))
+            self.assertTrue(numpy.all(result.matrix.data >= 0))
 
     def test_overflow_without_spark(self):
         with tempfile.TemporaryDirectory(prefix="merge-coocc-entry-test") as input_dir:
@@ -98,8 +98,8 @@ class MergeCooccEntry(unittest.TestCase):
             merge_coocc(args)
 
             result = Cooccurrences().load(args.output)
-            self.assertTrue(np.all(result.matrix.data <= MAX_INT32))
-            self.assertTrue(np.all(result.matrix.data >= 0))
+            self.assertTrue(numpy.all(result.matrix.data <= MAX_INT32))
+            self.assertTrue(numpy.all(result.matrix.data >= 0))
 
 
 if __name__ == '__main__':

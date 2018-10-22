@@ -2,7 +2,7 @@ import logging
 from uuid import uuid4
 
 from modelforge.progress_bar import progress_bar
-import numpy as np
+import numpy
 from scipy.sparse import coo_matrix
 
 from sourced.ml.cmd.args import handle_input_arg
@@ -37,12 +37,12 @@ def load_and_check(filepaths: list, log: logging.Logger):
     """
     for path in progress_bar(filepaths, log):
         coocc = Cooccurrences().load(path)
-        negative_values = np.where(coocc.matrix.data < 0)
+        negative_values = numpy.where(coocc.matrix.data < 0)
         if negative_values[0].size > 0:
             log.warning("Model %s is corrupted and will be skipped. "
                         "It contains negative elements.", path)
             continue
-        too_big_values = np.where(coocc.matrix.data > MAX_INT32)
+        too_big_values = numpy.where(coocc.matrix.data > MAX_INT32)
         if too_big_values[0].size > 0:
             log.warning("Model %s contains elements with values more than MAX_INT32. "
                         "They will be saturated to MAX_INT32", path)
@@ -75,7 +75,7 @@ def merge_coocc_spark(df, filepaths, log, args):
         coocc_rdds.append(
             rdd.map(lambda row: ((local_to_global(row[0][0]),
                                   local_to_global(row[0][1])),
-                                 np.uint32(row[1])))
+                                 numpy.uint32(row[1])))
                .filter(lambda row: row[0][0] >= 0))
 
     log.info("Calculating the union of cooccurrence matrices...")
@@ -100,15 +100,15 @@ def merge_coocc_no_spark(df, filepaths, log, args):
     # TODO(zurk): recheck the number of saturated elements.
     log.info("Merging cooccurrences without using PySpark")
     shape = (len(df) + 1,) * 2
-    result = coo_matrix(shape, dtype=np.uint32)
+    result = coo_matrix(shape, dtype=numpy.uint32)
     for path, coocc in load_and_check(filepaths, log):
         coocc._matrix = coo_matrix(coocc._matrix)
         index = [df.order.get(x, len(df)) for x in coocc.tokens]
         rows = [index[x] for x in coocc.matrix.row]
         cols = [index[x] for x in coocc.matrix.col]
         result += coo_matrix(
-            (coocc.matrix.data, (rows, cols)), shape=shape, dtype=np.uint32)
-        indx_overflow = np.where(result.data > MAX_INT32)
+            (coocc.matrix.data, (rows, cols)), shape=shape, dtype=numpy.uint32)
+        indx_overflow = numpy.where(result.data > MAX_INT32)
         if indx_overflow[0].size > 0:
             log.warning("Overflow in %d elements. They will be saturated to MAX_INT32",
                         indx_overflow[0].size)

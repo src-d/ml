@@ -58,7 +58,7 @@ import os
 import time
 import threading
 
-import numpy as np
+import numpy
 import tensorflow as tf
 from tensorflow.python.client import device_lib
 
@@ -249,7 +249,7 @@ class SwivelModel:
             tf.summary.histogram("row_emb", self.row_embedding)
             tf.summary.histogram("col_emb", self.col_embedding)
 
-            matrix_log_sum = math.log(np.sum(row_sums) + 1)
+            matrix_log_sum = math.log(numpy.sum(row_sums) + 1)
             row_bias_init = [math.log(x + 1) for x in row_sums]
             col_bias_init = [math.log(x + 1) for x in col_sums]
             self.row_bias = tf.Variable(
