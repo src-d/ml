@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-import numpy as np
+import numpy
 from scipy.sparse import csc_matrix
 
 from sourced.ml.models import BOW
@@ -12,12 +12,14 @@ class MergeBOWTests(unittest.TestCase):
     def setUp(self):
         self.model1 = BOW() \
             .construct(["doc_1", "doc_2", "doc_3"], ["f.tok_1", "k.tok_2", "f.tok_3"],
-                       csc_matrix((np.array([1, 2]), (np.array([0, 1]), np.array([1, 0]))),
+                       csc_matrix((numpy.array([1, 2]),
+                                  (numpy.array([0, 1]), numpy.array([1, 0]))),
                                   shape=(3, 3)))
         self.model1._meta = {"dependencies": [{"model": "docfreq", "uuid": "uuid"}]}
         self.model2 = BOW() \
             .construct(["doc_4", "doc_5", "doc_6"], ["f.tok_1", "k.tok_2", "f.tok_3"],
-                       csc_matrix((np.array([3, 4]), (np.array([0, 1]), np.array([1, 0]))),
+                       csc_matrix((numpy.array([3, 4]),
+                                  (numpy.array([0, 1]), numpy.array([1, 0]))),
                                   shape=(3, 3)))
         self.model2._meta = {"dependencies": [{"model": "docfreq", "uuid": "uuid"}]}
         self.merge_results = [[0, 1, 0], [2, 0, 0], [0, 0, 0], [0, 3, 0], [4, 0, 0], [0, 0, 0]]

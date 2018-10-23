@@ -2,8 +2,8 @@ import glob
 import logging
 import os
 
-import numpy as np
-import pandas as pd
+import numpy
+import pandas
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, KFold, GridSearchCV
 from tqdm import tqdm
@@ -16,8 +16,8 @@ def load_dataset(directory):
     csvpaths = glob.glob(os.path.join(directory, "**/*.csv"))
     chunks = []
     for csvpath in tqdm(csvpaths):
-        chunks.append(pd.read_csv(csvpath, sep=',', index_col=None))
-    df = pd.concat(chunks)
+        chunks.append(pandas.read_csv(csvpath, sep=',', index_col=None))
+    df = pandas.concat(chunks)
     df.role = df.role.map(lambda x: x.replace("IDENTIFIER | ", "").replace(" | IDENTIFIER", ""))
     return df
 
@@ -34,7 +34,7 @@ def identifiers_to_datasets(df_unique, id2vecs, log):
         X = []
         for key in identifiers:
             X.append(id2vec.embeddings[id2vec[key]])
-        Xs[name] = np.array(X)
+        Xs[name] = numpy.array(X)
 
     return Xs, y
 
@@ -101,7 +101,7 @@ def id2role_eval(args):
     log.debug("Convert words to its embeddings")
     Xs, y = identifiers_to_datasets(df_unique, models, log)
 
-    final_report = pd.DataFrame(columns=["embedding name", "score", "best C value"])
+    final_report = pandas.DataFrame(columns=["embedding name", "score", "best C value"])
     for name in tqdm(Xs):
         log.info("{}...".format(name))
         best_values = get_quality(Xs[name], y,
