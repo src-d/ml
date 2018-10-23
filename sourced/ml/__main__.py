@@ -121,6 +121,9 @@ def get_parser() -> argparse.ArgumentParser:
     repos2identifier_distance.add_argument(
         "--max-distance", default=extractors.IdentifierDistance.DEFAULT_MAX_DISTANCE, type=int,
         help="Maximum distance to save.")
+    repos2identifier_distance.add_argument("-x", "--mode", choices=("file", "func"),
+                                           default="file", help="What to extract from "
+                                                                "repositories.")
     repos2identifier_distance.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the directory where spark should store the result. "
@@ -134,6 +137,8 @@ def get_parser() -> argparse.ArgumentParser:
     repos2id_sequence.add_argument(
         "--skip-docname", default=False, action="store_true",
         help="Do not save document name in CSV file, only identifier sequence.")
+    repos2id_sequence.add_argument("-x", "--mode", choices=("file", "func"),
+                                   default="file", help="What to extract from repositories.")
     repos2id_sequence.add_argument(
         "-o", "--output", required=True,
         help="[OUT] Path to the directory where spark should store the result. "

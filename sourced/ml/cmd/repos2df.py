@@ -3,9 +3,8 @@ from uuid import uuid4
 
 from sourced.ml.extractors import create_extractors_from_args
 from sourced.ml.models import OrderedDocumentFrequencies
-from sourced.ml.transformers import (
-    BagFeatures2DocFreq, Cacher, Counter, create_uast_source, Uast2BagFeatures, UastDeserializer,
-    UastRow2Document)
+from sourced.ml.transformers import BagFeatures2DocFreq, Cacher, Counter, create_uast_source, \
+    Moder, Uast2BagFeatures, UastDeserializer, UastRow2Document
 from sourced.ml.utils.engine import pause, pipeline_graph
 from sourced.ml.utils.quant import create_or_apply_quant
 
@@ -18,6 +17,7 @@ def repos2df(args):
     root, start_point = create_uast_source(args, session_name)
 
     uast_extractor = start_point \
+        .link(Moder(args.mode)) \
         .link(UastRow2Document()) \
         .link(Cacher.maybe(args.persist))
     log.info("Extracting UASTs...")
