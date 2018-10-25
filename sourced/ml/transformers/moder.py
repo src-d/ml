@@ -1,6 +1,7 @@
 from itertools import chain
 import os
 
+from bblfsh import Node
 from pyspark import Row, RDD
 from pyspark.sql import DataFrame
 
@@ -81,7 +82,7 @@ class Moder(Transformer):
             data[EngineConstants.Columns.BlobId] += "_%s:%d" % (name, func.start_position.line)
             yield Row(**data)
 
-    def extract_functions_from_uast(self, uast: "bblfsh.Node"):
+    def extract_functions_from_uast(self, uast: Node):
         if self.USE_XPATH:
             allfuncs = list(self.filter_uast(uast, self.FUNC_XPATH))
         else:
