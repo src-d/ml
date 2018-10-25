@@ -24,7 +24,7 @@ Whether you wish to include Spark in your installation or would rather use an ex
 installation, to use `sourced-ml` you will need to have some native libraries installed,
 e.g. on Ubuntu you must first run: `apt install libxml2-dev libsnappy-dev`. [Tensorflow](https://tensorflow.org)
 is also a requirement - we support both the CPU and GPU  version. 
-In order to select which version ou want, modify the package name in the next section
+In order to select which version you want, modify the package name in the next section
 to either `sourced-ml[tf]` or `sourced-ml[tf-gpu]` depending on your choice.
 **If you don't, neither version will be installed.**
 

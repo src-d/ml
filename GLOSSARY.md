@@ -8,7 +8,7 @@ ASTs from different languages will have different features, so they are not lang
 See [Abstract Syntax Tree](#abstract-syntax-tree).
 
 ## Bag-of-words model
-A bag-of-words model is a model wherein text is represented as a "bag" of the words it contains. A bag-of-words model discards information about text structure, grammar and order, but preserves [multiplicity](https://en.wikipedia.org/wiki/Multiplicity_(mathematics)), or the number of occurances of each word in the text.
+A bag-of-words model is a model wherein text is represented as a "bag" of the words it contains. A bag-of-words model discards information about text structure, grammar and order, but preserves [multiplicity](https://en.wikipedia.org/wiki/Multiplicity_(mathematics)), or the number of occurrences of each word in the text.
 
 A `bow` model refers to a special type of bag-of-words model, described below.
 
