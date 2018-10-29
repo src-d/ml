@@ -22,7 +22,7 @@ For more information on the `bow` model, see the documentation [here](https://do
 A bag-of-words model can be generalized to a bag-of-X model.
 These models, sometimes called bag-of-feature models, can hold any uniform feature type.
 For example, it is possible to store information about some feature of a document in a vector, then dump the vectors into a bag-of-vectors.
-Given document frequencies and identifier embeddings, it is possible to reporesent a repository as a weighted bag-of-vectors.
+Given document frequencies and identifier embeddings, it is possible to represent a repository as a weighted bag-of-vectors.
 
 ## Collection frequency
 The number of times some term appears in all documents in a collection.
