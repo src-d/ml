@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from sourced.ml.utils.docfreq import create_or_load_ordered_df
-from sourced.ml.utils import create_spark
+from sourced.ml.utils.spark import create_spark
 from sourced.ml.transformers import ParquetLoader, UastDeserializer, UastRow2Document, Counter, \
     Uast2BagFeatures, Moder
 from sourced.ml.extractors import IdentifiersBagExtractor

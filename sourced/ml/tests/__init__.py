@@ -3,7 +3,7 @@ from unittest import SkipTest
 
 from modelforge.logs import setup_logging
 
-from sourced.ml.utils import create_spark
+from sourced.ml.utils.spark import create_spark
 from sourced.ml.utils.engine import get_engine_package, get_bblfsh_dependency, \
     get_engine_version
 

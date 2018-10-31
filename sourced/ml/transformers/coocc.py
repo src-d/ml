@@ -8,7 +8,8 @@ from pyspark.rdd import PipelinedRDD
 
 from sourced.ml.models import Cooccurrences, OrderedDocumentFrequencies
 from sourced.ml.transformers import Transformer
-from sourced.ml.utils import bblfsh_roles, EngineConstants
+from sourced.ml.utils import bblfsh_roles
+from sourced.ml.utils.engine import EngineConstants
 
 
 class CooccModelSaver(Transformer):

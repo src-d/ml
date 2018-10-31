@@ -3,7 +3,7 @@ from typing import Iterable
 
 from sourced.ml.extractors import BagsExtractor
 from sourced.ml.transformers.transformer import Transformer
-from sourced.ml.utils import EngineConstants
+from sourced.ml.utils.engine import EngineConstants
 
 
 class Uast2Quant(Transformer):

@@ -7,7 +7,7 @@ import sys
 
 from sourced.ml import extractors
 from sourced.ml.transformers import BOWWriter, Moder
-from sourced.ml.utils import add_engine_args
+from sourced.ml.utils.engine import add_engine_args
 
 
 class ArgumentDefaultsHelpFormatterNoNone(argparse.ArgumentDefaultsHelpFormatter):
