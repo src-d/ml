@@ -4,7 +4,7 @@ import os
 
 from sourced.ml.algorithms import UastIds2Bag, uast2sequence
 from sourced.ml.extractors import BagsExtractor, register_extractor
-from sourced.ml.utils import LITERAL
+from sourced.ml.utils import bblfsh_roles
 
 
 class HashedTokenParser:
@@ -39,7 +39,7 @@ class Literals2Bag(UastIds2Bag):
         :param uast: The UAST root node.
         :return: bag
         """
-        nodes = [node for node in uast2sequence(uast) if LITERAL in node.roles]
+        nodes = [node for node in uast2sequence(uast) if bblfsh_roles.LITERAL in node.roles]
         bag = defaultdict(int)
         for node in nodes:
             for sub in self._token_parser.process_token(node.token):

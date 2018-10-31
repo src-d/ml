@@ -11,7 +11,7 @@ from pyspark.sql import DataFrame, functions
 
 from sourced.ml.algorithms import TokenParser
 from sourced.ml.transformers import Transformer
-from sourced.ml.utils import EngineConstants
+from sourced.ml.utils.engine import EngineConstants
 
 
 class ContentToIdentifiers(Transformer):

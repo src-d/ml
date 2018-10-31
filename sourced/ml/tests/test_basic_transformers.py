@@ -8,7 +8,8 @@ import unittest
 from pyspark import StorageLevel
 from pyspark.sql import Row
 
-from sourced.ml.utils import create_engine, SparkDefault
+from sourced.ml.utils.engine import create_engine
+from sourced.ml.utils.spark import SparkDefault
 from sourced.ml.transformers import ParquetSaver, ParquetLoader, Collector, First, \
     Identity, FieldsSelector, Repartitioner, DzhigurdaFiles, CsvSaver, Rower, \
     PartitionSelector, Sampler, Distinct, Cacher, Ignition, HeadFiles, LanguageSelector, \

@@ -4,7 +4,7 @@ import bblfsh
 
 from sourced.ml.algorithms import TokenParser, NoopTokenParser
 from sourced.ml.algorithms.uast_to_bag import Uast2BagBase
-from sourced.ml.utils import IDENTIFIER
+from sourced.ml.utils import bblfsh_roles
 
 
 def uast2sequence(root):
@@ -99,7 +99,7 @@ class UastIds2Bag(UastTokens2Bag):
         :param uast: The UAST root node.
         :return: bag
         """
-        nodes = [node for node in uast2sequence(uast) if IDENTIFIER in node.roles]
+        nodes = [node for node in uast2sequence(uast) if bblfsh_roles.IDENTIFIER in node.roles]
         bag = defaultdict(int)
         for node in nodes:
             for sub in self._token_parser.process_token(node.token):

@@ -2,7 +2,7 @@ from pyspark import RDD, Row
 
 from sourced.ml.extractors import Extractor
 from sourced.ml.transformers.transformer import Transformer
-from sourced.ml.utils import EngineConstants
+from sourced.ml.utils.engine import EngineConstants
 
 
 class UastRow2Document(Transformer):

@@ -7,7 +7,7 @@ from sourced.ml.transformers import ParquetLoader, UastRow2Document, UastDeseria
 from sourced.ml.extractors import ChildrenBagExtractor
 from sourced.ml.models import QuantizationLevels
 from sourced.ml.utils.quant import create_or_apply_quant
-from sourced.ml.utils import create_spark
+from sourced.ml.utils.spark import create_spark
 
 import sourced.ml.tests.models as paths
 

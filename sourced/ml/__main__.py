@@ -10,7 +10,8 @@ from sourced.ml.transformers import Moder
 from sourced.ml import cmd
 from sourced.ml.cmd import args
 from sourced.ml.cmd.run_swivel import mirror_tf_args
-from sourced.ml.utils import install_bigartm, add_spark_args
+from sourced.ml.utils import install_bigartm
+from sourced.ml.utils.spark import add_spark_args
 
 
 def get_parser() -> argparse.ArgumentParser:

@@ -7,7 +7,8 @@ from pyspark.sql import DataFrame
 
 from sourced.ml.algorithms.uast_ids_to_bag import uast2sequence
 from sourced.ml.transformers import Transformer
-from sourced.ml.utils import EngineConstants, FUNCTION, DECLARATION, NAME, IDENTIFIER
+from sourced.ml.utils.engine import EngineConstants
+from sourced.ml.utils import bblfsh_roles
 
 
 class Moder(Transformer):
@@ -87,8 +88,8 @@ class Moder(Transformer):
             allfuncs = list(self.filter_uast(uast, self.FUNC_XPATH))
         else:
             node_seq = uast2sequence(uast)
-            allfuncs = [node for node in node_seq if FUNCTION in node.roles and
-                        DECLARATION in node.roles]
+            allfuncs = [node for node in node_seq if bblfsh_roles.FUNCTION in node.roles and
+                        bblfsh_roles.DECLARATION in node.roles]
         internal = set()
         for func in allfuncs:
             if id(func) in internal:
@@ -97,8 +98,9 @@ class Moder(Transformer):
             if self.USE_XPATH:
                 sub_seq = self.filter_uast(func, self.FUNC_XPATH)
             else:
-                sub_seq = [node for node in uast2sequence(func) if FUNCTION in node.roles and
-                           DECLARATION in node.roles]
+                sub_seq = [node for node in uast2sequence(func) if
+                           bblfsh_roles.FUNCTION in node.roles and
+                           bblfsh_roles.DECLARATION in node.roles]
 
             for sub in sub_seq:
                 if sub != func:
@@ -108,8 +110,10 @@ class Moder(Transformer):
                 if self.USE_XPATH:
                     f_seq = self.filter_uast(f, self.FUNC_NAME_XPATH)
                 else:
-                    f_seq = [node for node in uast2sequence(f) if FUNCTION in node.roles and
-                             IDENTIFIER in node.roles and NAME in node.roles]
+                    f_seq = [node for node in uast2sequence(f) if
+                             bblfsh_roles.FUNCTION in node.roles and
+                             bblfsh_roles.IDENTIFIER in node.roles and
+                             bblfsh_roles.NAME in node.roles]
                 name = "+".join(n.token for n in f_seq)
                 if name:
                     yield f, name
