@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 
-from modelforge.logs import setup_logging
+from modelforge import slogging
 
 from sourced.ml import extractors
 from sourced.ml.transformers import Moder
@@ -344,7 +344,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     args.log_level = logging._nameToLevel[args.log_level]
-    setup_logging(args.log_level)
+    slogging.setup(args.log_level, False)
     try:
         handler = args.handler
     except AttributeError:
