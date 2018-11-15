@@ -8,7 +8,7 @@ import unittest
 
 import requests
 
-from modelforge.logs import setup_logging
+from modelforge import slogging
 from sourced.ml.tests.test_dump import captured_output
 from sourced.ml.utils.projector import CORSWebServer, web_server, wait, present_embeddings
 
@@ -18,7 +18,7 @@ class ProjectorTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        setup_logging("DEBUG")
+        slogging.setup("DEBUG", False)
 
     def setUp(self):
         self.pwd = os.getcwd()

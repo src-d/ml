@@ -1,7 +1,7 @@
 import sys
 from unittest import SkipTest
 
-from modelforge.logs import setup_logging
+from modelforge import slogging
 
 from sourced.ml.utils.spark import create_spark
 from sourced.ml.utils.engine import get_engine_package, get_bblfsh_dependency, \
@@ -34,4 +34,4 @@ def has_tensorflow():
 
 
 def setup():
-    setup_logging("INFO")
+    slogging.setup("INFO", False)
