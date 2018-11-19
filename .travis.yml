@@ -7,6 +7,7 @@ cache:
   directories:
   - "$HOME/.cache/pip"
 stages:
+  - style
   - test
   - name: deploy
     # require any tag name to deploy
@@ -32,7 +33,13 @@ _deploy: &_deploy
     tags: true
 matrix:
   include:
-    - python: 3.4
+    - stage: style
+      python: 3.7
+      env: SCRIPT="make check && cd doc && make"
+      install:
+      - pip install -r doc/requirements.txt -r requirements-lint.txt
+    - stage: test
+      python: 3.4
       dist: trusty
       env: *_coverage
       install: *_install
@@ -46,11 +53,6 @@ matrix:
       install: *_install
       after_success:
         - codecov
-    - python: 3.7
-      env: *_coverage
-      install: *_install
-      env: SCRIPT="flake8 . && (! grep -R /tmp sourced/ml/tests)"
-      install: pip install flake8
     - python: 3.7
       env: *_coverage
       install: *_install

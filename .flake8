@@ -1,2 +1,19 @@
 [flake8]
+ignore=B008,E121,E123,E126,E226,E24,E704,W503,W504,D100,D105,D200,D301,D402
 max-line-length=99
+exclude=
+    .git
+    doc
+inline-quotes="
+import-order-style=appnexus
+application-package-names=sourced.ml
+per-file-ignores=
+    **/tests/**:D
+    # Should be resolved one by one
+    # Related issue: https://github.com/src-d/ml/issues/354
+    ./sourced/ml/transformers/*:D
+    ./sourced/ml/extractors/*:D
+    ./sourced/ml/models/**:D
+    ./sourced/ml/algorithms/**:D
+    ./sourced/ml/utils/*:D
+    ./sourced/ml/cmd/*:D
