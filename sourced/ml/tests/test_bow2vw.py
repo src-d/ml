@@ -4,9 +4,10 @@ import tempfile
 import unittest
 
 import sourced
-import sourced.ml.tests.models as paths
-from sourced.ml.models import BOW
+
 from sourced.ml.cmd import bow2vw
+from sourced.ml.models import BOW
+import sourced.ml.tests.models as paths
 
 
 class Bow2vwTests(unittest.TestCase):

@@ -1,8 +1,8 @@
 from collections import defaultdict
 import os
 
-from sourced.ml.models.model_converters.base import Model2Base
 from sourced.ml.models.df import DocumentFrequencies
+from sourced.ml.models.model_converters.base import Model2Base
 from sourced.ml.models.ordered_df import OrderedDocumentFrequencies
 
 

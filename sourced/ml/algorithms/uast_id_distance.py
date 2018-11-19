@@ -1,5 +1,5 @@
-from typing import Iterable, Tuple, Union
 from itertools import combinations
+from typing import Iterable, Tuple, Union
 
 import bblfsh
 
@@ -22,6 +22,7 @@ class Uast2IdDistance(UastIds2Bag):
         :param token2index: The mapping from tokens to token key. If None, no mapping is performed.
         :param token_parser: Specify token parser if you want to use a custom one. \
             :class:'TokenParser' is used if it is not specified.
+        :param max_distance: specify to skip too distant identifiers
         """
         super().__init__(token2index=token2index, token_parser=token_parser)
         self.max_distance = max_distance
@@ -85,7 +86,7 @@ class Uast2IdTreeDistance(Uast2IdDistance):
         i = 0
         ancestors1 = point1[1]
         ancestors2 = point2[1]
-        for i, (ancestor1, ancestor2) in enumerate(zip(ancestors1, ancestors2)):
+        for i, (ancestor1, ancestor2) in enumerate(zip(ancestors1, ancestors2)):  # noqa: B007
             if ancestor1 != ancestor2:
                 break
         distance = self.calc_tree_distance(i, len(ancestors1), len(ancestors2))

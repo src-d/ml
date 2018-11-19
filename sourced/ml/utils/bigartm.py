@@ -13,7 +13,7 @@ def execute(cmd, cwd, log):
     subprocess.check_call(parsed, cwd=cwd)
 
 
-def install_bigartm(args=None, target="./bigartm", tempdir=None, warn_exists=True):
+def install_bigartm(args=None, target="./bigartm", tempdir=None):
     """
     Deploys bigartm/bigartm at the specified path.
 
@@ -32,8 +32,7 @@ def install_bigartm(args=None, target="./bigartm", tempdir=None, warn_exists=Tru
         tempdir = args.tmpdir
         target = os.path.join(args.output, "bigartm")
     if shutil.which(os.path.basename(target)) or shutil.which(target, path=os.getcwd()):
-        if warn_exists:
-            log.warning("bigartm is in the PATH, no-op.")
+        log.warning("bigartm is in the PATH, no-op.")
         return 0
     if not shutil.which("cmake"):
         log.error("You need to install cmake.")

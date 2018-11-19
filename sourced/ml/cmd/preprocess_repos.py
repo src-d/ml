@@ -1,9 +1,9 @@
-import os
 import logging
+import os
 from uuid import uuid4
 
-from sourced.ml.transformers import FieldsSelector, Moder, ParquetSaver, create_uast_source
-from sourced.ml.utils.engine import pipeline_graph, pause
+from sourced.ml.transformers import create_uast_source, FieldsSelector, Moder, ParquetSaver
+from sourced.ml.utils.engine import pause, pipeline_graph
 
 
 @pause

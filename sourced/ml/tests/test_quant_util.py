@@ -3,13 +3,12 @@ import sys
 import tempfile
 import unittest
 
-from sourced.ml.transformers import ParquetLoader, UastRow2Document, UastDeserializer, Moder
 from sourced.ml.extractors import ChildrenBagExtractor
 from sourced.ml.models import QuantizationLevels
+import sourced.ml.tests.models as paths
+from sourced.ml.transformers import Moder, ParquetLoader, UastDeserializer, UastRow2Document
 from sourced.ml.utils.quant import create_or_apply_quant
 from sourced.ml.utils.spark import create_spark
-
-import sourced.ml.tests.models as paths
 
 
 class MyTestCase(unittest.TestCase):
@@ -43,5 +42,5 @@ class MyTestCase(unittest.TestCase):
             create_or_apply_quant("", [], None)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

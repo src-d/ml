@@ -1,14 +1,14 @@
 from datetime import datetime
 import logging
-import random
 import os
+import random
 from typing import Callable, Iterable, List, Tuple
 import warnings
 
-import numpy
 import keras
 from keras import backend as kbackend
-from keras.callbacks import CSVLogger, TensorBoard, ModelCheckpoint, LearningRateScheduler
+from keras.callbacks import CSVLogger, LearningRateScheduler, ModelCheckpoint, TensorBoard
+import numpy
 try:
     import tensorflow as tf
 except ImportError:
@@ -200,8 +200,8 @@ def prepare_callbacks(output_dir: str) -> Tuple[Callable]:
     csv_logger = CSVLogger(csv_path)
 
     filepath = os.path.join(output_dir, "best_" + time + ".model")
-    model_saver = ModelCheckpoint(filepath, monitor='val_recall', verbose=1, save_best_only=True,
-                                  mode='max')
+    model_saver = ModelCheckpoint(filepath, monitor="val_recall", verbose=1, save_best_only=True,
+                                  mode="max")
     return tensorboard, csv_logger, model_saver
 
 

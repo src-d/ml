@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+
 import numpy
 from scipy.sparse import csc_matrix
 
@@ -31,7 +32,7 @@ class MergeBOWTests(unittest.TestCase):
         self.assertListEqual(self.merge_bow.tokens, ["f.tok_1", "k.tok_2", "f.tok_3"])
         for i, row in enumerate(self.merge_bow.matrix[0].toarray()):
             self.assertListEqual(list(row), self.merge_results[i])
-        self.assertEqual(self.merge_bow.deps, [{'uuid': 'uuid', 'model': 'docfreq'}])
+        self.assertEqual(self.merge_bow.deps, [{"uuid": "uuid", "model": "docfreq"}])
         self.merge_bow.convert_model(self.model2)
         self.assertListEqual(self.merge_bow.documents,
                              ["doc_1", "doc_2", "doc_3", "doc_4", "doc_5", "doc_6"])
@@ -62,7 +63,7 @@ class MergeBOWTests(unittest.TestCase):
             self.assertListEqual(bow.tokens, ["f.tok_1", "k.tok_2", "f.tok_3"])
             for i, row in enumerate(bow.matrix.toarray()):
                 self.assertListEqual(list(row), self.merge_results[i])
-            self.assertEqual(bow.meta["dependencies"], [{'uuid': 'uuid', 'model': 'docfreq'}])
+            self.assertEqual(bow.meta["dependencies"], [{"uuid": "uuid", "model": "docfreq"}])
 
     def test_finalize_reduce(self):
         self.merge_bow.convert_model(self.model1)
@@ -75,12 +76,12 @@ class MergeBOWTests(unittest.TestCase):
             self.assertListEqual(bow.tokens, ["f.tok_1", "f.tok_3"])
             for i, row in enumerate(bow.matrix.toarray()):
                 self.assertListEqual(list(row), self.merge_results[i][::2])
-            self.assertEqual(bow.meta["dependencies"], [{'uuid': 'uuid', 'model': 'docfreq'}])
+            self.assertEqual(bow.meta["dependencies"], [{"uuid": "uuid", "model": "docfreq"}])
 
     def test_save_path(self):
         self.assertEqual(self.merge_bow._save_path(0, "bow.asdf"), "bow.asdf")
         self.assertEqual(self.merge_bow._save_path(0, "bow"), os.path.join("bow", "bow_0.asdf"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

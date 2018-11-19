@@ -1,6 +1,6 @@
 import bblfsh
 
-from sourced.ml.algorithms import Uast2RoleIdPairs, NoopTokenParser
+from sourced.ml.algorithms import NoopTokenParser, Uast2RoleIdPairs
 from sourced.ml.utils import PickleableLogger
 
 
@@ -44,6 +44,7 @@ class BagsExtractor(Extractor):
                                   into the bag
         :param weight: TF-IDF will be multiplied by this weight to change importance of specific \
                       bag extractor
+        :param kwargs: Parameters for parent constructor.
         """
         super().__init__(**kwargs)
         if docfreq_threshold is None:

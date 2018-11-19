@@ -3,7 +3,7 @@ import sys
 from modelforge.logs import setup_logging
 
 
-utmain = sys.modules['__main__']
+utmain = sys.modules["__main__"]
 if utmain.__package__ == "unittest" and utmain.__spec__ is None:
     from collections import namedtuple
     ModuleSpec = namedtuple("ModuleSpec", ["name"])

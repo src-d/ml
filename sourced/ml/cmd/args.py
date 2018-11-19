@@ -1,8 +1,8 @@
 import argparse
 import json
 import logging
-from typing import Optional, Union, Iterable
 import sys
+from typing import Iterable, Optional, Union
 
 
 from sourced.ml import extractors
@@ -32,7 +32,7 @@ def handle_input_arg(input_arg: Union[str, Iterable[str]],
     :return: An iterator over input files.
     """
     log = log.info if log else (lambda *x: None)
-    if input_arg == "-" or input_arg == ['-']:
+    if input_arg == "-" or input_arg == ["-"]:
         log("Reading file paths from stdin.")
         for line in sys.stdin:
             yield line.strip()

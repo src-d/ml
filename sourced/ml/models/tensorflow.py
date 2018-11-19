@@ -1,6 +1,6 @@
 from typing import List
 
-from modelforge import register_model, Model
+from modelforge import Model, register_model
 import numpy
 
 

@@ -4,9 +4,16 @@ import logging
 class PickleableLogger:
     """
     Base class which provides the logging features through ``self._log``.
+
     Can be safely pickled.
     """
+
     def __init__(self, log_level=logging.INFO):
+        """
+        Class constructor
+
+        :param log_level: logging level.
+        """
         self._log = logging.getLogger(self._get_log_name())
         self._log.setLevel(log_level)
 

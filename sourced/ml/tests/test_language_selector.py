@@ -1,11 +1,12 @@
 import sys
 import unittest
+
 from pyspark.sql.functions import lit
 
 from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
-from sourced.ml.transformers import LanguageSelector, Collector, Ignition, HeadFiles, \
-    LanguageExtractor
-from sourced.ml.transformers.basic import create_parquet_loader, create_engine
+from sourced.ml.transformers import (
+    Collector, HeadFiles, Ignition, LanguageExtractor, LanguageSelector)
+from sourced.ml.transformers.basic import create_engine, create_parquet_loader
 
 
 class LoaderTest(unittest.TestCase):
@@ -59,5 +60,5 @@ class LoaderTest(unittest.TestCase):
                          LanguageSelector(["BestLang"])(df_with_lang).collect())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

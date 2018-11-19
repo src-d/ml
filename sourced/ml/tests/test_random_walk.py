@@ -2,9 +2,9 @@ import unittest
 
 import bblfsh
 
-from sourced.ml.tests import models
-from sourced.ml.algorithms.uast_struct_to_bag import Uast2RandomWalks
 from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary
+from sourced.ml.algorithms.uast_struct_to_bag import Uast2RandomWalks
+from sourced.ml.tests import models
 
 
 class RandomWalkTests(unittest.TestCase):

@@ -2,12 +2,12 @@ import string
 from typing import Callable, List, Tuple, Union
 import warnings
 
-import numpy
 import keras
 from keras import backend as kbackend
-from keras.layers import BatchNormalization, Concatenate, Conv1D, Dense, Embedding, \
-    Input, TimeDistributed
+from keras.layers import (
+    BatchNormalization, Concatenate, Conv1D, Dense, Embedding, Input, TimeDistributed)
 from keras.models import Model
+import numpy
 try:
     import tensorflow as tf
 except ImportError:
@@ -24,7 +24,7 @@ def register_metric(metric: Union[str, Callable]) -> Union[str, Callable]:
     """
     Decorator function to register the metrics in the METRICS constant.
 
-    :param metrics: name of the tensorflow metric or custom function metric.
+    :param metric: name of the tensorflow metric or custom function metric.
     :return: the metric.
     """
     assert isinstance(metric, str) or callable(metric)
@@ -58,7 +58,6 @@ def prepare_input_emb(maxlen: int) -> Tuple[tf.Tensor]:
     Builds character embeddings, a dense representation of characters to feed the RNN with.
 
     :param maxlen: maximum length of the input sequence.
-    :param n_uniq: number of unique characters.
     :return: input and one-hot character embedding layer.
     """
     char_seq = Input((maxlen,))
@@ -73,7 +72,7 @@ def add_output_layer(hidden_layer: tf.Tensor) -> keras.layers.wrappers.TimeDistr
     The output layer has 1 sigmoid per character which predicts if there is a space or not
     before the character.
 
-    :param input_layer: hidden layer before the output layer.
+    :param hidden_layer: hidden layer before the output layer.
     :return: output layer.
     """
     norm_input = BatchNormalization()(hidden_layer)

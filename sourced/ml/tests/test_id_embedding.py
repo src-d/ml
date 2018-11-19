@@ -6,15 +6,15 @@ import tempfile
 import unittest
 
 import asdf
+from modelforge.model import assemble_sparse_matrix, split_strings
 import numpy
 from scipy.sparse import coo_matrix
 
-from modelforge.model import split_strings, assemble_sparse_matrix
-from sourced.ml.cmd import id2vec_postprocess, run_swivel, id2vec_preprocess
-from sourced.ml.models import OrderedDocumentFrequencies, Id2Vec
+from sourced.ml.cmd import id2vec_postprocess, id2vec_preprocess, run_swivel
+from sourced.ml.models import Id2Vec, OrderedDocumentFrequencies
 from sourced.ml.tests import has_tensorflow
-from sourced.ml.tests.test_dump import captured_output
 from sourced.ml.tests.models import COOCC, COOCC_DF
+from sourced.ml.tests.test_dump import captured_output
 
 
 VOCAB = 304

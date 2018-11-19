@@ -1,3 +1,4 @@
+"""MLonCode research playground."""
 try:
     import modelforge.configuration
 

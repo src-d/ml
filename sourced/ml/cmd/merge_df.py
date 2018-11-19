@@ -1,7 +1,7 @@
 import logging
 
-from sourced.ml.models import MergeDocFreq
 from sourced.ml.cmd.args import handle_input_arg
+from sourced.ml.models import MergeDocFreq
 
 
 def merge_df(args):

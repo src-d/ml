@@ -7,7 +7,7 @@ import unittest
 
 import numpy
 
-from sourced.ml.cmd.merge_coocc import merge_coocc, load_and_check, MAX_INT32
+from sourced.ml.cmd.merge_coocc import load_and_check, MAX_INT32, merge_coocc
 from sourced.ml.models import Cooccurrences
 from sourced.ml.tests import models
 
@@ -70,7 +70,7 @@ class MergeCooccEntry(unittest.TestCase):
             c_neg.matrix.data = numpy.uint32(c_neg.matrix.data)
             c_neg.matrix.data[0] = MAX_INT32 + 1
             c_neg.save(args.input[0])
-            for path, coocc in load_and_check(args.input, logging.getLogger("test")):
+            for _, coocc in load_and_check(args.input, logging.getLogger("test")):
                 self.assertTrue(numpy.all(coocc.matrix.data <= MAX_INT32))
                 break
 
@@ -102,5 +102,5 @@ class MergeCooccEntry(unittest.TestCase):
             self.assertTrue(numpy.all(result.matrix.data >= 0))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -31,11 +31,11 @@ def extract_coocc_matrix(global_shape, word_indices, model):
 
         # Handle missing rows
         prev = (mapped_indices[i - 1] + 1) if i > 0 else 0
-        for z in range(prev, v):
+        for _ in range(prev, v):
             new_indptr.append(prev_ptr)
 
         new_indptr.append(ptr)
-    for z in range(mapped_indices[-1] + 1, global_shape[0]):
+    for _ in range(mapped_indices[-1] + 1, global_shape[0]):
         new_indptr.append(csr_indptr[-1])
     matrix.indptr = numpy.array(new_indptr)
     matrix._shape = global_shape

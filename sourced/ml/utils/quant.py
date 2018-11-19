@@ -1,10 +1,10 @@
-import os
 import logging
+import os
 from typing import List
 
+from sourced.ml.extractors import BagsExtractor
 from sourced.ml.models import QuantizationLevels
 from sourced.ml.transformers import Uast2Quant
-from sourced.ml.extractors import BagsExtractor
 
 
 def create_or_apply_quant(model_path: str, extractors: List[BagsExtractor], extracted_uasts=None):

@@ -10,7 +10,7 @@ class UastRow2DocumentTest(unittest.TestCase):
         r2d = UastRow2Document()
         row = Row(repository_id="1", path="2", blob_id="3", uast="4")
         row2 = r2d.documentize(row)
-        row2_correct = Row(document='1//2@3', uast='4')
+        row2_correct = Row(document="1//2@3", uast="4")
         self.assertEqual(row2, row2_correct)
 
 
