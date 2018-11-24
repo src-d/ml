@@ -1,8 +1,8 @@
 Cython>=0.28,<1.0; python_version == '3.7'
 PyStemmer==1.3.0
 bblfsh==2.12.6
-modelforge==0.8.2
-sourced-engine==1.0.0
+modelforge==0.9.1
+sourced-engine==0.7.0
 parquet==1.2
 numpy==1.15.4
 humanize==0.5.1
