@@ -1,5 +1,5 @@
 from io import StringIO
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 from sourced.ml.utils import PickleableLogger  # nopep8
 

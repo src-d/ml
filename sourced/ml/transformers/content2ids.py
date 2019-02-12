@@ -1,13 +1,13 @@
 import operator
 import os
-from typing import NamedTuple, Generator
-import yaml
+from typing import Generator, NamedTuple
 
 import pygments
 from pygments.formatter import Formatter
-from pygments.lexers import get_lexer_by_name, ClassNotFound
+from pygments.lexers import ClassNotFound, get_lexer_by_name
 from pyspark import RDD, Row
 from pyspark.sql import DataFrame, functions
+import yaml
 
 from sourced.ml.algorithms import TokenParser
 from sourced.ml.transformers import Transformer

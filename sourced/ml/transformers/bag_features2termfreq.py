@@ -1,9 +1,9 @@
 import operator
 
-from pyspark import Row, RDD
+from pyspark import RDD, Row
 
-from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.transformers.transformer import Transformer
+from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 
 
 class BagFeatures2TermFreq(Transformer):

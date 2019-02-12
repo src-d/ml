@@ -4,7 +4,7 @@ from pyspark import Row
 
 from sourced.ml.algorithms import log_tf_log_idf
 from sourced.ml.models import DocumentFrequencies
-from sourced.ml.tests import tfidf_data, create_spark_for_test
+from sourced.ml.tests import create_spark_for_test, tfidf_data
 from sourced.ml.transformers import TFIDF
 
 

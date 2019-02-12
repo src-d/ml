@@ -1,14 +1,15 @@
 import argparse
-import logging
-import sys
-import os
-import shutil
-import tempfile
-import unittest
 from contextlib import contextmanager
 from io import StringIO
+import logging
+import os
+import shutil
+import sys
+import tempfile
+import unittest
 
 from modelforge.registry import dump_model
+
 import sourced.ml.tests.models as paths
 
 

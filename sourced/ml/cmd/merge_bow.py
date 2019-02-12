@@ -1,7 +1,7 @@
 import logging
 
-from sourced.ml.models import MergeBOW
 from sourced.ml.cmd.args import handle_input_arg
+from sourced.ml.models import MergeBOW
 
 
 def merge_bow(args):

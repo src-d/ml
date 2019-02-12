@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Tuple
+from typing import Iterable, Tuple, Union
 
 from bblfsh import Node
 import numpy

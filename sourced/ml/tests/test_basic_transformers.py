@@ -8,13 +8,14 @@ import unittest
 from pyspark import StorageLevel
 from pyspark.sql import Row
 
+from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
+from sourced.ml.transformers import (
+    Cacher, Collector, CsvSaver, Distinct, DzhigurdaFiles, FieldsSelector, First, HeadFiles,
+    Identity, Ignition, LanguageSelector, ParquetLoader, ParquetSaver, PartitionSelector,
+    Repartitioner, RepositoriesFilter, Rower, Sampler, UastDeserializer, UastExtractor,
+    UastRow2Document)
 from sourced.ml.utils.engine import create_engine
 from sourced.ml.utils.spark import SparkDefault
-from sourced.ml.transformers import ParquetSaver, ParquetLoader, Collector, First, \
-    Identity, FieldsSelector, Repartitioner, DzhigurdaFiles, CsvSaver, Rower, \
-    PartitionSelector, Sampler, Distinct, Cacher, Ignition, HeadFiles, LanguageSelector, \
-    UastExtractor, UastDeserializer, UastRow2Document, RepositoriesFilter
-from sourced.ml.tests.models import PARQUET_DIR, SIVA_DIR
 
 
 class BasicTransformerTests(unittest.TestCase):
@@ -162,7 +163,7 @@ class BasicTransformerTests(unittest.TestCase):
         CsvSaver(dirname)(df.rdd)
 
         # read saved data and check it
-        for root, d, files in os.walk(dirname):
+        for root, _, files in os.walk(dirname):
             for f in files:
                 filename = os.path.join(root, f)
                 if filename.endswith(".csv"):
@@ -230,5 +231,5 @@ class BasicTransformerTests(unittest.TestCase):
         self.assertEqual(langs, ["Python", "Java"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

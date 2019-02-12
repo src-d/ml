@@ -2,8 +2,8 @@ import unittest
 
 import bblfsh
 
-from sourced.ml.transformers import Moder
 from sourced.ml.tests.models import MODER_FUNC
+from sourced.ml.transformers import Moder
 
 
 class ModerTest(unittest.TestCase):

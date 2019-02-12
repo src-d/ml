@@ -1,11 +1,12 @@
 import logging
-from typing import Iterable, List, Dict
+from typing import Dict, Iterable, List
 
+from modelforge import (
+    assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, register_model,
+    split_strings)
+from modelforge.progress_bar import progress_bar
 from scipy import sparse
 
-from modelforge import Model, split_strings, assemble_sparse_matrix, \
-    merge_strings, disassemble_sparse_matrix, register_model
-from modelforge.progress_bar import progress_bar
 from sourced.ml.models.df import DocumentFrequencies
 
 

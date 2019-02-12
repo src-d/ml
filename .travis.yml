@@ -7,6 +7,7 @@ cache:
   directories:
   - "$HOME/.cache/pip"
 stages:
+  - style
   - test
   - name: deploy
     # require any tag name to deploy
@@ -18,7 +19,8 @@ addons:
 _install: &_install
   - gimme 1.8
   - source ~/.gimme/envs/latest.env
-  - pip install --upgrade pip
+  # We need pip v18.1 to make python 3.4 work well
+  - (wget -O - https://bootstrap.pypa.io/get-pip.py || wget -O - https://raw.githubusercontent.com/pypa/get-pip/master/get-pip.py) | python3 - pip==18.1
   - if [[ $TRAVIS_PYTHON_VERSION < 3.7 ]]; then pip install tensorflow; fi
   - pip install -r requirements.txt codecov
   - pip install -e .[pandas]
@@ -32,7 +34,13 @@ _deploy: &_deploy
     tags: true
 matrix:
   include:
-    - python: 3.4
+    - stage: style
+      python: 3.7
+      env: SCRIPT="make check && cd doc && make"
+      install:
+      - pip install -r doc/requirements.txt -r requirements-lint.txt
+    - stage: test
+      python: 3.4
       dist: trusty
       env: *_coverage
       install: *_install
@@ -49,15 +57,10 @@ matrix:
     - python: 3.7
       env: *_coverage
       install: *_install
-      env: SCRIPT="flake8 . && (! grep -R /tmp sourced/ml/tests)"
-      install: pip install flake8
-    - python: 3.7
-      env: *_coverage
-      install: *_install
     - stage: deploy
       python: 3.4
       install:
-        - pip3 install --upgrade pip
+        - (wget -O - https://bootstrap.pypa.io/get-pip.py || wget -O - https://raw.githubusercontent.com/pypa/get-pip/master/get-pip.py) | python3 - --user pip==18.1
         - pip3 install twine
       before_script: skip
       script:

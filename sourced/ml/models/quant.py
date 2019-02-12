@@ -1,6 +1,6 @@
 from typing import Dict
 
-from modelforge import Model, split_strings, merge_strings, register_model
+from modelforge import merge_strings, Model, register_model, split_strings
 import numpy
 
 

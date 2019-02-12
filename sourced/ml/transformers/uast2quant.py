@@ -18,7 +18,7 @@ class Uast2Quant(Transformer):
 
     def __call__(self, rows):
         uast_column = EngineConstants.Columns.Uast
-        for i, extractor in enumerate(self.extractors):
+        for extractor in self.extractors:
             try:
                 quantize = extractor.quantize
             except AttributeError:

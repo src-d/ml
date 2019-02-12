@@ -36,5 +36,5 @@ class Model2BaseTests(unittest.TestCase):
         self.assertEqual(self.merge_df._save_path(0, "df"), os.path.join("df", "docfreq_0.asdf"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

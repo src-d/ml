@@ -2,9 +2,9 @@ from typing import Iterable, Tuple
 
 import bblfsh
 
-from sourced.ml.extractors.bags_extractor import BagsExtractor
-from sourced.ml.algorithms import NoopTokenParser, Uast2IdTreeDistance, Uast2IdLineDistance
+from sourced.ml.algorithms import NoopTokenParser, Uast2IdLineDistance, Uast2IdTreeDistance
 from sourced.ml.algorithms.uast_id_distance import Uast2IdDistance
+from sourced.ml.extractors.bags_extractor import BagsExtractor
 
 
 class IdentifierDistance(BagsExtractor):

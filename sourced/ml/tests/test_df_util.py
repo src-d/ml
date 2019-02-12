@@ -1,16 +1,15 @@
-import os
 import argparse
+import os
 import sys
 import tempfile
 import unittest
 
+from sourced.ml.extractors import IdentifiersBagExtractor
+import sourced.ml.tests.models as paths
+from sourced.ml.transformers import (
+    Counter, Moder, ParquetLoader, Uast2BagFeatures, UastDeserializer, UastRow2Document)
 from sourced.ml.utils.docfreq import create_or_load_ordered_df
 from sourced.ml.utils.spark import create_spark
-from sourced.ml.transformers import ParquetLoader, UastDeserializer, UastRow2Document, Counter, \
-    Uast2BagFeatures, Moder
-from sourced.ml.extractors import IdentifiersBagExtractor
-
-import sourced.ml.tests.models as paths
 
 
 class DocumentFrequenciesUtilTests(unittest.TestCase):

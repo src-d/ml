@@ -1,6 +1,7 @@
-from bblfsh import Node
 from collections import defaultdict
 from typing import Dict
+
+from bblfsh import Node
 
 
 class Uast2BagBase:

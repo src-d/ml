@@ -1,9 +1,8 @@
 from itertools import islice
-from typing import Iterable, Union, Dict, List
+from typing import Dict, Iterable, List, Union
 
+from modelforge import merge_strings, Model, register_model, split_strings
 import numpy
-
-from modelforge import Model, split_strings, merge_strings, register_model
 
 
 @register_model

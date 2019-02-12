@@ -1,6 +1,6 @@
 import unittest
 
-from sourced.ml.transformers.transformer import Transformer, Execute
+from sourced.ml.transformers.transformer import Execute, Transformer
 
 
 class DumpTransformer(Transformer):
@@ -178,7 +178,7 @@ class TransformerTest(unittest.TestCase):
         self.transformers_linear[0].graph(stream=out)
         graph = out.getvalue()
         self.assertEqual(graph,
-                         'digraph source-d {\n'
+                         "digraph source-d {\n"
                          '	"DumpTransformer 1" -> "DumpTransformer 2"\n'
                          '	"DumpTransformer 2" -> "DumpTransformer 3"\n'
                          '	"DumpTransformer 3" -> "DumpTransformer 4"\n'
@@ -186,19 +186,19 @@ class TransformerTest(unittest.TestCase):
                          '	"DumpTransformer 5" -> "DumpTransformer 6"\n'
                          '	"DumpTransformer 6" -> "DumpTransformer 7"\n'
                          '	"DumpTransformer 7" -> "DumpTransformer 8"\n'
-                         '}\n')
+                         "}\n")
         out = io.StringIO()
         self.transformers_tree[0].graph(stream=out)
         tree = out.getvalue()
         self.assertEqual(tree,
-                         'digraph source-d {\n'
+                         "digraph source-d {\n"
                          '	"DumpTransformer 1" -> "DumpTransformer 2"\n'
                          '	"DumpTransformer 1" -> "DumpTransformer 3"\n'
                          '	"DumpTransformer 2" -> "DumpTransformer 4"\n'
                          '	"DumpTransformer 2" -> "DumpTransformer 5"\n'
                          '	"DumpTransformer 2" -> "DumpTransformer 6"\n'
                          '	"DumpTransformer 4" -> "DumpTransformer 7"\n'
-                         '}\n')
+                         "}\n")
 
 
 if __name__ == "__main__":

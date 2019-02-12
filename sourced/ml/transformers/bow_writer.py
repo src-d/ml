@@ -7,7 +7,7 @@ import numpy
 from pyspark import RDD
 from scipy.sparse import csr_matrix
 
-from sourced.ml.models import OrderedDocumentFrequencies, BOW
+from sourced.ml.models import BOW, OrderedDocumentFrequencies
 from sourced.ml.transformers import Indexer, Uast2BagFeatures
 from sourced.ml.transformers.transformer import Transformer
 

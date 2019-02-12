@@ -5,20 +5,19 @@ import sys
 
 from modelforge import slogging
 
-from sourced.ml import extractors
-from sourced.ml.transformers import Moder
 from sourced.ml import cmd
+from sourced.ml import extractors
 from sourced.ml.cmd import args
 from sourced.ml.cmd.run_swivel import mirror_tf_args
+from sourced.ml.transformers import Moder
 from sourced.ml.utils import install_bigartm
 from sourced.ml.utils.spark import add_spark_args
 
 
 def get_parser() -> argparse.ArgumentParser:
     """
-    Creates the cmdline argument parser.
+    Create the cmdline argument parser.
     """
-
     parser = argparse.ArgumentParser(formatter_class=args.ArgumentDefaultsHelpFormatterNoNone)
     parser.add_argument("--log-level", default="INFO",
                         choices=logging._nameToLevel,
@@ -337,10 +336,10 @@ def get_parser() -> argparse.ArgumentParser:
 
 def main():
     """
-    Creates all the argparse-rs and invokes the function from set_defaults().
+    Create all the argparse-rs and invokes the function from set_defaults().
+
     :return: The result of the function from set_defaults().
     """
-
     parser = get_parser()
     args = parser.parse_args()
     args.log_level = logging._nameToLevel[args.log_level]

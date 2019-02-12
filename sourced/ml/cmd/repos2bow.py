@@ -2,13 +2,14 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import create_extractors_from_args
-from sourced.ml.transformers import UastDeserializer, BagFeatures2TermFreq, Uast2BagFeatures, \
-    TFIDF, Cacher, Indexer, UastRow2Document, BOWWriter, Moder, create_uast_source, \
-    Repartitioner, PartitionSelector, Transformer, Distinct, Collector, FieldsSelector
-from sourced.ml.utils.engine import EngineConstants, pipeline_graph, pause
-from sourced.ml.utils.docfreq import create_or_load_ordered_df
-from sourced.ml.utils.quant import create_or_apply_quant
 from sourced.ml.models import DocumentFrequencies
+from sourced.ml.transformers import (
+    BagFeatures2TermFreq, BOWWriter, Cacher, Collector, create_uast_source, Distinct,
+    FieldsSelector, Indexer, Moder, PartitionSelector, Repartitioner, TFIDF, Transformer,
+    Uast2BagFeatures, UastDeserializer, UastRow2Document)
+from sourced.ml.utils.docfreq import create_or_load_ordered_df
+from sourced.ml.utils.engine import EngineConstants, pause, pipeline_graph
+from sourced.ml.utils.quant import create_or_apply_quant
 
 
 @pause

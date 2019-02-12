@@ -1,4 +1,4 @@
-from modelforge import register_model, Model, split_strings, merge_strings
+from modelforge import merge_strings, Model, register_model, split_strings
 
 
 @register_model

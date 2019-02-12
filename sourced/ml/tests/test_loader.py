@@ -1,6 +1,6 @@
+import argparse
 import sys
 import unittest
-import argparse
 
 from sourced.ml.tests.models import PARQUET_DIR
 from sourced.ml.transformers import create_uast_source
@@ -24,5 +24,5 @@ class LoaderTest(unittest.TestCase):
         self.assertEqual(row.commit_hash, "e08278f331b2450441f7879c57ad574d9caf2032")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
