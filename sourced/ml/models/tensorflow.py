@@ -1,6 +1,6 @@
 from typing import List
 
-from modelforge import register_model, Model
+from modelforge import Model, register_model
 import numpy
 
 
@@ -10,6 +10,8 @@ class TensorFlowModel(Model):
     TensorFlow Protobuf model exported in the Modelforge format with GraphDef inside.
     """
     NAME = "tensorflow-model"
+    VENDOR = "source{d}"
+    DESCRIPTION = "TensorFlow Protobuf model that contains a GraphDef instance."
 
     def construct(self, graphdef: "tensorflow.GraphDef" = None,  # noqa: F821
                   session: "tensorflow.Session" = None,  # noqa: F821

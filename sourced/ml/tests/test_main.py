@@ -4,7 +4,6 @@ import unittest
 
 import sourced.ml.__main__ as main
 from sourced.ml.cmd.args import ArgumentDefaultsHelpFormatterNoNone
-
 from sourced.ml.tests.test_dump import captured_output
 
 
@@ -88,7 +87,7 @@ class MainTests(unittest.TestCase):
     def test_custom_formatter(self):
         class FakeAction:
             default = None
-            option_strings = ['--param']
+            option_strings = ["--param"]
             nargs = None
             help = "help"
 

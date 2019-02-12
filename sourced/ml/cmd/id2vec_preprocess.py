@@ -3,13 +3,13 @@ import os
 import shutil
 import warnings
 
-import numpy
+from modelforge.progress_bar import progress_bar
 try:
     import tensorflow as tf
 except ImportError:
     warnings.warn("Tensorflow is not installed, dependent functionality is unavailable.")
+import numpy
 
-from modelforge.progress_bar import progress_bar
 from sourced.ml.algorithms.id_embedding import extract_coocc_matrix
 from sourced.ml.models import Cooccurrences, DocumentFrequencies
 
@@ -72,7 +72,7 @@ def id2vec_preprocess(args):
     if not os.path.exists(args.output):
         os.makedirs(args.output)
     with open(os.path.join(args.output, "row_vocab.txt"), "w") as out:
-        out.write('\n'.join(chosen_words))
+        out.write("\n".join(chosen_words))
     log.info("Saved row_vocab.txt")
     shutil.copyfile(os.path.join(args.output, "row_vocab.txt"),
                     os.path.join(args.output, "col_vocab.txt"))
@@ -85,7 +85,7 @@ def id2vec_preprocess(args):
     bool_sums = ccmatrix.indptr[1:] - ccmatrix.indptr[:-1]
     reorder = numpy.argsort(-bool_sums)
     with open(os.path.join(args.output, "row_sums.txt"), "w") as out:
-        out.write('\n'.join(map(str, bool_sums.tolist())))
+        out.write("\n".join(map(str, bool_sums.tolist())))
     log.info("Saved row_sums.txt")
     shutil.copyfile(os.path.join(args.output, "row_sums.txt"),
                     os.path.join(args.output, "col_sums.txt"))

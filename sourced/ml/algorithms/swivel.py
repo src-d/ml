@@ -55,8 +55,8 @@ column embeddings are stored in separate files.
 import glob
 import math
 import os
-import time
 import threading
+import time
 
 import numpy
 import tensorflow as tf

@@ -1,8 +1,10 @@
 import functools
 import logging
+
+from pkg_resources import DistributionNotFound, get_distribution
 import requests
-from pkg_resources import get_distribution, DistributionNotFound
 from sourced.engine import Engine
+
 from sourced.ml.utils.spark import add_spark_args, create_spark, SparkDefault
 
 

@@ -2,15 +2,15 @@ import argparse
 import logging
 from typing import List, Union
 
-from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 from pyspark import RDD, Row, StorageLevel
 from pyspark.sql import DataFrame, functions
+from sourced.engine.engine import BlobsDataFrame, BlobsWithLanguageDataFrame
 
 from sourced.ml.extractors.helpers import filter_kwargs
 from sourced.ml.transformers.transformer import Transformer
 from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
-from sourced.ml.utils.engine import EngineConstants, create_engine
-from sourced.ml.utils.spark import get_spark_memory_config, create_spark, SparkDefault
+from sourced.ml.utils.engine import create_engine, EngineConstants
+from sourced.ml.utils.spark import create_spark, get_spark_memory_config, SparkDefault
 
 
 class Repartitioner(Transformer):

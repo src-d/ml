@@ -1,9 +1,9 @@
 import logging
 from uuid import uuid4
 
-from sourced.ml.transformers import ContentToIdentifiers, create_file_source, \
-    IdentifiersToDataset, CsvSaver, Repartitioner
-from sourced.ml.utils.engine import pipeline_graph, pause
+from sourced.ml.transformers import (
+    ContentToIdentifiers, create_file_source, CsvSaver, IdentifiersToDataset, Repartitioner)
+from sourced.ml.utils.engine import pause, pipeline_graph
 
 
 @pause

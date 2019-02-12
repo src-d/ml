@@ -1,9 +1,10 @@
-from typing import Union, Dict
-from pyspark.rdd import RDD
-from pyspark import Row
+from typing import Dict, Union
 
-from sourced.ml.transformers.transformer import Transformer
+from pyspark import Row
+from pyspark.rdd import RDD
+
 from sourced.ml.models import DocumentFrequencies
+from sourced.ml.transformers.transformer import Transformer
 
 
 class Indexer(Transformer):
@@ -16,7 +17,7 @@ class Indexer(Transformer):
         """
         :param column: column index or its name in pyspark.RDD for indexing.
         :param column2id: precomputed mapping between column values to integers.
-        :param kwargs:
+        :param kwargs: Parameters for parent constructor.
         """
         super().__init__(**kwargs)
         self.column = column

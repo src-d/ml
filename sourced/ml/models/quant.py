@@ -1,6 +1,6 @@
 from typing import Dict
 
-from modelforge import Model, split_strings, merge_strings, register_model
+from modelforge import merge_strings, Model, register_model, split_strings
 import numpy
 
 
@@ -12,6 +12,8 @@ class QuantizationLevels(Model):
     with integer level borders. The size of each numpy array is (the number of levels + 1).
     """
     NAME = "quant"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that contains quantization levels for multiple schemes (feature types)."
 
     def construct(self, levels: Dict[str, Dict[str, numpy.ndarray]]):
         self._levels = levels

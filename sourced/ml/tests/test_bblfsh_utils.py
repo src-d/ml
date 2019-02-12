@@ -1,11 +1,12 @@
-import docker.client
 import errno
 import random
 import socket
 import time
 import unittest
 
-from sourced.ml.utils.bblfsh import check_version, BBLFSH_VERSION_LOW, BBLFSH_VERSION_HIGH
+import docker.client
+
+from sourced.ml.utils.bblfsh import BBLFSH_VERSION_HIGH, BBLFSH_VERSION_LOW, check_version
 
 
 class BblfshUtilsTests(unittest.TestCase):
@@ -22,12 +23,11 @@ class BblfshUtilsTests(unittest.TestCase):
 
     def __check_bblfsh_version_support(self, version: str) -> bool:
         """
-        :param client: docker client instance
         :param version: version of bblfshd to check
         :return: True if version is supported, False otherwise
         """
         with socket.socket() as s:
-            for i in range(3):
+            for _ in range(3):
                 try:
                     port = random.randint(10000, 50000)
                     s.connect(("localhost", port))
@@ -44,7 +44,7 @@ class BblfshUtilsTests(unittest.TestCase):
 
         assert container is not None, "failed to create bblfsh container"
 
-        for i in range(10):
+        for _ in range(10):
             try:
                 res = check_version(port=port)
                 break

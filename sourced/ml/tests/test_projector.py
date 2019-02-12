@@ -6,11 +6,11 @@ import tempfile
 import time
 import unittest
 
+from modelforge import slogging
 import requests
 
-from modelforge import slogging
 from sourced.ml.tests.test_dump import captured_output
-from sourced.ml.utils.projector import CORSWebServer, web_server, wait, present_embeddings
+from sourced.ml.utils.projector import CORSWebServer, present_embeddings, wait, web_server
 
 
 class ProjectorTests(unittest.TestCase):

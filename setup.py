@@ -1,12 +1,13 @@
+from importlib.machinery import SourceFileLoader
 import io
 import os.path
-from importlib.machinery import SourceFileLoader
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 sourcedml = SourceFileLoader("sourced.ml", "./sourced/ml/__init__.py").load_module()
 
 with io.open(os.path.join(os.path.dirname(__file__), "README.md"),
-             encoding='utf-8') as f:
+             encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
@@ -32,7 +33,7 @@ setup(
     install_requires=[
         "PyStemmer>=1.3,<2.0",
         "bblfsh>=2.2.1,<3.0",
-        "modelforge>=0.9.3,<0.10",
+        "modelforge>=0.10.1,<0.11",
         "sourced-engine>=0.7.0,<1.1",
         "humanize>=0.5.0,<0.6",
         "parquet>=1.2,<2.0",

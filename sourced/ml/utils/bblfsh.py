@@ -1,5 +1,6 @@
-from bblfsh.client import BblfshClient
 from distutils.version import StrictVersion
+
+from bblfsh.client import BblfshClient
 
 BBLFSH_VERSION_LOW = "2.2"
 BBLFSH_VERSION_HIGH = "3.0"

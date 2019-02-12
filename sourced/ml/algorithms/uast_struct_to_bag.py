@@ -1,8 +1,8 @@
-import random
 from collections import defaultdict
+import random
 
-from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary, Uast2BagBase
 from sourced.ml.algorithms import uast2sequence
+from sourced.ml.algorithms.uast_ids_to_bag import FakeVocabulary, Uast2BagBase
 
 
 class Uast2StructBagBase(Uast2BagBase):
@@ -91,6 +91,9 @@ class Uast2RandomWalks:
                                      within a small locality.
         :param n_walks: Number of walks from each node.
         :param n_steps: Number of steps in walk.
+        :param node2index: Specify node2index transformation. Node2InternalType() is used as \
+                           default.
+        :param seed: Random seed.
         """
         self.p_explore_neighborhood = p_explore_neighborhood
         self.q_leave_neighborhood = q_leave_neighborhood
@@ -102,7 +105,7 @@ class Uast2RandomWalks:
 
     def __call__(self, uast):
         starting_nodes = self.prepare_starting_nodes(uast)
-        for i in range(self.n_walks):
+        for _ in range(self.n_walks):
             for start_node in starting_nodes:
                 yield self.random_walk(start_node)
 

@@ -3,12 +3,12 @@ from unittest import SkipTest
 
 from modelforge import slogging
 
+from sourced.ml.utils.engine import (
+    get_bblfsh_dependency, get_engine_package, get_engine_version)
 from sourced.ml.utils.spark import create_spark
-from sourced.ml.utils.engine import get_engine_package, get_bblfsh_dependency, \
-    get_engine_version
 
 
-utmain = sys.modules['__main__']
+utmain = sys.modules["__main__"]
 if utmain.__package__ == "unittest" and utmain.__spec__ is None:
     from collections import namedtuple
     ModuleSpec = namedtuple("ModuleSpec", ["name"])

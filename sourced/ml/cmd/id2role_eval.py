@@ -5,7 +5,7 @@ import os
 import numpy
 import pandas
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, KFold, GridSearchCV
+from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 from tqdm import tqdm
 
 from sourced.ml.cmd.args import handle_input_arg
@@ -16,7 +16,7 @@ def load_dataset(directory):
     csvpaths = glob.glob(os.path.join(directory, "**/*.csv"))
     chunks = []
     for csvpath in tqdm(csvpaths):
-        chunks.append(pandas.read_csv(csvpath, sep=',', index_col=None))
+        chunks.append(pandas.read_csv(csvpath, sep=",", index_col=None))
     df = pandas.concat(chunks)
     df.role = df.role.map(lambda x: x.replace("IDENTIFIER | ", "").replace(" | IDENTIFIER", ""))
     return df
@@ -49,10 +49,10 @@ def get_quality(X, y, estimator, tuned_parameters, seed, log):
 
     log.debug("Best parameters set found on development set:", clf.best_params_)
     log.debug("Grid scores on development set:")
-    means = clf.cv_results_['mean_test_score']
-    stds = clf.cv_results_['std_test_score']
+    means = clf.cv_results_["mean_test_score"]
+    stds = clf.cv_results_["std_test_score"]
     best_values = (0,)
-    for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+    for mean, std, params in zip(means, stds, clf.cv_results_["params"]):
         log.debug("\t%0.3f (+/-%0.03f) for %r" % (mean, std, params))
         if best_values[0] < mean:
             best_values = (mean, std, params)
@@ -80,7 +80,7 @@ def id2role_eval(args):
             common_tokens &= set(models[name].tokens)
     log.info("Common tokens in all models: %d" % len(common_tokens))
 
-    tuned_parameters = [{'C': [10 ** x for x in range(-7, -1)]}]
+    tuned_parameters = [{"C": [10 ** x for x in range(-7, -1)]}]
     # Load data and preprocess
     log.info("Data loading...")
     df = load_dataset(args.dataset)

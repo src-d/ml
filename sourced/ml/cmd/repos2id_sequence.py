@@ -2,10 +2,10 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import IdSequenceExtractor
-from sourced.ml.transformers import UastDeserializer, Uast2BagFeatures, UastRow2Document, \
-    CsvSaver, create_uast_source
+from sourced.ml.transformers import (
+    create_uast_source, CsvSaver, Uast2BagFeatures, UastDeserializer, UastRow2Document)
 from sourced.ml.transformers.basic import Rower
-from sourced.ml.utils.engine import pipeline_graph, pause
+from sourced.ml.utils.engine import pause, pipeline_graph
 
 
 @pause

@@ -3,9 +3,9 @@ import os
 import tempfile
 import unittest
 
-import sourced.ml.tests.models as paths
-from sourced.ml.models import Topics
 from sourced.ml.cmd import bigartm2asdf
+from sourced.ml.models import Topics
+import sourced.ml.tests.models as paths
 
 
 class TopicsTests(unittest.TestCase):

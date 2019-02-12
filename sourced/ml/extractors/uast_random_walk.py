@@ -1,6 +1,6 @@
 from sourced.ml.algorithms import UastRandomWalk2Bag
-from sourced.ml.extractors import BagsExtractor, register_extractor, get_names_from_kwargs,\
-    filter_kwargs
+from sourced.ml.extractors import (
+    BagsExtractor, filter_kwargs, get_names_from_kwargs, register_extractor)
 
 
 @register_extractor

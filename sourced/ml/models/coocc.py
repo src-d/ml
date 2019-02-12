@@ -1,7 +1,7 @@
-import pyspark
-from modelforge.model import Model, split_strings, assemble_sparse_matrix, \
-    merge_strings, disassemble_sparse_matrix
+from modelforge.model import (
+    assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, split_strings)
 from modelforge.models import register_model
+import pyspark
 
 
 @register_model
@@ -10,6 +10,8 @@ class Cooccurrences(Model):
     Co-occurrence matrix.
     """
     NAME = "co-occurrences"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that contains the sparse co-occurrence matrix of source code identifiers."
 
     def construct(self, tokens, matrix):
         self._tokens = tokens

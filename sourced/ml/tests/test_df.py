@@ -39,7 +39,7 @@ class DocumentFrequenciesTests(unittest.TestCase):
 
     def test_prune(self):
         pruned = self.model.prune(4)
-        for tok, freq in pruned:
+        for _, freq in pruned:
             self.assertGreaterEqual(freq, 4)
         self.assertEqual(len(pruned), 346)
 

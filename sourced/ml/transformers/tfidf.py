@@ -1,8 +1,8 @@
-from pyspark import Row, RDD, SparkContext
+from pyspark import RDD, Row, SparkContext
 
 from sourced.ml.algorithms import log_tf_log_idf
-from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 from sourced.ml.transformers.transformer import Transformer
+from sourced.ml.transformers.uast2bag_features import Uast2BagFeatures
 
 
 class TFIDF(Transformer):
@@ -14,8 +14,9 @@ class TFIDF(Transformer):
     def __init__(self, df: dict, ndocs: int, sc: SparkContext, **kwargs):
         """
         :param df: dict containing document frequencies calculated for the given stream.
-        :param ndocs: total number of documents
-        :param sc: spark context used to broadcast `df
+        :param ndocs: total number of documents.
+        :param sc: spark context used to broadcast `df.
+        :param kwargs: Parameters for parent constructor.
         """
         super().__init__(**kwargs)
         self.df = df
@@ -28,7 +29,7 @@ class TFIDF(Transformer):
         :param head: pyspark rdd where each row is named tuple with `token`, `document` and `value`
                    (term frequency) fields. One can use Uast2TermFreq Transformer to calculate
                    such rdd.
-        :return: rdd after applying TFIDF
+        :return: rdd after applying TFIDF.
         """
         c = self.Columns
         df = self.sc.broadcast(self.df)

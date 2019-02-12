@@ -1,10 +1,10 @@
 import itertools
 import operator
 
-from scipy import sparse
 from bblfsh import Node
 from pyspark import Row
 from pyspark.rdd import PipelinedRDD
+from scipy import sparse
 
 from sourced.ml.models import Cooccurrences, OrderedDocumentFrequencies
 from sourced.ml.transformers import Transformer

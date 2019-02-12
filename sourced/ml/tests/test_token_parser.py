@@ -1,7 +1,7 @@
 import pickle
 import unittest
 
-from sourced.ml.algorithms import TokenParser, NoopTokenParser
+from sourced.ml.algorithms import NoopTokenParser, TokenParser
 
 
 class TokenParserTests(unittest.TestCase):
@@ -35,18 +35,18 @@ class TokenParserTests(unittest.TestCase):
             ("sourced.ml.algorithms.uast_ids_to_bag",
              ["sourc", "sourcedml", "algorithm", "mlalgorithm",
               "uast", "ids", "idsto", "bag", "tobag"]),
-            ("WORSTnameYOUcanIMAGINE", ['worst', 'name', 'you', 'can', 'imagin']),
+            ("WORSTnameYOUcanIMAGINE", ["worst", "name", "you", "can", "imagin"]),
             # Another bad example. Parser failed to parse it correctly
-            ("SmallIdsToFoOo", ["small", "ids", 'idsto', 'fo', 'oo']),
-            ("SmallIdFooo", ["small", "smallid", 'fooo', 'idfooo']),
-            ("ONE_M0re_.__badId.example", ['one', 'onem', 're', 'bad', 'rebad',
-                                           'badid', 'exampl', 'idexampl']),
-            ("never_use_Such__varsableNames", ['never', 'use', 'such', 'varsabl', 'name']),
+            ("SmallIdsToFoOo", ["small", "ids", "idsto", "fo", "oo"]),
+            ("SmallIdFooo", ["small", "smallid", "fooo", "idfooo"]),
+            ("ONE_M0re_.__badId.example", ["one", "onem", "re", "bad", "rebad",
+                                           "badid", "exampl", "idexampl"]),
+            ("never_use_Such__varsableNames", ["never", "use", "such", "varsabl", "name"]),
             ("a.b.c.d", ["a", "b", "c", "d"]),
-            ("A.b.Cd.E", ['a', 'b', 'cd', 'e']),
-            ("looong_sh_loooong_sh", ['looong', 'looongsh', 'loooong', 'shloooong', 'loooongsh']),
-            ("sh_sh_sh_sh", ['sh', 'sh', 'sh', 'sh']),
-            ("loooong_loooong_loooong", ['loooong', 'loooong', 'loooong'])
+            ("A.b.Cd.E", ["a", "b", "cd", "e"]),
+            ("looong_sh_loooong_sh", ["looong", "looongsh", "loooong", "shloooong", "loooongsh"]),
+            ("sh_sh_sh_sh", ["sh", "sh", "sh", "sh"]),
+            ("loooong_loooong_loooong", ["loooong", "loooong", "loooong"])
         ]
 
         for token, correct in tokens:
@@ -79,17 +79,17 @@ class TokenParserTests(unittest.TestCase):
             ("foo_BAR", ["foo", "bar"]),
             ("sourced.ml.algorithms.uast_ids_to_bag",
              ["sourc", "ml", "algorithm", "uast", "ids", "to", "bag"]),
-            ("WORSTnameYOUcanIMAGINE", ['worst', 'name', 'you', 'can', 'imagin']),
+            ("WORSTnameYOUcanIMAGINE", ["worst", "name", "you", "can", "imagin"]),
             # Another bad example. Parser failed to parse it correctly
-            ("SmallIdsToFoOo", ["small", "ids", "to", 'fo', 'oo']),
-            ("SmallIdFooo", ["small", "id", 'fooo']),
-            ("ONE_M0re_.__badId.example", ['one', 'm', 're', 'bad', 'id', 'exampl']),
-            ("never_use_Such__varsableNames", ['never', 'use', 'such', 'varsabl', 'name']),
+            ("SmallIdsToFoOo", ["small", "ids", "to", "fo", "oo"]),
+            ("SmallIdFooo", ["small", "id", "fooo"]),
+            ("ONE_M0re_.__badId.example", ["one", "m", "re", "bad", "id", "exampl"]),
+            ("never_use_Such__varsableNames", ["never", "use", "such", "varsabl", "name"]),
             ("a.b.c.d", ["a", "b", "c", "d"]),
-            ("A.b.Cd.E", ['a', 'b', 'cd', 'e']),
-            ("looong_sh_loooong_sh", ['looong', 'sh', 'loooong', 'sh']),
-            ("sh_sh_sh_sh", ['sh', 'sh', 'sh', 'sh']),
-            ("loooong_loooong_loooong", ['loooong', 'loooong', 'loooong'])
+            ("A.b.Cd.E", ["a", "b", "cd", "e"]),
+            ("looong_sh_loooong_sh", ["looong", "sh", "loooong", "sh"]),
+            ("sh_sh_sh_sh", ["sh", "sh", "sh", "sh"]),
+            ("loooong_loooong_loooong", ["loooong", "loooong", "loooong"])
         ]
 
         for token, correct in tokens:
@@ -121,10 +121,10 @@ class TokenParserTests(unittest.TestCase):
 
         self.assertEqual(
             list(self.tp.split("a b c d")),
-            ['a', 'b', 'c', 'd'])
+            ["a", "b", "c", "d"])
         self.assertEqual(
             list(self.tp.split("a b long c d")),
-            ['a', 'b', 'long', 'blong', 'longc', 'd'])
+            ["a", "b", "long", "blong", "longc", "d"])
         self.assertEqual(
             list(self.tp.split("AbCd")),
             ["ab", "cd"])
@@ -141,10 +141,10 @@ class TokenParserTests(unittest.TestCase):
             ["a", "b", "c", "d"])
         self.assertEqual(
             list(self.tp.split("a b long c d")),
-            ['a', 'b', 'long', 'c', 'd'])
+            ["a", "b", "long", "c", "d"])
         self.assertEqual(
             list(self.tp.split("AbCd")),
-            ['ab', 'cd'])
+            ["ab", "cd"])
 
     def test_stem(self):
         self.assertEqual(self.tp.stem("lol"), "lol")

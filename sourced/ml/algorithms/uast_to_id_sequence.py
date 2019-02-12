@@ -27,4 +27,4 @@ class Uast2IdSequence(Uast2IdLineDistance):
 
     @staticmethod
     def concat(id_sequence: Iterable):
-        return ' '.join(id_sequence)
+        return " ".join(id_sequence)

@@ -2,10 +2,11 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import IdentifiersBagExtractor
-from sourced.ml.transformers import Cacher, UastDeserializer, CooccConstructor, CooccModelSaver, \
-    Uast2BagFeatures, Counter, UastRow2Document, Repartitioner, create_uast_source
-from sourced.ml.utils.engine import pipeline_graph, pause
+from sourced.ml.transformers import (
+    Cacher, CooccConstructor, CooccModelSaver, Counter, create_uast_source, Repartitioner,
+    Uast2BagFeatures, UastDeserializer, UastRow2Document)
 from sourced.ml.utils.docfreq import create_or_load_ordered_df
+from sourced.ml.utils.engine import pause, pipeline_graph
 
 
 @pause

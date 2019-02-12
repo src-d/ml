@@ -2,7 +2,7 @@ import codecs
 from collections import defaultdict
 import os
 
-from sourced.ml.algorithms import UastIds2Bag, uast2sequence
+from sourced.ml.algorithms import uast2sequence, UastIds2Bag
 from sourced.ml.extractors import BagsExtractor, register_extractor
 from sourced.ml.utils import bblfsh_roles
 

@@ -3,8 +3,8 @@ import unittest
 
 import numpy
 
-import sourced.ml.tests.models as paths
 from sourced.ml.models import BOW
+import sourced.ml.tests.models as paths
 
 
 class BOWTests(unittest.TestCase):

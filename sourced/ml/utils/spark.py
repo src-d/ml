@@ -1,8 +1,9 @@
 import logging
 import os
 import sys
-import pkg_resources
 import zipfile
+
+import pkg_resources
 
 os.environ["PYSPARK_PYTHON"] = sys.executable
 

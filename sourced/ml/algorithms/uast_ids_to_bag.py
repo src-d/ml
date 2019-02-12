@@ -2,7 +2,7 @@ from collections import defaultdict, deque
 
 import bblfsh
 
-from sourced.ml.algorithms import TokenParser, NoopTokenParser
+from sourced.ml.algorithms import NoopTokenParser, TokenParser
 from sourced.ml.algorithms.uast_to_bag import Uast2BagBase
 from sourced.ml.utils import bblfsh_roles
 

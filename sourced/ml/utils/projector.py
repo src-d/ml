@@ -1,5 +1,5 @@
-import logging
 from http.server import HTTPServer, SimpleHTTPRequestHandler, test
+import logging
 import os
 import shutil
 import threading

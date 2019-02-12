@@ -1,4 +1,4 @@
-from modelforge import register_model, Model, split_strings, merge_strings
+from modelforge import merge_strings, Model, register_model, split_strings
 
 
 @register_model
@@ -7,6 +7,8 @@ class Id2Vec(Model):
     id2vec model - source code identifier embeddings.
     """
     NAME = "id2vec"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that contains information on source code as identifier embeddings."
 
     def construct(self, embeddings, tokens):
         self._embeddings = embeddings

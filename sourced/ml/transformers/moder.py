@@ -2,13 +2,13 @@ from itertools import chain
 import os
 
 from bblfsh import Node
-from pyspark import Row, RDD
+from pyspark import RDD, Row
 from pyspark.sql import DataFrame
 
 from sourced.ml.algorithms.uast_ids_to_bag import uast2sequence
 from sourced.ml.transformers import Transformer
-from sourced.ml.utils.engine import EngineConstants
 from sourced.ml.utils import bblfsh_roles
+from sourced.ml.utils.engine import EngineConstants
 
 
 class Moder(Transformer):

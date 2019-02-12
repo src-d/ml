@@ -1,7 +1,7 @@
 import logging
 
-from sourced.ml.transformers import BagFeatures2DocFreq, Uast2BagFeatures
 from sourced.ml.models import OrderedDocumentFrequencies
+from sourced.ml.transformers import BagFeatures2DocFreq, Uast2BagFeatures
 
 
 def create_or_load_ordered_df(args, ndocs: int = None, bag_features: Uast2BagFeatures = None):

@@ -1,7 +1,7 @@
 import logging
 import multiprocessing
 import os
-from typing import Union, List
+from typing import List, Union
 
 from modelforge import Model
 from modelforge.progress_bar import progress_bar

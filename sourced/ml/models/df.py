@@ -1,9 +1,8 @@
 from itertools import islice
-from typing import Iterable, Union, Dict, List
+from typing import Dict, Iterable, List, Union
 
+from modelforge import merge_strings, Model, register_model, split_strings
 import numpy
-
-from modelforge import Model, split_strings, merge_strings, register_model
 
 
 @register_model
@@ -13,6 +12,8 @@ class DocumentFrequencies(Model):
     in different repositories. Each repository counts only once.
     """
     NAME = "docfreq"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that represents the document frequencies of features extracted from source code."
 
     def construct(self, docs: int, tokfreqs: Union[Iterable[Dict[str, int]], Dict[str, int]]):
         """

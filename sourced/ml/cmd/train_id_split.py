@@ -9,7 +9,6 @@ def train_id_split(args: argparse.ArgumentParser):
     Pipeline to train a neural network to split identifiers.
 
     :param args: arguments.
-    :param model: type of neural network used to learn the splitting task.
     """
     from sourced.ml.algorithms.id_splitter.features import prepare_features
     from sourced.ml.algorithms.id_splitter.nn_model import build_rnn, build_cnn, prepare_devices

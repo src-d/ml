@@ -1,8 +1,8 @@
-from typing import Iterable, Dict, List
+from typing import Dict, Iterable, List
 
+from modelforge import merge_strings, register_model, split_strings
 import numpy
 
-from modelforge import register_model, merge_strings, split_strings
 from sourced.ml.models import DocumentFrequencies
 
 

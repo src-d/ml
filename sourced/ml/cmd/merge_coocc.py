@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix
 
 from sourced.ml.cmd.args import handle_input_arg
 from sourced.ml.extractors.helpers import filter_kwargs
-from sourced.ml.models import OrderedDocumentFrequencies, Cooccurrences
+from sourced.ml.models import Cooccurrences, OrderedDocumentFrequencies
 from sourced.ml.transformers import CooccModelSaver
 from sourced.ml.utils.engine import pause
 from sourced.ml.utils.spark import create_spark
@@ -101,7 +101,7 @@ def merge_coocc_no_spark(df, filepaths, log, args):
     log.info("Merging cooccurrences without using PySpark")
     shape = (len(df) + 1,) * 2
     result = coo_matrix(shape, dtype=numpy.uint32)
-    for path, coocc in load_and_check(filepaths, log):
+    for _, coocc in load_and_check(filepaths, log):
         coocc._matrix = coo_matrix(coocc._matrix)
         index = [df.order.get(x, len(df)) for x in coocc.tokens]
         rows = [index[x] for x in coocc.matrix.row]

@@ -1,8 +1,8 @@
 import sys
 import unittest
 
-from sourced.ml.utils.spark import get_spark_memory_config, create_spark
 from sourced.ml.tests.models import PARQUET_DIR
+from sourced.ml.utils.spark import create_spark, get_spark_memory_config
 
 
 class SparkTests(unittest.TestCase):
@@ -25,5 +25,5 @@ class SparkTests(unittest.TestCase):
         spark.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

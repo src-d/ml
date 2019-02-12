@@ -3,8 +3,8 @@ import string
 import tarfile
 from typing import List, Tuple
 
-import numpy
 from modelforge.progress_bar import progress_bar
+import numpy
 
 
 def read_identifiers(csv_path: str, use_header: bool, max_identifier_len: int, identifier_col: int,
