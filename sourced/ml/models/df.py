@@ -13,7 +13,7 @@ class DocumentFrequencies(Model):
     """
     NAME = "docfreq"
     VENDOR = "source{d}"
-    DESCRIPTION = "Model that represents the document frequencies of features extracted from source code."
+    DESCRIPTION = "Model that contains document frequencies of features extracted from code."
 
     def construct(self, docs: int, tokfreqs: Union[Iterable[Dict[str, int]], Dict[str, int]]):
         """

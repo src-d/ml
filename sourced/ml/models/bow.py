@@ -84,14 +84,16 @@ class BOW(Model):
         """
         return len(self._documents)
 
-    def save(self, output: str, deps: Iterable = ()):
+    def save(self, output: str, series: str = "bow", deps: Iterable = tuple(),
+             create_missing_dirs: bool = True):
         if not deps:
             try:
                 deps = [self.get_dep(DocumentFrequencies.NAME)]
             except KeyError:
                 raise ValueError(
                     "You must specify DocumentFrequencies dependency to save BOW.") from None
-        super().save(output, deps)
+        super().save(output=output, series=series, deps=deps,
+                     create_missing_dirs=create_missing_dirs)
 
     def convert_bow_to_vw(self, output: str):
         log = logging.getLogger("bow2vw")

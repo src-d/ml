@@ -38,4 +38,5 @@ def bigartm2asdf(args):
     data = numpy.array(data, dtype=numpy.float32)
     indices = numpy.array(indices, dtype=numpy.int32)
     matrix = csr_matrix((data, indices, indptr), shape=(len(tokens), len(items) - 2)).T
-    Topics().construct(tokens, None, matrix).save(args.output)
+    Topics().construct(tokens=tokens, topics=None, matrix=matrix) \
+        .save(output=args.output, series="topics")
