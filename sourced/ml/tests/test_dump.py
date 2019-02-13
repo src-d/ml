@@ -34,9 +34,12 @@ def captured_output():
 class DumpTests(unittest.TestCase):
     ID2VEC_DUMP = """{'created_at': '2017-06-18 17:37:06', \
 'dependencies': [], \
+'license': 'ODbL-1.0', \
 'model': 'id2vec', \
+'series': 'id2vec-1000', \
 'size': '1.1 MB', \
 'uuid': '92609e70-f79c-46b5-8419-55726e873cfc', \
+'vendor': 'source{d}', \
 'version': [1, 0, 0]}
 Shape: (1000, 300)
 First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
@@ -44,9 +47,12 @@ First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value
 
     DOCFREQ_DUMP = """{'created_at': '2017-08-09 16:49:12', \
 'dependencies': [], \
+'license': 'ODbL-1.0', \
 'model': 'docfreq', \
-'size': '6.2 kB', \
+'series': 'docfreq-1000', \
+'size': '6.4 kB', \
 'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a', \
+'vendor': 'source{d}', \
 'version': [0, 1, 0]}
 Number of words: 982
 """ + "Random 10 words: "
@@ -57,10 +63,13 @@ Number of words: 982
 'model': 'docfreq', \
 'uuid': '2c4fcae7-93a6-496e-9e3a-d6e15d35b812', \
 'version': [1, 0, 0]}], \
+'license': 'ODbL-1.0', \
 'model': 'bow', \
 'parent': '51b4165d-b2c6-442a-93be-0eb35f4cc19a', \
-'size': '2.3 kB', \
+'series': 'bow-docfreq', \
+'size': '2.5 kB', \
 'uuid': '0d95f342-2c69-459f-9ee7-a1fc7da88d64', \
+'vendor': 'source{d}', \
 'version': [1, 0, 15]}
 Shape: (5, 20)
 First 10 documents: ['repo1', 'repo2', 'repo3', 'repo4', 'repo5']
@@ -72,9 +81,12 @@ First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 
 'model': 'docfreq', \
 'uuid': '0f94a6c6-7dc3-4b3c-b8d2-917164a50581', \
 'version': [1, 0, 0]}], \
+'license': 'ODbL-1.0', \
 'model': 'co-occurrences', \
-'size': '79.7 kB', \
+'series': 'coocc-docfreq', \
+'size': '79.9 kB', \
 'uuid': 'e75dcb2d-ec1d-476b-a04b-bc64c7779ae1', \
+'vendor': 'source{d}', \
 'version': [1, 0, 0]}
 Number of words: 304
 First 10 words: ['i.set', 'i.iter', 'i.error', 'i.logsdir', 'i.read', 'i.captur', 'i.clear',""" + \
