@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-from modelforge.registry import dump_model
+from modelforge.tools import dump_model
 
 import sourced.ml.tests.models as paths
 
