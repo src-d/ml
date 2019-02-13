@@ -84,7 +84,7 @@ class BOW(Model):
         """
         return len(self._documents)
 
-    def save(self, output: str, series: str = "bow", deps: Iterable = tuple(),
+    def save(self, output: str, series: str, deps: Iterable = tuple(),
              create_missing_dirs: bool = True):
         if not deps:
             try:

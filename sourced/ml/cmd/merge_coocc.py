@@ -115,4 +115,4 @@ def merge_coocc_no_spark(df, filepaths, log, args):
             result.data[indx_overflow] = MAX_INT32
     Cooccurrences() \
         .construct(df.tokens(), result[:-1, :-1]) \
-        .save(args.output, (df,))
+        .save(output=args.output, series="id2vec", deps=(df,))

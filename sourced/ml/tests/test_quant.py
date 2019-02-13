@@ -27,7 +27,7 @@ class QuantizationLevelsTests(unittest.TestCase):
                   "yyy": {"q": numpy.array([3, 2, 1]), "w": numpy.array([6, 5, 4]),
                           "e": numpy.array([9, 8, 7])}}
         buffer = BytesIO()
-        QuantizationLevels().construct(levels).save(buffer)
+        QuantizationLevels().construct(levels).save(output=buffer, series="quant")
         buffer.seek(0)
         model = QuantizationLevels().load(buffer)
         levels = model.levels

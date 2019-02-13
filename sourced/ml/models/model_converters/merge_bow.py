@@ -49,7 +49,7 @@ class MergeBOW(Model2Base):
             self._reduce_matrix()
         BOW(log_level=self._log.level) \
             .construct(self.documents, self.tokens, self.matrix) \
-            .save(output=self._save_path(index, destdir), deps=self.deps)
+            .save(output=self._save_path(index, destdir), series="bow", deps=self.deps)
 
     def _reduce_matrix(self):
         reduced_tokens = []

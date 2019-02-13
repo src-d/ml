@@ -40,4 +40,5 @@ def id2vec_postprocess(args):
     log.info("Generating numpy arrays...")
     embeddings = numpy.array(embeddings, dtype=numpy.float32)
     log.info("Writing %s...", args.output)
-    Id2Vec().construct(embeddings=embeddings, tokens=tokens).save(args.output)
+    Id2Vec().construct(embeddings=embeddings, tokens=tokens) \
+        .save(output=args.output, series="id2vec")
