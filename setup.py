@@ -46,7 +46,7 @@ setup(
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
-        "pandas": ["pandas>=0.22,<1.0"],
+        "pandas": ["pandas>=0.24.1,<1.0"],
     },
     tests_require=["docker>=3.6.0,<4.0"],
     package_data={"": ["LICENSE.md", "README.md"],
