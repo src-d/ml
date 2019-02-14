@@ -80,12 +80,12 @@ def repos2bow_template(args, cache_hook: Transformer = None,
             .execute()
         uast_extractor.unpersist()
         tokens = {row.token for row in tokens}
-        reduced_token_freq = {key: df_model[key] for key in df_model.df if key in tokens}
-        reduced_token_index = {key: df_model.order[key] for key in df_model.df if key in tokens}
+        reduced_token_freq = {key: df_model[key] for key in df_model._df if key in tokens}
+        reduced_token_index = {key: df_model.order[key] for key in df_model._df if key in tokens}
         log.info("Processing %s distinct tokens", len(reduced_token_freq))
         log.info("Indexing by document and token ...")
         bags_writer = bags \
-            .link(TFIDF(reduced_token_freq, df_model.docs, root.session.sparkContext)) \
+            .link(TFIDF(reduced_token_freq, df_model.docs, root.engine.session.sparkContext)) \
             .link(document_indexer) \
             .link(Indexer(Uast2BagFeatures.Columns.token, reduced_token_index))
         if save_hook is not None:

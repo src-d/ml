@@ -10,13 +10,14 @@ from sourced.ml.utils.spark import add_spark_args, create_spark, SparkDefault
 
 def get_engine_version():
     try:
-        engine = get_distribution("sourced-engine").version
+        engine = get_distribution("sourced-jgit-spark-connector").version
     except DistributionNotFound:
         log = logging.getLogger("engine_version")
-        engine = requests.get("https://api.github.com/repos/src-d/engine/releases/latest") \
+        engine = requests.get("https://api.github.com/repos/src-d/sourced-jgit-spark-connector/"
+                              "releases/latest") \
             .json()["tag_name"].replace("v", "")
-        log.warning("Engine not found, queried GitHub to get the latest release tag (%s)",
-                    engine)
+        log.warning("jgit-spark-connector not found, queried GitHub to get the latest release tag "
+                    "(%s)", engine)
     return engine
 
 
@@ -54,7 +55,7 @@ def add_engine_args(my_parser, default_packages=None):
 
 
 def get_engine_package(engine):
-    return "tech.sourced:engine:" + engine
+    return "tech.sourced:jgit-spark-connector:" + engine
 
 
 def get_bblfsh_dependency(bblfsh):

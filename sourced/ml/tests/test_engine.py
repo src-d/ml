@@ -9,4 +9,4 @@ class EngineTests(unittest.TestCase):
                          "spark.tech.sourced.bblfsh.grpc.host=localhost")
 
     def test_engine_dependencies(self):
-        self.assertEqual(get_engine_package("latest"), "tech.sourced:engine:latest")
+        self.assertEqual(get_engine_package("latest"), "tech.sourced:jgit-spark-connector:latest")
