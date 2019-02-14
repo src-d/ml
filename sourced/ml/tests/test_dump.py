@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 
-from modelforge.registry import dump_model
+from modelforge.tools import dump_model
 
 import sourced.ml.tests.models as paths
 
@@ -32,45 +32,62 @@ def captured_output():
 
 
 class DumpTests(unittest.TestCase):
-    ID2VEC_DUMP = """{'created_at': datetime.datetime(2017, 6, 18, 17, 37, 6, 255615),
- 'dependencies': [],
- 'model': 'id2vec',
- 'uuid': '92609e70-f79c-46b5-8419-55726e873cfc',
- 'version': [1, 0, 0]}
+    ID2VEC_DUMP = """{'created_at': '2017-06-18 17:37:06', \
+'dependencies': [], \
+'license': 'ODbL-1.0', \
+'model': 'id2vec', \
+'series': 'id2vec-1000', \
+'size': '1.1 MB', \
+'uuid': '92609e70-f79c-46b5-8419-55726e873cfc', \
+'vendor': 'source{d}', \
+'version': [1, 0, 0]}
 Shape: (1000, 300)
 First 10 words: ['get', 'name', 'type', 'string', 'class', 'set', 'data', 'value', 'self', 'test']
 """
-    DOCFREQ_DUMP = """{'created_at': datetime.datetime(2017, 8, 9, 16, 49, 12, 775367),
- 'dependencies': [],
- 'model': 'docfreq',
- 'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a',
- 'version': [0, 1, 0]}
+
+    DOCFREQ_DUMP = """{'created_at': '2017-08-09 16:49:12', \
+'dependencies': [], \
+'license': 'ODbL-1.0', \
+'model': 'docfreq', \
+'series': 'docfreq-1000', \
+'size': '6.4 kB', \
+'uuid': 'f64bacd4-67fb-4c64-8382-399a8e7db52a', \
+'vendor': 'source{d}', \
+'version': [0, 1, 0]}
 Number of words: 982
 """ + "Random 10 words: "
 
-    BOW_DUMP = """{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 59, 200818),
- 'dependencies': [{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 48, 828287),
-                   'dependencies': [],
-                   'model': 'docfreq',
-                   'uuid': '2c4fcae7-93a6-496e-9e3a-d6e15d35b812',
-                   'version': [1, 0, 0]}],
- 'model': 'bow',
- 'parent': '51b4165d-b2c6-442a-93be-0eb35f4cc19a',
- 'uuid': '0d95f342-2c69-459f-9ee7-a1fc7da88d64',
- 'version': [1, 0, 15]}
+    BOW_DUMP = """{'created_at': '2018-01-18 21:59:59', \
+'dependencies': [{'created_at': datetime.datetime(2018, 1, 18, 21, 59, 48, 828287), \
+'dependencies': [], \
+'model': 'docfreq', \
+'uuid': '2c4fcae7-93a6-496e-9e3a-d6e15d35b812', \
+'version': [1, 0, 0]}], \
+'license': 'ODbL-1.0', \
+'model': 'bow', \
+'parent': '51b4165d-b2c6-442a-93be-0eb35f4cc19a', \
+'series': 'bow-docfreq', \
+'size': '2.5 kB', \
+'uuid': '0d95f342-2c69-459f-9ee7-a1fc7da88d64', \
+'vendor': 'source{d}', \
+'version': [1, 0, 15]}
 Shape: (5, 20)
 First 10 documents: ['repo1', 'repo2', 'repo3', 'repo4', 'repo5']
 First 10 tokens: ['i.', 'i.*', 'i.Activity', 'i.AdapterView', 'i.ArrayAdapter', 'i.Arrays', 'i.Bundle', 'i.EditText', 'i.Exception', 'i.False']\n"""  # noqa
 
-    COOCC_DUMP = """{'created_at': datetime.datetime(2018, 1, 24, 16, 0, 2, 591553),
- 'dependencies': [{'created_at': datetime.datetime(2018, 1, 24, 15, 59, 24, 129470),
-                   'dependencies': [],
-                   'model': 'docfreq',
-                   'uuid': '0f94a6c6-7dc3-4b3c-b8d2-917164a50581',
-                   'version': [1, 0, 0]}],
- 'model': 'co-occurrences',
- 'uuid': 'e75dcb2d-ec1d-476b-a04b-bc64c7779ae1',
- 'version': [1, 0, 0]}
+    COOCC_DUMP = """{'created_at': '2018-01-24 16:00:02', \
+'dependencies': [{'created_at': datetime.datetime(2018, 1, 24, 15, 59, 24, 129470), \
+'dependencies': [], \
+'model': 'docfreq', \
+'uuid': '0f94a6c6-7dc3-4b3c-b8d2-917164a50581', \
+'version': [1, 0, 0]}], \
+'license': 'ODbL-1.0', \
+'model': 'co-occurrences', \
+'series': 'coocc-docfreq', \
+'size': '79.9 kB', \
+'uuid': 'e75dcb2d-ec1d-476b-a04b-bc64c7779ae1', \
+'vendor': 'source{d}', \
+'version': [1, 0, 0]}
 Number of words: 304
 First 10 words: ['i.set', 'i.iter', 'i.error', 'i.logsdir', 'i.read', 'i.captur', 'i.clear',""" + \
                  """ 'i.android', 'i.tohome', 'i.ljust']

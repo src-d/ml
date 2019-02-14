@@ -32,7 +32,7 @@ class BOWTests(unittest.TestCase):
 
     def test_write(self):
         buffer = BytesIO()
-        self.model.save(buffer)
+        self.model.save(output=buffer, series="bow-docfreq")
         buffer.seek(0)
         new_model = BOW().load(buffer)
         self.assertEqual((self.model.matrix != new_model.matrix).nnz, 0)

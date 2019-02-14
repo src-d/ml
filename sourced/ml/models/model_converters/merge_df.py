@@ -33,7 +33,7 @@ class MergeDocFreq(Model2Base):
             .construct(self._docs, self._df) \
             .prune(self.min_docfreq) \
             .greatest(self.vocabulary_size) \
-            .save(self._save_path(index, destdir))
+            .save(output=self._save_path(index, destdir), series="id2vec")
 
     @staticmethod
     def _save_path(index: int, destdir: str):

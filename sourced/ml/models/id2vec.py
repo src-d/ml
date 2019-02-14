@@ -1,5 +1,7 @@
 from modelforge import merge_strings, Model, register_model, split_strings
 
+from sourced.ml.models.license import DEFAULT_LICENSE
+
 
 @register_model
 class Id2Vec(Model):
@@ -7,6 +9,9 @@ class Id2Vec(Model):
     id2vec model - source code identifier embeddings.
     """
     NAME = "id2vec"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that contains information on source code as identifier embeddings."
+    LICENSE = DEFAULT_LICENSE
 
     def construct(self, embeddings, tokens):
         self._embeddings = embeddings

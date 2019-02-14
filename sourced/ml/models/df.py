@@ -4,6 +4,8 @@ from typing import Dict, Iterable, List, Union
 from modelforge import merge_strings, Model, register_model, split_strings
 import numpy
 
+from sourced.ml.models.license import DEFAULT_LICENSE
+
 
 @register_model
 class DocumentFrequencies(Model):
@@ -12,6 +14,9 @@ class DocumentFrequencies(Model):
     in different repositories. Each repository counts only once.
     """
     NAME = "docfreq"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that contains document frequencies of features extracted from code."
+    LICENSE = DEFAULT_LICENSE
 
     def construct(self, docs: int, tokfreqs: Union[Iterable[Dict[str, int]], Dict[str, int]]):
         """

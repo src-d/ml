@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "PyStemmer>=1.3,<2.0",
         "bblfsh>=2.2.1,<3.0",
-        "modelforge>=0.9.3,<0.10",
+        "modelforge>=0.11.0,<0.12",
         "sourced-engine>=0.7.0,<1.1",
         "humanize>=0.5.0,<0.6",
         "parquet>=1.2,<2.0",
@@ -46,7 +46,7 @@ setup(
     extras_require={
         "tf": ["tensorflow>=1.0,<2.0"],
         "tf_gpu": ["tensorflow-gpu>=1.0,<2.0"],
-        "pandas": ["pandas>=0.22,<1.0"],
+        "pandas": ["pandas>=0.24.1,<1.0"],
     },
     tests_require=["docker>=3.6.0,<4.0"],
     package_data={"": ["LICENSE.md", "README.md"],
@@ -58,9 +58,9 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Topic :: Software Development :: Libraries"
     ]
 )

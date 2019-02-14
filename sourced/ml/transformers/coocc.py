@@ -38,7 +38,7 @@ class CooccModelSaver(Transformer):
                                    shape=(tokens_num, tokens_num))
         Cooccurrences() \
             .construct(self.tokens_list, matrix) \
-            .save(self.output, deps=(self.df_model,))
+            .save(output=self.output, series="id2vec", deps=(self.df_model,))
 
 
 class CooccConstructor(Transformer):

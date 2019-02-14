@@ -76,7 +76,7 @@ class Indexer(Transformer):
     def save_index(self, path):
         self._log.info("Saving the index to %s", path)
         DocumentFrequencies().construct(len(self._value_to_index), self._value_to_index) \
-            .save(path)
+            .save(output=path, series="docfreq")
 
     def __call__(self, rdd: RDD):
         column_name = self.column

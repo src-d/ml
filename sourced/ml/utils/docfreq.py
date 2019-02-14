@@ -33,5 +33,5 @@ def create_or_load_ordered_df(args, ndocs: int = None, bag_features: Uast2BagFea
         .construct(ndocs, df) \
         .prune(args.min_docfreq) \
         .greatest(args.vocabulary_size) \
-        .save(args.docfreq_out)
+        .save(output=args.docfreq_out, series="docfreq")
     return df_model

@@ -1,13 +1,13 @@
 import logging
 from typing import Dict, Iterable, List
 
-from modelforge import (
-    assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, register_model,
-    split_strings)
+from modelforge import assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, \
+    register_model, split_strings
 from modelforge.progress_bar import progress_bar
 from scipy import sparse
 
 from sourced.ml.models.df import DocumentFrequencies
+from sourced.ml.models.license import DEFAULT_LICENSE
 
 
 @register_model
@@ -19,6 +19,9 @@ class BOW(Model):
     This model depends on :class:`sourced.ml.models.DocumentFrequencies`.
     """
     NAME = "bow"
+    VENDOR = "source{d}"
+    DESCRIPTION = "Model that contains source code as weighted bag of words."
+    LICENSE = DEFAULT_LICENSE
 
     def construct(self, documents: List[str], tokens: List[str], matrix: sparse.spmatrix):
         if matrix.shape[0] != len(documents):
@@ -82,14 +85,16 @@ class BOW(Model):
         """
         return len(self._documents)
 
-    def save(self, output: str, deps: Iterable = ()):
+    def save(self, output: str, series: str, deps: Iterable = tuple(),
+             create_missing_dirs: bool = True):
         if not deps:
             try:
                 deps = [self.get_dep(DocumentFrequencies.NAME)]
             except KeyError:
                 raise ValueError(
                     "You must specify DocumentFrequencies dependency to save BOW.") from None
-        super().save(output, deps)
+        super().save(output=output, series=series, deps=deps,
+                     create_missing_dirs=create_missing_dirs)
 
     def convert_bow_to_vw(self, output: str):
         log = logging.getLogger("bow2vw")

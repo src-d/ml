@@ -26,4 +26,5 @@ def create_or_apply_quant(model_path: str, extractors: List[BagsExtractor], extr
         extracted_uasts.link(quant).execute()
         if quant.levels:
             log.info("Writing quantization levels to %s", model_path)
-            QuantizationLevels().construct(quant.levels).save(model_path)
+            QuantizationLevels().construct(quant.levels) \
+                .save(output=model_path, series="quant")
