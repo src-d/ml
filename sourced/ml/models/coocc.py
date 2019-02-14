@@ -3,6 +3,8 @@ from modelforge.model import (
 from modelforge.models import register_model
 import pyspark
 
+from sourced.ml.models.license import DEFAULT_LICENSE
+
 
 @register_model
 class Cooccurrences(Model):
@@ -12,6 +14,7 @@ class Cooccurrences(Model):
     NAME = "co-occurrences"
     VENDOR = "source{d}"
     DESCRIPTION = "Model that contains the sparse co-occurrence matrix of source code identifiers."
+    LICENSE = DEFAULT_LICENSE
 
     def construct(self, tokens, matrix):
         self._tokens = tokens

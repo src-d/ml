@@ -1,8 +1,9 @@
 from typing import Union
 
-from modelforge import (
-    assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, register_model,
-    split_strings)
+from modelforge import assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, \
+    Model, register_model, split_strings
+
+from sourced.ml.models.license import DEFAULT_LICENSE
 
 
 @register_model
@@ -10,6 +11,7 @@ class Topics(Model):
     NAME = "topics"
     VENDOR = "source{d}"
     DESCRIPTION = "Model that is used to identify topics of source code repositories."
+    LICENSE = DEFAULT_LICENSE
 
     @property
     def tokens(self):

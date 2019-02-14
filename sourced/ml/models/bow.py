@@ -1,13 +1,13 @@
 import logging
 from typing import Dict, Iterable, List
 
-from modelforge import (
-    assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, register_model,
-    split_strings)
+from modelforge import assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, \
+    register_model, split_strings
 from modelforge.progress_bar import progress_bar
 from scipy import sparse
 
 from sourced.ml.models.df import DocumentFrequencies
+from sourced.ml.models.license import DEFAULT_LICENSE
 
 
 @register_model
@@ -21,6 +21,7 @@ class BOW(Model):
     NAME = "bow"
     VENDOR = "source{d}"
     DESCRIPTION = "Model that contains source code as weighted bag of words."
+    LICENSE = DEFAULT_LICENSE
 
     def construct(self, documents: List[str], tokens: List[str], matrix: sparse.spmatrix):
         if matrix.shape[0] != len(documents):
