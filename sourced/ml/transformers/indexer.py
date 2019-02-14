@@ -93,11 +93,16 @@ class Indexer(Transformer):
             Please contact me if you have troubles: kslavnov@gmail.com
             """
             if isinstance(column_name, str):
-                assert isinstance(row, Row)
-                row_dict = row.asDict()
-                row_dict[column_name] = column2id.value[row_dict[column_name]]
-                return Row(**row_dict)
-            return row[:column_name] + (column2id.value[row[column_name]],) + row[column_name + 1:]
-        indexed_rdd = rdd.map(index_column)
+                try:
+                    assert isinstance(row, Row)
+                    row_dict = row.asDict()
+                    row_dict[column_name] = column2id.value[row_dict[column_name]]
+                    return [Row(**row_dict)]
+                except KeyError:
+                    return []
+            return [row[:column_name] + (column2id.value[row[column_name]],) +
+                    row[column_name + 1:]]
+
+        indexed_rdd = rdd.flatMap(index_column)
         column2id.unpersist(blocking=True)
         return indexed_rdd
