@@ -17,7 +17,7 @@ setup(
                 "on source code features extracted from Babelfish's UASTs.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version=".".join(map(str, sourcedml.__version__)),
+    version=sourcedml.__version__,
     license="Apache 2.0",
     author="source{d}",
     author_email="machine-learning@sourced.tech",
