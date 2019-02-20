@@ -1,7 +1,6 @@
 from modelforge.model import (
     assemble_sparse_matrix, disassemble_sparse_matrix, merge_strings, Model, split_strings)
 from modelforge.models import register_model
-import pyspark
 
 from sourced.ml.models.license import DEFAULT_LICENSE
 
@@ -55,7 +54,7 @@ Matrix: shape: %s non-zero: %d""" % (
         return {"tokens": merge_strings(self.tokens),
                 "matrix": disassemble_sparse_matrix(self.matrix)}
 
-    def matrix_to_rdd(self, spark_context: pyspark.SparkContext) -> pyspark.RDD:
+    def matrix_to_rdd(self, spark_context: "pyspark.SparkContext") -> "pyspark.RDD":
         self._log.info("Convert coocc model to RDD...")
         rdd_row = spark_context.parallelize(self._matrix.row)
         rdd_col = spark_context.parallelize(self._matrix.col)
