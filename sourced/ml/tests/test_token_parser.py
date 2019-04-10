@@ -129,6 +129,49 @@ class TokenParserTests(unittest.TestCase):
             list(self.tp.split("AbCd")),
             ["ab", "cd"])
 
+    def test_reconstruct(self):
+        self.tp._save_token_style = True
+        self.tp._single_shot = True
+        self.tp.min_split_length = 1
+
+        tokens = [
+            "UpperCamelCase",
+            "camelCase",
+            "FRAPScase",
+            "SQLThing",
+            "_Astra",
+            "CAPS_CONST",
+            "_something_SILLY_",
+            "blink182",
+            "FooBar100500Bingo",
+            "Man45var",
+            "method_name",
+            "Method_Name",
+            "101dalms",
+            "101_dalms",
+            "101_DalmsBug",
+            "101_Dalms45Bug7",
+            "wdSize",
+            "Glint",
+            "foo_BAR",
+            "sourced.ml.algorithms.uast_ids_to_bag",
+            "WORSTnameYOUcanIMAGINE",
+            "SmallIdsToFoOo",
+            "SmallIdFooo",
+            "ONE_M0re_.__badId.example",
+            "never_use_Such__varsableNames",
+            "a.b.c.d",
+            "A.b.Cd.E",
+            "looong_sh_loooong_sh",
+            "sh_sh_sh_sh",
+            "loooong_loooong_loooong",
+        ]
+        self.tp.max_token_length = max(map(len, tokens))
+
+        for token in tokens:
+            splitted_tokens = list(self.tp.split(token))
+            self.assertEqual(token, self.tp.reconstruct(splitted_tokens))
+
     def test_split_single_shot(self):
         self.tp._single_shot = True
         self.tp.min_split_length = 1
