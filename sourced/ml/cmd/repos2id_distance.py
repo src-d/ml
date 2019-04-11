@@ -2,8 +2,8 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import IdentifierDistance
-from sourced.ml.transformers import (
-    create_uast_source, CsvSaver, Uast2BagFeatures, UastDeserializer, UastRow2Document)
+from sourced.ml.transformers import create_uast_source, CsvSaver, Moder, \
+    Uast2BagFeatures, UastDeserializer, UastRow2Document
 from sourced.ml.transformers.basic import Rower
 from sourced.ml.utils.engine import pause, pipeline_graph
 
@@ -16,6 +16,7 @@ def repos2id_distance(args):
     root, start_point = create_uast_source(args, session_name)
 
     start_point \
+        .link(Moder(args.mode)) \
         .link(UastRow2Document()) \
         .link(UastDeserializer()) \
         .link(Uast2BagFeatures(extractor)) \

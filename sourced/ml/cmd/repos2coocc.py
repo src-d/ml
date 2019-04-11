@@ -2,9 +2,8 @@ import logging
 from uuid import uuid4
 
 from sourced.ml.extractors import IdentifiersBagExtractor
-from sourced.ml.transformers import (
-    Cacher, CooccConstructor, CooccModelSaver, Counter, create_uast_source, Repartitioner,
-    Uast2BagFeatures, UastDeserializer, UastRow2Document)
+from sourced.ml.transformers import Cacher, CooccConstructor, CooccModelSaver, Counter, \
+    create_uast_source, Moder, Repartitioner, Uast2BagFeatures, UastDeserializer, UastRow2Document
 from sourced.ml.utils.docfreq import create_or_load_ordered_df
 from sourced.ml.utils.engine import pause, pipeline_graph
 
@@ -18,6 +17,7 @@ def repos2coocc(args):
     root, start_point = create_uast_source(args, session_name)
 
     uast_extractor = start_point \
+        .link(Moder("file")) \
         .link(UastRow2Document()) \
         .link(Repartitioner.maybe(args.partitions, args.shuffle)) \
         .link(Cacher.maybe(args.persist))
