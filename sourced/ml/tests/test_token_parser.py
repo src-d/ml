@@ -6,7 +6,7 @@ from sourced.ml.algorithms import NoopTokenParser, TokenParser
 
 class TokenParserTests(unittest.TestCase):
     def setUp(self):
-        self.tp = TokenParser(stem_threshold=4, max_token_length=20)
+        self.tp = TokenParser(stem_threshold=4, max_token_length=20, attach_upper=False)
         self.tp._single_shot = False
 
     def test_process_token(self):
@@ -55,7 +55,7 @@ class TokenParserTests(unittest.TestCase):
 
     def test_process_token_with_attach_upper(self):
         tp = TokenParser(stem_threshold=100, single_shot=True, max_token_length=100,
-                         min_split_length=1, attach_upper=True)
+                         min_split_length=1)
         tokens = [
             ("UpperCamelCase", ["upper", "camel", "case"]),
             ("camelCase", ["camel", "case"]),

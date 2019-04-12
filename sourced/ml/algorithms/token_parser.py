@@ -34,9 +34,9 @@ class TokenParser:
     # if you do not want to filter small tokens set min_split_length=1.
     SAVE_TOKEN_STYLE = False  # whether yield metadata that can be used to reconstruct initial
     # identifier.
-    ATTACH_UPPER = False  # True to attach the last of several uppercase letters in a row to
-    # the next token. Example: 'HTMLResponce' -> ["html", "responce"] if True,
-    # 'HTMLResponce' -> ["htmlr", "esponce"] if False.
+    ATTACH_UPPER = True  # True to attach the last of several uppercase letters in a row to
+    # the next token. Example: 'HTMLResponse' -> ["html", "response"] if True,
+    # 'HTMLResponse' -> ["htmlr", "esponse"] if False.
 
     def __init__(self, stem_threshold=STEM_THRESHOLD, max_token_length=MAX_TOKEN_LENGTH,
                  min_split_length=MIN_SPLIT_LENGTH, single_shot=DEFAULT_SINGLE_SHOT,
