@@ -33,11 +33,14 @@ class TokenParser:
     # if True we have only ["sourc", "algorithm"].
     # if you do not want to filter small tokens set min_split_length=1.
     SAVE_TOKEN_STYLE = False  # whether yield metadata that can be used to reconstruct initial
-    # identifier
+    # identifier.
+    ATTACH_UPPER = False  # True to attach the last of several uppercase letters in a row to
+    # the next token. Example: 'HTMLResponce' -> ["html", "responce"] if True,
+    # 'HTMLResponce' -> ["htmlr", "esponce"] if False.
 
     def __init__(self, stem_threshold=STEM_THRESHOLD, max_token_length=MAX_TOKEN_LENGTH,
                  min_split_length=MIN_SPLIT_LENGTH, single_shot=DEFAULT_SINGLE_SHOT,
-                 save_token_style=SAVE_TOKEN_STYLE):
+                 save_token_style=SAVE_TOKEN_STYLE, attach_upper=ATTACH_UPPER):
         self._stemmer = Stemmer.Stemmer("english")
         self._stemmer.maxCacheSize = 0
         self._stem_threshold = stem_threshold
@@ -45,6 +48,7 @@ class TokenParser:
         self._min_split_length = min_split_length
         self._single_shot = single_shot
         self._save_token_style = save_token_style
+        self._attach_upper = attach_upper
         if self._save_token_style and not self._single_shot:
             raise ValueError("Only one of `single_shot`/`save_token_style` should be True")
 
@@ -143,22 +147,22 @@ class TokenParser:
                 yield part, TokenStyle.DELIMITER
                 continue
             assert part.isalpha()
-            prev = part[0]
-            pos = 0
+            start = 0
             for i in range(1, len(part)):
                 this = part[i]
+                prev = part[i - 1]
                 if prev.islower() and this.isupper():
-                    yield from ret(part[pos:i])
-                    pos = i
+                    yield from ret(part[start:i])
+                    start = i
                 elif prev.isupper() and this.islower():
-                    if 0 < i - 1 - pos <= self.min_split_length:
-                        yield from ret(part[pos:i])
-                        pos = i
-                    elif i - 1 > pos:
-                        yield from ret(part[pos:i])
-                        pos = i
-                prev = this
-            last = part[pos:]
+                    if self._attach_upper and i > 1 and part[i - 2].isupper():
+                        new_start = i - 1
+                    else:
+                        new_start = i
+                    if i - 1 > start:
+                        yield from ret(part[start:new_start])
+                        start = new_start
+            last = part[start:]
             if last:
                 yield from ret(last)
 
@@ -188,7 +192,7 @@ class TokenParser:
 
 class NoopTokenParser:
     """
-    One can use this class if he or she does not want to do any parsing.
+    One can use this class one does not want to do any parsing.
     """
 
     def process_token(self, token):
