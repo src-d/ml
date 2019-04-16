@@ -6,13 +6,15 @@ from sourced.ml.algorithms import NoopTokenParser, TokenParser
 
 class TokenParserTests(unittest.TestCase):
     def setUp(self):
-        self.tp = TokenParser(stem_threshold=4, max_token_length=20)
+        self.tp = TokenParser(stem_threshold=4, max_token_length=20, attach_upper=False)
         self.tp._single_shot = False
 
     def test_process_token(self):
         self.tp.max_token_length = 100
 
         tokens = [
+            ("ONLYCAPS", ["onlycap"]),
+            ("nocaps", ["nocap"]),
             ("UpperCamelCase", ["upper", "camel", "case"]),
             ("camelCase", ["camel", "case"]),
             ("FRAPScase", ["frap", "case"]),
@@ -53,11 +55,58 @@ class TokenParserTests(unittest.TestCase):
             res = list(self.tp.process_token(token))
             self.assertEqual(res, correct)
 
+    def test_process_token_with_attach_upper(self):
+        tp = TokenParser(stem_threshold=100, single_shot=True, max_token_length=100,
+                         min_split_length=1)
+        tokens = [
+            ("ONLYCAPS", ["onlycaps"]),
+            ("nocaps", ["nocaps"]),
+            ("UpperCamelCase", ["upper", "camel", "case"]),
+            ("camelCase", ["camel", "case"]),
+            ("FRAPScase", ["frap", "scase"]),
+            ("SQLThing", ["sql", "thing"]),
+            ("_Astra", ["astra"]),
+            ("CAPS_CONST", ["caps", "const"]),
+            ("_something_SILLY_", ["something", "silly"]),
+            ("blink182", ["blink"]),
+            ("FooBar100500Bingo", ["foo", "bar", "bingo"]),
+            ("Man45var", ["man", "var"]),
+            ("method_name", ["method", "name"]),
+            ("Method_Name", ["method", "name"]),
+            ("101dalms", ["dalms"]),
+            ("101_dalms", ["dalms"]),
+            ("101_DalmsBug", ["dalms", "bug"]),
+            ("101_Dalms45Bug7", ["dalms", "bug"]),
+            ("wdSize", ["wd", "size"]),
+            ("Glint", ["glint"]),
+            ("foo_BAR", ["foo", "bar"]),
+            ("sourced.ml.algorithms.uast_ids_to_bag",
+             ["sourced", "ml", "algorithms", "uast", "ids", "to", "bag"]),
+            ("WORSTnameYOUcanIMAGINE", ["wors", "tname", "yo", "ucan", "imagine"]),
+            # Another bad example. Parser failed to parse it correctly
+            ("SmallIdsToFoOo", ["small", "ids", "to", "fo", "oo"]),
+            ("SmallIdFooo", ["small", "id", "fooo"]),
+            ("ONE_M0re_.__badId.example", ["one", "m", "re", "bad",
+                                           "id", "example"]),
+            ("never_use_Such__varsableNames", ["never", "use", "such", "varsable", "names"]),
+            ("a.b.c.d", ["a", "b", "c", "d"]),
+            ("A.b.Cd.E", ["a", "b", "cd", "e"]),
+            ("looong_sh_loooong_sh", ["looong", "sh", "loooong", "sh"]),
+            ("sh_sh_sh_sh", ["sh", "sh", "sh", "sh"]),
+            ("loooong_loooong_loooong", ["loooong", "loooong", "loooong"])
+        ]
+
+        for token, correct in tokens:
+            res = list(tp.process_token(token))
+            self.assertEqual(res, correct)
+
     def test_process_token_single_shot(self):
         self.tp.max_token_length = 100
         self.tp._single_shot = True
         self.tp.min_split_length = 1
         tokens = [
+            ("ONLYCAPS", ["onlycap"]),
+            ("nocaps", ["nocap"]),
             ("UpperCamelCase", ["upper", "camel", "case"]),
             ("camelCase", ["camel", "case"]),
             ("FRAPScase", ["frap", "case"]),
@@ -135,6 +184,8 @@ class TokenParserTests(unittest.TestCase):
         self.tp.min_split_length = 1
 
         tokens = [
+            "ONLYCAPS",
+            "nocaps",
             "UpperCamelCase",
             "camelCase",
             "FRAPScase",
