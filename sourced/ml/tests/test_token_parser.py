@@ -13,6 +13,8 @@ class TokenParserTests(unittest.TestCase):
         self.tp.max_token_length = 100
 
         tokens = [
+            ("ONLYCAPS", ["onlycap"]),
+            ("nocaps", ["nocap"]),
             ("UpperCamelCase", ["upper", "camel", "case"]),
             ("camelCase", ["camel", "case"]),
             ("FRAPScase", ["frap", "case"]),
@@ -57,6 +59,8 @@ class TokenParserTests(unittest.TestCase):
         tp = TokenParser(stem_threshold=100, single_shot=True, max_token_length=100,
                          min_split_length=1)
         tokens = [
+            ("ONLYCAPS", ["onlycaps"]),
+            ("nocaps", ["nocaps"]),
             ("UpperCamelCase", ["upper", "camel", "case"]),
             ("camelCase", ["camel", "case"]),
             ("FRAPScase", ["frap", "scase"]),
@@ -101,6 +105,8 @@ class TokenParserTests(unittest.TestCase):
         self.tp._single_shot = True
         self.tp.min_split_length = 1
         tokens = [
+            ("ONLYCAPS", ["onlycap"]),
+            ("nocaps", ["nocap"]),
             ("UpperCamelCase", ["upper", "camel", "case"]),
             ("camelCase", ["camel", "case"]),
             ("FRAPScase", ["frap", "case"]),
@@ -178,6 +184,8 @@ class TokenParserTests(unittest.TestCase):
         self.tp.min_split_length = 1
 
         tokens = [
+            "ONLYCAPS",
+            "nocaps",
             "UpperCamelCase",
             "camelCase",
             "FRAPScase",
