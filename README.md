@@ -1,5 +1,12 @@
 # MLonCode research playground [![PyPI](https://img.shields.io/pypi/v/sourced-ml.svg)](https://pypi.python.org/pypi/sourced-ml) [![Build Status](https://travis-ci.org/src-d/ml.svg)](https://travis-ci.org/src-d/ml) [![Docker Build Status](https://img.shields.io/docker/build/srcd/ml.svg)](https://hub.docker.com/r/srcd/ml) [![codecov](https://codecov.io/github/src-d/ml/coverage.svg)](https://codecov.io/gh/src-d/ml)
 
+**This project is no longer maintained, it has evolved into several others:**
+
+* [ml-core](https://github.com/src-d/ml-core) - the bits which are independent of mining tools.
+* [ml-mining](https://github.com/src-d/ml-mining) - general purpose mining environment, currenly based on the deprecated [jgit-spark-connector](https://github.com/src-d/jgit-spark-connector).
+
+**Below goes the original README.**
+
 This project is the foundation for [MLonCode](https://github.com/src-d/awesome-machine-learning-on-source-code) research and development. It abstracts feature extraction and training models, thus allowing to focus on the higher level tasks.
 
 Currently, the following models are implemented:
